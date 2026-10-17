@@ -3,15 +3,17 @@
 
 const isSimpleName = (text) => /^[\p{L}_][\p{L}\p{N}_]*$/u.test(text);
 
-function testText(e) {
-  if (e.kind === 'while') {
-    return e.result ? 'Condition vraie : on fait un tour de boucle' : 'Condition fausse : la boucle while s’arrête';
-  }
+// Une condition entourée de parenthèses est la même que sans : (x > m) et x > m.
+const bare = (src) => src.trim().replace(/^\((.*)\)$/s, '$1').trim();
+
+/** Ce que l'on fait ensuite, d'après la valeur de la condition. */
+function consequence(e) {
+  if (e.kind === 'while') return e.result ? 'donc on fait un tour de boucle' : 'donc la boucle while s’arrête';
   const where = e.kind === 'elif' ? 'du elif' : 'du if';
-  if (e.result) return `Condition vraie : on exécute le bloc ${where}`;
-  if (e.next === 'else') return 'Condition fausse : on passe au bloc else';
-  if (e.next === 'elif') return 'Condition fausse : on teste le elif suivant';
-  return `Condition fausse : on saute le bloc ${where}`;
+  if (e.result) return `donc on exécute le bloc ${where}`;
+  if (e.next === 'else') return 'donc on passe au bloc else';
+  if (e.next === 'elif') return 'donc on teste le elif suivant';
+  return `donc on saute le bloc ${where}`;
 }
 
 function mutateText(e) {
@@ -44,12 +46,17 @@ function mutateText(e) {
 }
 
 /**
- * @returns {{text: string, result?: boolean, tone?: 'flow'|'note'|'error'}[]}
+ * Chaque élément est soit une phrase { text, tone }, soit l'évaluation d'une condition
+ * { src, values, bool } : « x > m ⟶ 12 > 4 : True », le booléen étant surligné.
+ * @returns {{text?: string, src?: string, values?: string|null, bool?: boolean, tone?: 'flow'|'note'|'error'}[]}
  */
 export function narrate(step, sourceLines) {
-  if (step.kind === 'start') return [{ text: 'Prêt. Lance l’animation avec ▶ ou la touche Espace.', tone: 'flow' }];
+  if (step.kind === 'start') {
+    return [{ text: 'Prêt. Clique sur « Pas à pas » (ou appuie sur →) pour exécuter la première ligne.', tone: 'flow' }];
+  }
   const out = [];
   const iterVars = new Set(step.events.filter((e) => e.type === 'iter').map((e) => e.var));
+  const compared = new Set(step.events.filter((e) => e.type === 'compare').map((e) => bare(e.src)));
   for (const e of step.events) {
     switch (e.type) {
       case 'iter':
@@ -70,11 +77,13 @@ export function narrate(step, sourceLines) {
         break;
       case 'compare': {
         const values = `${e.left} ${e.op} ${e.right}`;
-        out.push({ text: values === e.src ? e.src : `${e.src}   ⟶   ${values}`, result: e.result });
+        out.push({ src: e.src, values: values === e.src ? null : values, bool: e.result });
         break;
       }
       case 'test':
-        out.push({ text: testText(e), tone: 'flow' });
+        // la condition entière, sauf si c'est exactement la comparaison qui vient d'être affichée
+        if (!compared.has(bare(e.src))) out.push({ src: e.src, values: null, bool: e.result });
+        out.push({ text: consequence(e), tone: 'flow' });
         break;
       case 'write':
         out.push({
@@ -120,7 +129,8 @@ export function narrate(step, sourceLines) {
         });
         break;
       case 'assert':
-        out.push({ text: `Vérification : ${e.src}`, result: true });
+        if (!compared.has(bare(e.src))) out.push({ src: e.src, values: null, bool: true });
+        out.push({ text: 'donc la vérification (assert) réussit', tone: 'flow' });
         break;
       case 'note':
         out.push({ text: e.text, tone: 'note' });
@@ -139,7 +149,7 @@ export function narrate(step, sourceLines) {
         break;
     }
   }
-  if (step.kind === 'end') out.push({ text: 'Fin du programme.', tone: 'flow' });
+  if (step.kind === 'end') out.push({ text: 'Fin du programme. Clique sur Exécuter pour recommencer.', tone: 'flow' });
   if (step.kind === 'error') {
     const where = step.error.line ? ` à la ligne ${step.error.line}` : '';
     out.push({ text: `Arrêt${where} : ${step.error.title.toLowerCase()}`, tone: 'error' });

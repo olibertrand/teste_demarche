@@ -40,6 +40,9 @@ export class Stage {
     this.run = run;
     this.lines = source.split('\n');
     this.exclusive = new Map();
+    // Ces zones gardent la même hauteur pendant toute l'exécution : rien ne saute d'une étape à l'autre.
+    this.hasPhrases = [...run.comments.values()].some((c) => c.text);
+    this.hasCalls = run.steps.some((s) => s.kind === 'call');
   }
 
   render(k, { animate = true } = {}) {
@@ -58,9 +61,8 @@ export class Stage {
   // ---------------------------------------------------------------- phrase de la démarche
 
   renderPhrase(step) {
-    const text = phraseFor(step.line, this.run.comments);
-    this.els.phrase.hidden = !text;
-    if (text) this.els.phraseText.textContent = text;
+    this.els.phrase.hidden = !this.hasPhrases;
+    this.els.phraseText.textContent = phraseFor(step.line, this.run.comments) ?? '';
   }
 
   // ---------------------------------------------------------------- listes
@@ -287,8 +289,8 @@ export class Stage {
   renderStack(step) {
     const box = this.els.stack;
     const frames = step.frames;
-    box.hidden = frames.length < 2;
-    if (frames.length < 2) return;
+    box.hidden = !this.hasCalls;
+    if (box.hidden) return;
     box.textContent = '';
     box.append(
       h('span', { class: 'group-title' }, 'Appels en cours'),
@@ -300,8 +302,19 @@ export class Stage {
     const list = this.els.narration;
     list.textContent = '';
     for (const item of narrate(step, this.lines)) {
-      const li = h('li', { class: item.tone ?? null }, h('span', { class: 'ntext' }, item.text));
-      if (item.result !== undefined) li.append(h('span', { class: `pill ${item.result ? 'true' : 'false'}` }, item.result ? 'Vrai' : 'Faux'));
+      const li = h('li', { class: item.tone ?? null });
+      if (item.src === undefined) li.append(h('span', { class: 'ntext' }, item.text));
+      else {
+        // condition évaluée : « x > m ⟶ 12 > 4 : True », avec le booléen surligné
+        // (les espaces entre les morceaux servent au copier-coller et aux lecteurs d'écran)
+        li.append(h('span', { class: 'nsrc' }, item.src), ' ');
+        if (item.values) li.append(h('span', { class: 'nvals' }, `⟶ ${item.values}`), ' ');
+        li.append(
+          h('span', { class: 'ncolon' }, ':'),
+          ' ',
+          h('mark', { class: item.bool ? 'bool is-true' : 'bool is-false' }, item.bool ? 'True' : 'False'),
+        );
+      }
       list.append(li);
     }
   }

@@ -17,6 +17,8 @@
   --hl-compare: #7fcfff; /* surligneur bleu */
   --hl-write: #8be29a; /* surligneur vert */
   --hl-swap: #ffa3cd; /* surligneur rose */
+  --hl-true: #8be29a;
+  --hl-false: #ffaaa2;
   --on-hl: #151a27;
   --error: #c42b25; /* stylo rouge */
   --error-soft: #fcebea;
@@ -55,6 +57,8 @@
     --hl-compare: #6ec3ee;
     --hl-write: #7dd48a;
     --hl-swap: #f29bc3;
+    --hl-true: #7dd48a;
+    --hl-false: #f3958c;
     --on-hl: #141a17;
     --error: #ff7d74;
     --error-soft: #3a2220;
@@ -89,6 +93,8 @@
   --hl-compare: #6ec3ee;
   --hl-write: #7dd48a;
   --hl-swap: #f29bc3;
+  --hl-true: #7dd48a;
+  --hl-false: #f3958c;
   --on-hl: #141a17;
   --error: #ff7d74;
   --error-soft: #3a2220;
@@ -444,59 +450,31 @@ code {
   padding: 0 14px 12px;
 }
 
-.transport {
-  display: flex;
-  gap: 6px;
-}
-
-.icon-btn {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
+.step-btn {
+  padding: 10px 22px;
   border-radius: 10px;
-  border: 1.5px solid var(--rule);
-  background: var(--surface);
-  cursor: pointer;
+  font-size: 1.05rem;
 }
 
-.icon-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
-}
-
-.icon-btn:hover:not(:disabled) {
-  border-color: var(--ink-soft);
-}
-
-.icon-btn.play {
-  width: 52px;
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-}
-
-.icon-btn:disabled {
-  opacity: 0.4;
+.btn:disabled {
+  opacity: 0.45;
   cursor: default;
+  filter: none;
 }
 
-.scrub {
-  flex: 1 1 180px;
-  min-width: 0;
-  accent-color: var(--accent);
+.keys {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
 }
 
-.speed {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.speed input {
-  width: 110px;
-  accent-color: var(--accent);
+kbd {
+  font: 600 0.85em var(--font-code);
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .stale {
@@ -526,6 +504,11 @@ body[data-stale] .stage-body {
 
 .phrase {
   margin: 0;
+  height: 2.3em; /* toujours deux lignes : la scène ne bouge pas d'une étape à l'autre */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font: 600 clamp(1.45rem, 1.1rem + 1.2vw, 2rem)/1.15 var(--font-hand);
   color: var(--hand);
   text-wrap: balance;
@@ -537,6 +520,11 @@ body[data-stale] .stage-body {
 
 .phrase::after {
   content: " »";
+}
+
+.phrase:empty::before,
+.phrase:empty::after {
+  content: none;
 }
 
 /* listes */
@@ -839,7 +827,9 @@ body[data-stale] .stage-body {
   margin: 0;
   padding: 0;
   display: grid;
+  align-content: start;
   gap: 6px;
+  min-height: 8.6rem; /* cinq lignes réservées */
 }
 
 .narration li {
@@ -867,19 +857,25 @@ body[data-stale] .stage-body {
   color: var(--error);
 }
 
-.pill {
-  font: 700 0.78rem/1.5 var(--font-ui);
-  padding: 0 9px;
-  border-radius: 999px;
-  color: var(--surface);
+.narration .nvals,
+.narration .ncolon {
+  color: var(--ink-soft);
 }
 
-.pill.true {
-  background: var(--true);
+/* valeur d'une condition : True ou False, au surligneur */
+.bool {
+  font: 700 1rem/1.35 var(--font-code);
+  padding: 0 7px;
+  border-radius: 4px;
+  color: var(--on-hl);
 }
 
-.pill.false {
-  background: var(--false);
+.bool.is-true {
+  background: var(--hl-true);
+}
+
+.bool.is-false {
+  background: var(--hl-false);
 }
 
 /* console */
@@ -922,9 +918,6 @@ body[data-stale] .stage-body {
 @media (max-width: 520px) {
   .brand {
     font-size: 1.25rem;
-  }
-  .speed input {
-    width: 90px;
   }
   .cell {
     min-width: 2.6rem;

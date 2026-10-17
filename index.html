@@ -51,29 +51,11 @@
         <span id="counter" class="counter" aria-live="polite"></span>
       </div>
 
-      <div class="player" role="toolbar" aria-label="Lecture de l’animation">
-        <div class="transport">
-          <button id="first" class="icon-btn" type="button" aria-label="Début" title="Début (Origine)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2.5v14H4zM13 5l-6.5 7 6.5 7zM20 5l-6.5 7 6.5 7z"/></svg>
-          </button>
-          <button id="prev" class="icon-btn" type="button" aria-label="Étape précédente" title="Étape précédente (←)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM18 5l-9 7 9 7z"/></svg>
-          </button>
-          <button id="play" class="icon-btn play" type="button" aria-label="Lecture" title="Lecture (Espace)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>
-          </button>
-          <button id="next" class="icon-btn" type="button" aria-label="Étape suivante" title="Étape suivante (→)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM15.5 5H18v14h-2.5z"/></svg>
-          </button>
-          <button id="last" class="icon-btn" type="button" aria-label="Fin" title="Fin (Fin)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5l6.5 7L4 19zM11 5l6.5 7-6.5 7zM17.5 5H20v14h-2.5z"/></svg>
-          </button>
-        </div>
-        <input id="scrub" class="scrub" type="range" min="0" max="0" value="0" aria-label="Choisir l’étape">
-        <label class="speed" for="speed">
-          <span class="label">Vitesse</span>
-          <input id="speed" type="range" min="0" max="100" value="38">
-        </label>
+      <div class="player">
+        <button id="step" class="btn primary step-btn" type="button" title="Exécuter la ligne suivante (→ ou Espace)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM15 5h3v14h-3z"/></svg>Pas à pas
+        </button>
+        <span class="keys">ou les touches <kbd>→</kbd> et <kbd>Espace</kbd></span>
       </div>
 
       <p id="stale" class="stale" hidden>Le programme a changé : clique sur <strong>Exécuter</strong> pour mettre l’animation à jour.</p>
@@ -106,7 +88,7 @@
 
   <footer class="footnote">
     Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
-    Raccourcis : Espace (lecture / pause), ← → (étape par étape), Ctrl + Entrée (exécuter).
+    Raccourcis : → ou Espace (pas à pas), Ctrl + Entrée (exécuter).
   </footer>
 </div>
 <!-- APP:END -->

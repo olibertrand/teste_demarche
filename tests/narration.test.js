@@ -17,9 +17,11 @@ test('maximum : visite, comparaison et décision sont racontées', () => {
   const { all } = texts(code('maximum'));
   const flat = all.flat();
   assert.ok(flat.some((n) => n.text === 'x ← L[1] = 12'));
-  const compare = flat.find((n) => n.text.startsWith('x > m') && n.text.endsWith('12 > 4'));
-  assert.equal(compare.result, true);
-  assert.ok(flat.some((n) => n.text === 'Condition vraie : on exécute le bloc du if'));
+  // la condition, ses valeurs et le booléen obtenu : « x > m ⟶ 12 > 4 : True »
+  assert.ok(flat.some((n) => n.src === 'x > m' && n.values === '12 > 4' && n.bool === true));
+  assert.ok(flat.some((n) => n.src === 'x > m' && n.values === '4 > 4' && n.bool === false));
+  assert.ok(flat.some((n) => n.text === 'donc on exécute le bloc du if'));
+  assert.ok(flat.some((n) => n.text === 'donc on saute le bloc du if'));
   assert.ok(flat.some((n) => n.text === 'm ← 12'));
   assert.ok(flat.some((n) => n.text === 'Fin du parcours de L'));
   // l'affectation de x n'est pas répétée à côté de l'itération
@@ -42,14 +44,36 @@ test('appel, retour et affichage', () => {
 
 test('boucle while : la condition fausse arrête la boucle', () => {
   const flat = texts(code('recherche-while')).all.flat();
-  assert.ok(flat.some((n) => n.text === 'Condition fausse : la boucle while s’arrête'));
-  assert.ok(flat.some((n) => n.text === 'Condition vraie : on exécute le bloc du if'));
+  assert.ok(flat.some((n) => n.text === 'donc la boucle while s’arrête'));
+  assert.ok(flat.some((n) => n.text === 'donc on exécute le bloc du if'));
+});
+
+test('condition composée : chaque comparaison puis la condition entière avec son booléen', () => {
+  const { r, all } = texts(code('recherche-while'));
+  const k = r.steps.findIndex((s) => s.events.some((e) => e.type === 'test' && e.result === false));
+  assert.deepEqual(all[k], [
+    { src: 'i < len(L)', values: '2 < 5', bool: true },
+    { src: 'L[i] != v', values: '8 != 8', bool: false },
+    { src: 'i < len(L) and L[i] != v', values: null, bool: false },
+    { text: 'donc la boucle while s’arrête', tone: 'flow' },
+  ]);
+});
+
+test('condition simple : le booléen n’est pas répété', () => {
+  const { r, all } = texts('x = 3\nif (x < 4):\n    pass\nok = True\nif not ok:\n    pass');
+  const first = all[r.steps.findIndex((s) => s.line === 2)];
+  assert.deepEqual(first, [
+    { src: 'x < 4', values: '3 < 4', bool: true },
+    { text: 'donc on exécute le bloc du if', tone: 'flow' },
+  ]);
+  const second = all[r.steps.findIndex((s) => s.line === 5)];
+  assert.deepEqual(second[0], { src: 'not ok', values: null, bool: false });
 });
 
 test('première et dernière étapes', () => {
   const { r, all } = texts(code('parcours'));
   assert.match(all[0][0].text, /^Prêt/);
-  assert.equal(all.at(-1).at(-1).text, 'Fin du programme.');
+  assert.equal(all.at(-1).at(-1).text, 'Fin du programme. Clique sur Exécuter pour recommencer.');
   const passStep = r.steps.findIndex((s) => s.line === 3);
   assert.equal(all[passStep][0].text, 'pass : il n’y a rien à faire');
 });

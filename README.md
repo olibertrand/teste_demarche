@@ -2,8 +2,8 @@
 
 Une application web pour **voir ce que fait un algorithme**, étape par étape : les cases
 d'une liste s'allument quand elles sont lues, les variables changent sous nos yeux, chaque
-comparaison est écrite avec son résultat (« x > m ⟶ 12 > 4 Vrai »), et la phrase de la
-démarche correspondant à la ligne exécutée s'affiche au-dessus de l'animation.
+condition est écrite avec ses valeurs et son booléen surligné (« x > m ⟶ 12 > 4 : True »), et la
+phrase de la démarche correspondant à la ligne exécutée s'affiche au-dessus de l'animation.
 
 Pensée pour la NSI (1re et Terminale). Ce dépôt correspond à l'**étape 1** du projet :
 le moteur d'exécution et les animations, alimentés par du Python écrit à la main.
@@ -16,8 +16,8 @@ L'étape 2 ajoutera la traduction d'une démarche rédigée en français vers ce
   d'Internet ; sans connexion, des polices du système les remplacent).
 - Choisir un exemple dans la liste, ou cliquer sur **Modifier** pour écrire son propre programme,
   puis **Exécuter** (ou Ctrl + Entrée).
-- Lecteur : Espace (lecture / pause), ← → (étape par étape), Origine / Fin, curseur de vitesse.
-  On peut revenir en arrière à tout moment.
+- Le bouton **Pas à pas** (ou les touches → et Espace) exécute une étape à la fois. Il n'y a pas
+  de lecture automatique : c'est l'élève qui avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
 
 ### Les commentaires sont les phrases de la démarche
@@ -31,8 +31,8 @@ for x in L:       # parcours la liste L
 ```
 
 Quand une ligne s'exécute, son commentaire (ou les commentaires placés juste au-dessus)
-s'affiche en grand au-dessus de l'animation. C'est ce format que produira la traduction
-automatique de l'étape 2.
+s'affiche en grand au-dessus de l'animation (la zone garde la même hauteur à chaque étape, même
+pour les lignes sans commentaire). C'est ce format que produira la traduction automatique de l'étape 2.
 
 ### Ce que montre l'animation
 
@@ -43,6 +43,9 @@ automatique de l'étape 2.
   flèches sous les cases ; la variable d'une boucle `for x in L` suit l'élément visité ;
 - pour une recherche dichotomique (`debut` / `fin`, `gauche` / `droite`…), les cases hors de la
   zone de recherche sont grisées ;
+- chaque condition évaluée, avec ses valeurs et son booléen surligné, puis sa conséquence :
+  `x > m ⟶ 4 > 4 : False`, « donc on saute le bloc du if ». Pour une condition composée
+  (`i < len(L) and L[i] != v`), chaque comparaison est détaillée avant la condition entière ;
 - les variables, les appels de fonctions en cours, ce qui est affiché par `print` ;
 - les erreurs, expliquées en français, avec l'état du programme au moment de l'erreur (une case
   fantôme rouge montre l'indice qui dépasse de la liste). Une boucle qui ne s'arrête pas est
@@ -90,7 +93,7 @@ npm run dev        # sert le dossier sur http://localhost:8080 (index.html)
 L'interpréteur exécute tout le programme d'un coup et enregistre une **trace** : pour chaque
 étape, la ligne exécutée, les événements (lecture d'une case, comparaison, affectation,
 échange, appel…) et un instantané des variables et des listes. L'animation ne fait que rejouer
-cette trace, ce qui permet d'avancer et de reculer librement.
+cette trace, étape par étape.
 
 Les tests différentiels exécutent un corpus de programmes (et d'erreurs) à la fois avec le vrai
 Python 3 et avec l'interpréteur, et vérifient que les affichages et les types d'erreur sont identiques.
