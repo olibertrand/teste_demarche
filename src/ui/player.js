@@ -8,9 +8,16 @@ export class Player {
     this.index = 0;
   }
 
-  load(count) {
+  load(count, start = 0) {
     this.count = count;
-    this.show(0);
+    this.show(start);
+  }
+
+  /** Plus rien à lire (avant la première exécution). */
+  reset() {
+    this.count = 0;
+    this.index = 0;
+    this.onState();
   }
 
   show(k) {

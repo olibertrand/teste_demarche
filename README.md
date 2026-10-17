@@ -5,21 +5,50 @@ d'une liste s'allument quand elles sont lues, les variables changent sous nos ye
 condition est écrite avec ses valeurs et son booléen surligné (« x > m ⟶ 12 > 4 : True »), et la
 phrase de la démarche correspondant à la ligne exécutée s'affiche au-dessus de l'animation.
 
-Pensée pour la NSI (1re et Terminale). Ce dépôt correspond à l'**étape 1** du projet :
-le moteur d'exécution et les animations, alimentés par du Python écrit à la main.
-L'étape 2 ajoutera la traduction d'une démarche rédigée en français vers ce Python.
+Pensée pour la NSI (1re et Terminale). L'élève peut écrire sa **démarche en français** : elle est
+traduite en Python par Claude, sans être corrigée, puis animée. On peut aussi écrire directement
+du Python.
 
 ## Utiliser l'application
 
 - **Sans rien installer** : ouvrir `dist/demarche.html` dans un navigateur (double-clic).
   Le fichier est autonome : il fonctionne hors connexion (seules les polices viennent
   d'Internet ; sans connexion, des polices du système les remplacent).
-- Choisir un exemple dans la liste, ou cliquer sur **Modifier** pour écrire son propre programme,
-  puis **Exécuter** (ou Ctrl + Entrée).
+- Deux onglets : **Démarche** (en français, une instruction par ligne) et **Python**. Choisir un
+  exemple dans la liste, ou écrire son propre texte, puis **Traduire et exécuter** ou **Exécuter**
+  (ou Ctrl + Entrée).
 - Le bouton **Pas à pas** (ou les touches → et Espace) exécute une étape à la fois ; **Étape
   précédente** (ou ←) revient en arrière. Il n'y a pas de lecture automatique : c'est l'élève qui
   avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
+
+### La démarche en français
+
+L'onglet **Démarche** reçoit le texte de l'élève, une instruction par ligne, éventuellement mêlé
+de Python :
+
+```
+L = [4,12,7,2,33]
+m = L[0]
+parcours la liste L
+chaque fois que la valeur x rencontrée est supérieure à m, cela devient la nouvelle valeur de m
+```
+
+**Traduire et exécuter** demande à Claude une traduction littérale en Python, puis l'animation
+démarre. La phrase de l'élève en cours d'exécution est surlignée dans son texte et affichée sur la
+scène ; la traduction en Python est visible à côté, avec les **hypothèses** de traduction
+(« « cela » désigne la valeur x »). La consigne donnée à Claude (`src/translate/prompt.js`) lui
+interdit de corriger ou de compléter : une valeur de départ oubliée reste oubliée, et c'est
+l'animation qui montre l'erreur.
+
+- La traduction utilise **le compte Claude de la personne qui ouvre la page**, dans la version en
+  ligne publiée sur claude.ai : elle accepte au premier usage. Dans le fichier `dist/demarche.html`
+  ouvert hors ligne, l'onglet Démarche l'explique et seul l'onglet Python fonctionne.
+- Une démarche déjà traduite est gardée dans le navigateur : la même démarche donne toujours la
+  même traduction, sans nouvel appel. **Retraduire** en demande une nouvelle.
+- **Ouvrir ce code dans l'onglet Python** permet de reprendre la traduction et de la modifier.
+- La réponse de Claude est vérifiée avant d'être exécutée : forme attendue, puis analyse du Python
+  produit par l'interpréteur de l'application.
 
 ### Les commentaires sont les phrases de la démarche
 
@@ -33,7 +62,7 @@ for x in L:       # parcours la liste L
 
 Quand une ligne s'exécute, son commentaire (ou les commentaires placés juste au-dessus)
 s'affiche en grand au-dessus de l'animation (la zone garde la même hauteur à chaque étape, même
-pour les lignes sans commentaire). C'est ce format que produira la traduction automatique de l'étape 2.
+pour les lignes sans commentaire). C'est aussi la forme du Python produit par la traduction.
 
 ### Ce que montre l'animation
 
@@ -77,6 +106,7 @@ ensembles (`set`), modules autres que ceux cités. Le programme le signale clair
 src/python/   tokenizer.js, parser.js  → analyse du programme
               interpreter.js           → exécution et enregistrement de la trace
               values.js, builtins.js   → valeurs Python, fonctions et modules
+src/translate/ prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
 src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js
 src/style.css
 index.html    page de développement (modules JS, nécessite un petit serveur)
@@ -101,10 +131,11 @@ Python 3 et avec l'interpréteur, et vérifient que les affichages et les types 
 
 ## Feuille de route
 
-1. **Moteur et animations** (ce dépôt) : tableaux, parcours, recherches, tris, glouton.
-2. **Traduction de la démarche** : un modèle de langage traduit la démarche rédigée par l'élève en
-   Python restreint commenté (une ligne de démarche ↔ une ou plusieurs lignes de code), sans la
-   corriger, en signalant ses hypothèses.
+1. **Moteur et animations** : tableaux, parcours, recherches, tris, glouton. Fait.
+2. **Traduction de la démarche** : Claude traduit la démarche rédigée par l'élève en Python
+   restreint commenté (une ligne de démarche ↔ une ou plusieurs lignes de code), sans la corriger,
+   en signalant ses hypothèses. Première version faite, à éprouver avec de vraies démarches
+   d'élèves ; pour des élèves sans compte Claude, il faudra un petit serveur avec une clé d'API.
 3. **Autonomie** : selon les besoins (données, coût, réseau), un petit modèle spécialisé hébergé
    localement ou dans le navigateur.
 

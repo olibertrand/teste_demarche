@@ -19,6 +19,8 @@
   --hl-swap: #ffa3cd; /* surligneur rose */
   --hl-true: #8be29a;
   --hl-false: #ffaaa2;
+  --ruled: rgba(35, 70, 196, 0.16); /* lignes du cahier */
+  --margin: rgba(214, 48, 49, 0.55); /* marge rouge */
   --on-hl: #151a27;
   --error: #c42b25; /* stylo rouge */
   --error-soft: #fcebea;
@@ -59,6 +61,8 @@
     --hl-swap: #f29bc3;
     --hl-true: #7dd48a;
     --hl-false: #f3958c;
+    --ruled: rgba(229, 236, 230, 0.12);
+    --margin: rgba(255, 125, 116, 0.5);
     --on-hl: #141a17;
     --error: #ff7d74;
     --error-soft: #3a2220;
@@ -95,6 +99,8 @@
   --hl-swap: #f29bc3;
   --hl-true: #7dd48a;
   --hl-false: #f3958c;
+  --ruled: rgba(229, 236, 230, 0.12);
+  --margin: rgba(255, 125, 116, 0.5);
   --on-hl: #141a17;
   --error: #ff7d74;
   --error-soft: #3a2220;
@@ -171,6 +177,7 @@ code {
 .app {
   max-width: 1480px;
   margin: 0 auto;
+  grid-template-columns: minmax(0, 1fr); /* rien ne doit élargir la page, même un long titre d'exemple */
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 14px 28px;
@@ -204,9 +211,11 @@ code {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .picker select {
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
   padding: 8px 10px;
@@ -243,6 +252,7 @@ code {
 
 .panel-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -876,6 +886,212 @@ body[data-stale] .stage-body {
 
 .bool.is-false {
   background: var(--hl-false);
+}
+
+/* onglets Démarche / Python */
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: 700 0.95rem/1.2 var(--font-ui);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+/* la démarche s'écrit sur un cahier : lignes horizontales et marge rouge */
+.notebook {
+  --lh: 2.1rem;
+  --margin-x: 2.4rem;
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  border-radius: 0;
+  outline: none;
+  padding: 0 14px 0 calc(var(--margin-x) + 12px);
+  font: 600 1.45rem/var(--lh) var(--font-hand);
+  color: var(--hand);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(90deg, transparent var(--margin-x), var(--margin) var(--margin-x), var(--margin) calc(var(--margin-x) + 2px), transparent calc(var(--margin-x) + 2px)),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--lh) - 1px), var(--ruled) calc(var(--lh) - 1px), var(--ruled) var(--lh));
+  background-attachment: local;
+}
+
+textarea.notebook {
+  height: min(46vh, 17rem);
+  resize: vertical;
+}
+
+.notebook::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+
+.notebook:focus-visible {
+  outline: 3px solid var(--hl-compare);
+  outline-offset: -3px;
+}
+
+.notebook-view {
+  position: relative;
+  padding-left: 0;
+  max-height: min(46vh, 22rem);
+  overflow: auto;
+}
+
+.notebook-view .ln {
+  display: grid;
+  grid-template-columns: var(--margin-x) minmax(0, 1fr);
+  column-gap: 12px;
+  min-width: 0;
+  padding: 0 14px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notebook-view .ln .no {
+  padding-right: 8px;
+  font: 0.8rem/var(--lh) var(--font-code);
+}
+
+.notebook-view .ln.is-current,
+.notebook-view .ln.is-error {
+  background: none;
+  box-shadow: none;
+}
+
+/* la phrase en cours est surlignée, comme au surligneur sur un cahier */
+.notebook-view .ln.is-current .src,
+.notebook-view .ln.is-error .src {
+  color: var(--on-hl);
+  background: linear-gradient(transparent 14%, var(--hl-read) 14%, var(--hl-read) 86%, transparent 86%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.notebook-view .ln.is-error .src {
+  background: linear-gradient(transparent 14%, var(--hl-false) 14%, var(--hl-false) 86%, transparent 86%);
+}
+
+.translating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn.small {
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 0.85rem;
+}
+
+.error-box .retry {
+  margin-top: 8px;
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--rule);
+  background: var(--accent-soft);
+}
+
+.translation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* le code trop large défile dans son cadre, sans élargir la page */
+  gap: 14px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--rule);
+}
+
+.notes {
+  display: grid;
+  gap: 6px;
+}
+
+.notes ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.notes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.note-line {
+  font: 700 0.72rem/1.4 var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.notes.is-error li {
+  color: var(--error);
+}
+
+.notes q {
+  font: 600 1.2rem/1.2 var(--font-hand);
+  color: var(--hand);
+}
+
+.translation-code summary {
+  cursor: pointer;
+}
+
+.translation-code .code-view {
+  margin-top: 8px;
+  max-height: 18rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.translation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 /* console */

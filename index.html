@@ -22,27 +22,65 @@
   </header>
 
   <main class="workspace">
-    <section class="panel sheet" aria-labelledby="sheet-title">
+    <section class="panel sheet" aria-label="Écrire la démarche ou le programme">
       <div class="panel-head">
-        <h2 id="sheet-title" class="label">Programme</h2>
+        <div class="tabs" role="tablist" aria-label="Écrire">
+          <button id="tab-demarche" class="tab" type="button" role="tab" aria-controls="demarche-pane" aria-selected="false">Démarche</button>
+          <button id="tab-python" class="tab" type="button" role="tab" aria-controls="python-pane" aria-selected="false">Python</button>
+        </div>
         <div class="actions">
           <button id="edit" class="btn" type="button" hidden>Modifier</button>
-          <button id="run" class="btn primary" type="button" title="Exécuter (Ctrl + Entrée)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>Exécuter
+          <button id="run" class="btn primary" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg><span id="run-label">Exécuter</span>
           </button>
         </div>
       </div>
-      <div id="editor" class="editor">
-        <div class="gutter" aria-hidden="true"></div>
-        <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Programme en Python"></textarea>
+
+      <div id="demarche-pane" role="tabpanel" aria-labelledby="tab-demarche" hidden>
+        <textarea id="demarche" class="notebook" spellcheck="true" lang="fr" aria-label="Démarche, une instruction par ligne"
+          placeholder="Une instruction par ligne, par exemple :&#10;L = [4, 12, 7, 2, 33]&#10;parcours la liste L"></textarea>
+        <div id="demarche-view" class="notebook notebook-view" hidden title="Double-clic pour modifier"></div>
+        <div id="translating" class="translating" role="status" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="translating-text">Traduction en cours…</span>
+          <button id="stop" class="btn small" type="button">Arrêter</button>
+        </div>
+        <div id="translate-error" class="error-box" role="alert" hidden></div>
+        <div id="translation" class="translation" hidden>
+          <div id="hypotheses-box" class="notes" hidden>
+            <h3 class="label">J’ai supposé que…</h3>
+            <ul id="hypotheses"></ul>
+          </div>
+          <div id="incompris-box" class="notes is-error" hidden>
+            <h3 class="label">Je n’ai pas su traduire</h3>
+            <ul id="incompris"></ul>
+          </div>
+          <details id="translation-details" class="translation-code" open>
+            <summary><span class="label">Traduction en Python</span></summary>
+            <div id="translation-view" class="code-view"></div>
+            <div class="translation-actions">
+              <button id="retranslate" class="btn small" type="button" title="Demander une nouvelle traduction à Claude">Retraduire</button>
+              <button id="to-python" class="btn small" type="button">Ouvrir ce code dans l’onglet Python</button>
+            </div>
+          </details>
+        </div>
+        <p id="translate-unavailable" class="notice" hidden>La traduction automatique fonctionne dans la version en ligne de l’application, ouverte sur claude.ai avec un compte Claude. Ici, écris directement le programme dans l’onglet Python.</p>
+        <p class="hint">Une instruction par ligne ; les lignes déjà écrites en Python sont gardées telles quelles. La traduction ne corrige rien : l’animation montre ce que fait vraiment la démarche.</p>
       </div>
-      <div id="code-view" class="code-view" hidden title="Double-clic pour modifier"></div>
-      <div id="inputs-box" class="inputs" hidden>
-        <label class="label" for="inputs">Entrées pour input() · une valeur par ligne</label>
-        <textarea id="inputs" rows="3" spellcheck="false"></textarea>
+
+      <div id="python-pane" role="tabpanel" aria-labelledby="tab-python" hidden>
+        <div id="editor" class="editor">
+          <div class="gutter" aria-hidden="true"></div>
+          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Programme en Python"></textarea>
+        </div>
+        <div id="code-view" class="code-view" hidden title="Double-clic pour modifier"></div>
+        <div id="inputs-box" class="inputs" hidden>
+          <label class="label" for="inputs">Entrées pour input() · une valeur par ligne</label>
+          <textarea id="inputs" rows="3" spellcheck="false"></textarea>
+        </div>
+        <div id="syntax-error" class="error-box" role="alert" hidden></div>
+        <p class="hint">Les commentaires (après <code>#</code>) jouent le rôle des phrases de la démarche : chacun s’affiche quand sa ligne s’exécute. Double-clic sur le code pour le modifier.</p>
       </div>
-      <div id="syntax-error" class="error-box" role="alert" hidden></div>
-      <p class="hint">Les commentaires (après <code>#</code>) jouent le rôle des phrases de la démarche : chacun s’affiche quand sa ligne s’exécute. Double-clic sur le code pour le modifier.</p>
     </section>
 
     <section class="panel stage" aria-labelledby="stage-title">
@@ -61,7 +99,7 @@
         <span class="keys">ou les flèches <kbd>←</kbd> <kbd>→</kbd> du clavier</span>
       </div>
 
-      <p id="stale" class="stale" hidden>Le programme a changé : clique sur <strong>Exécuter</strong> pour mettre l’animation à jour.</p>
+      <p id="stale" class="stale" hidden></p>
 
       <div class="stage-body">
         <div id="phrase" class="phrase-box" hidden>
@@ -91,7 +129,8 @@
 
   <footer class="footnote">
     Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
-    Raccourcis : → ou Espace (pas à pas), ← (étape précédente), Ctrl + Entrée (exécuter).
+    Raccourcis : → ou Espace (pas à pas), ← (étape précédente), Ctrl + Entrée (exécuter ou traduire).
+    La traduction des démarches en français utilise Claude, dans la version en ligne sur claude.ai.
   </footer>
 </div>
 <!-- APP:END -->

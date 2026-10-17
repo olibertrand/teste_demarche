@@ -83,6 +83,17 @@ export function run(src, options = {}) {
   return new Interpreter(ast, options).run();
 }
 
+/** Vérifie qu'un programme peut être exécuté (syntaxe, break hors boucle…) ; renvoie l'erreur ou null. */
+export function check(src) {
+  try {
+    validate(parse(src).body);
+    return null;
+  } catch (e) {
+    if (e instanceof PyError) return errorInfo(e);
+    throw e;
+  }
+}
+
 function validate(body, inLoop = false, inFunction = false) {
   for (const s of body) {
     switch (s.type) {
