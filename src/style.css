@@ -915,9 +915,23 @@ body[data-stale] .stage-body {
   font-size: 0.85rem;
 }
 
+/* sur écran tactile, pas de clavier : l'indication des flèches ne sert à rien */
+@media (hover: none) {
+  .keys {
+    display: none;
+  }
+}
+
 @media (max-width: 520px) {
   .brand {
     font-size: 1.25rem;
+  }
+  .player {
+    gap: 10px;
+  }
+  .step-btn {
+    padding: 9px 12px;
+    font-size: 0.98rem;
   }
   .cell {
     min-width: 2.6rem;

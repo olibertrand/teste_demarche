@@ -16,8 +16,9 @@ L'étape 2 ajoutera la traduction d'une démarche rédigée en français vers ce
   d'Internet ; sans connexion, des polices du système les remplacent).
 - Choisir un exemple dans la liste, ou cliquer sur **Modifier** pour écrire son propre programme,
   puis **Exécuter** (ou Ctrl + Entrée).
-- Le bouton **Pas à pas** (ou les touches → et Espace) exécute une étape à la fois. Il n'y a pas
-  de lecture automatique : c'est l'élève qui avance. **Exécuter** recommence depuis le début.
+- Le bouton **Pas à pas** (ou les touches → et Espace) exécute une étape à la fois ; **Étape
+  précédente** (ou ←) revient en arrière. Il n'y a pas de lecture automatique : c'est l'élève qui
+  avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
 
 ### Les commentaires sont les phrases de la démarche
@@ -93,7 +94,7 @@ npm run dev        # sert le dossier sur http://localhost:8080 (index.html)
 L'interpréteur exécute tout le programme d'un coup et enregistre une **trace** : pour chaque
 étape, la ligne exécutée, les événements (lecture d'une case, comparaison, affectation,
 échange, appel…) et un instantané des variables et des listes. L'animation ne fait que rejouer
-cette trace, étape par étape.
+cette trace, étape par étape, en avant comme en arrière.
 
 Les tests différentiels exécutent un corpus de programmes (et d'erreurs) à la fois avec le vrai
 Python 3 et avec l'interpréteur, et vérifient que les affichages et les types d'erreur sont identiques.

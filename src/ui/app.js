@@ -182,20 +182,25 @@ function start() {
 
   function updateControls() {
     const ready = Boolean(current) && $('stale').hidden;
+    $('prev').disabled = !ready || player.index === 0;
     const button = $('step');
     button.disabled = !ready || player.atEnd;
     button.title = player.atEnd && ready ? 'Fin du programme : clique sur Exécuter pour recommencer' : 'Exécuter la ligne suivante (→ ou Espace)';
   }
 
+  $('prev').addEventListener('click', () => player.prev());
   $('step').addEventListener('click', () => player.next());
 
   document.addEventListener('keydown', (e) => {
     if (mode !== 'run' || !current || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.target.closest('textarea, input, select')) return;
     if (e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return; // le bouton fait déjà son travail
-    if (e.key !== 'ArrowRight' && e.key !== ' ') return;
+    const move = { ArrowRight: 1, ' ': 1, ArrowLeft: -1 }[e.key];
+    if (!move) return;
     e.preventDefault();
-    if ($('stale').hidden) player.next();
+    if (!$('stale').hidden) return;
+    if (move > 0) player.next();
+    else player.prev();
   });
 
   // ---------------------------------------------------------------- ouverture

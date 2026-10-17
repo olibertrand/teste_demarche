@@ -52,10 +52,13 @@
       </div>
 
       <div class="player">
+        <button id="prev" class="btn step-btn" type="button" title="Revenir à l’étape précédente (←)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h3v14H6zM19 5l-9 7 9 7z"/></svg>Étape précédente
+        </button>
         <button id="step" class="btn primary step-btn" type="button" title="Exécuter la ligne suivante (→ ou Espace)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM15 5h3v14h-3z"/></svg>Pas à pas
         </button>
-        <span class="keys">ou les touches <kbd>→</kbd> et <kbd>Espace</kbd></span>
+        <span class="keys">ou les flèches <kbd>←</kbd> <kbd>→</kbd> du clavier</span>
       </div>
 
       <p id="stale" class="stale" hidden>Le programme a changé : clique sur <strong>Exécuter</strong> pour mettre l’animation à jour.</p>
@@ -88,7 +91,7 @@
 
   <footer class="footnote">
     Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
-    Raccourcis : → ou Espace (pas à pas), Ctrl + Entrée (exécuter).
+    Raccourcis : → ou Espace (pas à pas), ← (étape précédente), Ctrl + Entrée (exécuter).
   </footer>
 </div>
 <!-- APP:END -->

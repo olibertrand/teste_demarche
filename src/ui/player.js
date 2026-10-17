@@ -1,9 +1,9 @@
 // Avancée dans la trace, une étape à la fois : pas de lecture automatique,
-// c'est l'élève qui décide quand exécuter la ligne suivante.
+// c'est l'élève qui décide quand exécuter la ligne suivante (ou revenir en arrière).
 export class Player {
   constructor({ onShow, onState }) {
     this.onShow = onShow; // (index) → affiche l'étape
-    this.onState = onState; // () → met à jour le bouton « Pas à pas »
+    this.onState = onState; // () → met à jour les boutons
     this.count = 0;
     this.index = 0;
   }
@@ -26,5 +26,9 @@ export class Player {
 
   next() {
     if (!this.atEnd) this.show(this.index + 1);
+  }
+
+  prev() {
+    if (this.index > 0) this.show(this.index - 1);
   }
 }
