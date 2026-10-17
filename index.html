@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- HEAD:START -->
+<title>Démarche pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Animer pas à pas un algorithme écrit en Python : les cases d'une liste s'allument, les variables évoluent, chaque étape est expliquée.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Caveat:wght@500;600&display=swap">
+<!-- HEAD:END -->
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<!-- APP:START -->
+<div class="app">
+  <header class="topbar">
+    <h1 class="brand">Démarche <span class="hand">pas à pas</span></h1>
+    <label class="picker" for="example"><span class="label">Exemple</span><select id="example"></select></label>
+  </header>
+
+  <main class="workspace">
+    <section class="panel sheet" aria-labelledby="sheet-title">
+      <div class="panel-head">
+        <h2 id="sheet-title" class="label">Programme</h2>
+        <div class="actions">
+          <button id="edit" class="btn" type="button" hidden>Modifier</button>
+          <button id="run" class="btn primary" type="button" title="Exécuter (Ctrl + Entrée)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>Exécuter
+          </button>
+        </div>
+      </div>
+      <div id="editor" class="editor">
+        <div class="gutter" aria-hidden="true"></div>
+        <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Programme en Python"></textarea>
+      </div>
+      <div id="code-view" class="code-view" hidden title="Double-clic pour modifier"></div>
+      <div id="inputs-box" class="inputs" hidden>
+        <label class="label" for="inputs">Entrées pour input() · une valeur par ligne</label>
+        <textarea id="inputs" rows="3" spellcheck="false"></textarea>
+      </div>
+      <div id="syntax-error" class="error-box" role="alert" hidden></div>
+      <p class="hint">Les commentaires (après <code>#</code>) jouent le rôle des phrases de la démarche : chacun s’affiche quand sa ligne s’exécute. Double-clic sur le code pour le modifier.</p>
+    </section>
+
+    <section class="panel stage" aria-labelledby="stage-title">
+      <div class="panel-head">
+        <h2 id="stage-title" class="label">Animation</h2>
+        <span id="counter" class="counter" aria-live="polite"></span>
+      </div>
+
+      <div class="player" role="toolbar" aria-label="Lecture de l’animation">
+        <div class="transport">
+          <button id="first" class="icon-btn" type="button" aria-label="Début" title="Début (Origine)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2.5v14H4zM13 5l-6.5 7 6.5 7zM20 5l-6.5 7 6.5 7z"/></svg>
+          </button>
+          <button id="prev" class="icon-btn" type="button" aria-label="Étape précédente" title="Étape précédente (←)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM18 5l-9 7 9 7z"/></svg>
+          </button>
+          <button id="play" class="icon-btn play" type="button" aria-label="Lecture" title="Lecture (Espace)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>
+          </button>
+          <button id="next" class="icon-btn" type="button" aria-label="Étape suivante" title="Étape suivante (→)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM15.5 5H18v14h-2.5z"/></svg>
+          </button>
+          <button id="last" class="icon-btn" type="button" aria-label="Fin" title="Fin (Fin)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5l6.5 7L4 19zM11 5l6.5 7-6.5 7zM17.5 5H20v14h-2.5z"/></svg>
+          </button>
+        </div>
+        <input id="scrub" class="scrub" type="range" min="0" max="0" value="0" aria-label="Choisir l’étape">
+        <label class="speed" for="speed">
+          <span class="label">Vitesse</span>
+          <input id="speed" type="range" min="0" max="100" value="38">
+        </label>
+      </div>
+
+      <p id="stale" class="stale" hidden>Le programme a changé : clique sur <strong>Exécuter</strong> pour mettre l’animation à jour.</p>
+
+      <div class="stage-body">
+        <div id="phrase" class="phrase-box" hidden>
+          <span class="label">Démarche</span>
+          <p class="phrase"></p>
+        </div>
+        <div id="structures" class="structures" aria-label="Listes"></div>
+        <div class="duo">
+          <div class="vars-box">
+            <h3 class="label">Variables</h3>
+            <div id="variables" class="vars"></div>
+            <div id="stack" class="stack" hidden></div>
+          </div>
+          <div class="narration-box">
+            <h3 class="label">Ce qui se passe</h3>
+            <ol id="narration" class="narration" aria-live="polite"></ol>
+          </div>
+        </div>
+        <div id="error" class="error-box" role="alert" hidden></div>
+        <div class="console">
+          <h3 class="label">Affichage (print)</h3>
+          <pre id="output"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footnote">
+    Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
+    Raccourcis : Espace (lecture / pause), ← → (étape par étape), Ctrl + Entrée (exécuter).
+  </footer>
+</div>
+<!-- APP:END -->
+<script type="module" src="src/ui/app.js"></script>
+</body>
+</html>

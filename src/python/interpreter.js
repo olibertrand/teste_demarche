@@ -727,6 +727,7 @@ class Interpreter {
     }
     const i = normIndex(len, index);
     if (i < 0) {
+      if (obj instanceof PyList) this.emit({ type: 'outOfRange', ref: obj.id, index: Number(intVal(index)) });
       const kind =
         typeof obj === 'string' ? 'la chaîne' : obj instanceof PyTuple ? 'le tuple' : obj instanceof PyRange ? 'le range' : 'la liste';
       const range = len === 0 ? `${kind.split(' ')[0] === 'la' ? 'elle' : 'il'} est vide` : `les indices vont de 0 à ${len - 1}`;

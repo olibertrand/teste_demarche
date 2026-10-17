@@ -688,7 +688,7 @@ export function getAttribute(obj, name) {
   else if (typeof obj === 'string') table = STR_METHODS;
   else if (obj instanceof PyDict) table = DICT_METHODS;
   else if (obj instanceof PyTuple) table = TUPLE_METHODS;
-  const method = table && Object.hasOwn(table, name) ? table[name] : null;
+  const method = table && Object.prototype.hasOwnProperty.call(table, name) ? table[name] : null;
   if (method) {
     const wrapped =
       table === STR_METHODS

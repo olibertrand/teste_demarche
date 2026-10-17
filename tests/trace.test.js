@@ -122,6 +122,7 @@ test('boucle infinie : arrêt après le nombre maximal d’étapes', () => {
   assert.equal(r.error.type, 'StepLimit');
   assert.equal(r.steps.length, 501);
   assert.match(r.error.message, /500 étapes/);
+  assert.equal(r.error.title, 'Trop d’étapes');
 });
 
 test('les mots français et les imports oubliés sont signalés', () => {

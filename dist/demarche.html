@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Démarche pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Animer pas à pas un algorithme écrit en Python : les cases d'une liste s'allument, les variables évoluent, chaque étape est expliquée.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Caveat:wght@500;600&display=swap">
+<style>
+/* Démarche pas à pas
+   Mise en page : « la copie et le tableau ». À gauche le programme, comme une copie d'élève ;
+   à droite la scène, sur papier quadrillé, où l'algorithme se joue. Encre bleue pour les phrases
+   de la démarche, surligneurs pour les cases « allumées », stylo rouge pour les erreurs. */
+:root {
+  --bg: #e7ecf2;
+  --surface: #ffffff;
+  --surface-2: #f3f6fa;
+  --ink: #17203b;
+  --ink-soft: #536079;
+  --rule: #cfd7e3;
+  --accent: #2346c4; /* bleu stylo-bille */
+  --accent-ink: #ffffff;
+  --accent-soft: #e0e7fb;
+  --hand: #1f3fb5;
+  --hl-read: #ffe14a; /* surligneur jaune */
+  --hl-compare: #7fcfff; /* surligneur bleu */
+  --hl-write: #8be29a; /* surligneur vert */
+  --hl-swap: #ffa3cd; /* surligneur rose */
+  --on-hl: #151a27;
+  --error: #c42b25; /* stylo rouge */
+  --error-soft: #fcebea;
+  --true: #1a7a3a;
+  --false: #b8261f;
+  --grid: rgba(35, 70, 196, 0.075);
+  --console-bg: #17203b;
+  --console-ink: #e6ebf5;
+  --console-new: #ffe14a;
+  --tk-kw: #2346c4;
+  --tk-str: #0b7653;
+  --tk-num: #b04a0c;
+  --tk-fn: #7a3aae;
+  --tk-def: #17203b;
+  --shadow: 0 1px 2px rgba(23, 32, 59, 0.06), 0 6px 20px rgba(23, 32, 59, 0.06);
+
+  --font-ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-code: "Atkinson Hyperlegible Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  --font-hand: "Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121916;
+    --surface: #1a2320;
+    --surface-2: #202b27;
+    --ink: #e5ece6;
+    --ink-soft: #a2b3aa;
+    --rule: #33433d;
+    --accent: #93b2ff;
+    --accent-ink: #0f1626;
+    --accent-soft: #233150;
+    --hand: #a9c0ff;
+    --hl-read: #f2d35a;
+    --hl-compare: #6ec3ee;
+    --hl-write: #7dd48a;
+    --hl-swap: #f29bc3;
+    --on-hl: #141a17;
+    --error: #ff7d74;
+    --error-soft: #3a2220;
+    --true: #78d58b;
+    --false: #ff8a80;
+    --grid: rgba(229, 236, 230, 0.05);
+    --console-bg: #0c1110;
+    --console-ink: #dde7e1;
+    --console-new: #f2d35a;
+    --tk-kw: #93b2ff;
+    --tk-str: #86d6a8;
+    --tk-num: #f0a46c;
+    --tk-fn: #cfa6f2;
+    --tk-def: #e5ece6;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #121916;
+  --surface: #1a2320;
+  --surface-2: #202b27;
+  --ink: #e5ece6;
+  --ink-soft: #a2b3aa;
+  --rule: #33433d;
+  --accent: #93b2ff;
+  --accent-ink: #0f1626;
+  --accent-soft: #233150;
+  --hand: #a9c0ff;
+  --hl-read: #f2d35a;
+  --hl-compare: #6ec3ee;
+  --hl-write: #7dd48a;
+  --hl-swap: #f29bc3;
+  --on-hl: #141a17;
+  --error: #ff7d74;
+  --error-soft: #3a2220;
+  --true: #78d58b;
+  --false: #ff8a80;
+  --grid: rgba(229, 236, 230, 0.05);
+  --console-bg: #0c1110;
+  --console-ink: #dde7e1;
+  --console-new: #f2d35a;
+  --tk-kw: #93b2ff;
+  --tk-str: #86d6a8;
+  --tk-num: #f0a46c;
+  --tk-fn: #cfa6f2;
+  --tk-def: #e5ece6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 1rem/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+code {
+  font-family: var(--font-code);
+  font-size: 0.92em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--hl-compare);
+  outline-offset: 2px;
+}
+
+.label {
+  font: 700 0.72rem/1.2 var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.empty,
+.muted {
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ mise en page */
+
+.app {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px 28px;
+  display: grid;
+  gap: 14px;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+}
+
+.brand {
+  margin: 0;
+  font: 700 1.45rem/1 var(--font-ui);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.brand .hand {
+  font: 600 1.55em/1 var(--font-hand);
+  color: var(--hand);
+  margin-left: 0.1em;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.picker select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--rule);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 980px) {
+  .workspace {
+    grid-template-columns: minmax(360px, 1fr) minmax(0, 1.15fr);
+  }
+  .sheet {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+  }
+}
+
+.panel {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  min-height: 52px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--rule);
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: var(--ink-soft);
+}
+
+.btn svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+/* ------------------------------------------------------------------ la copie : programme */
+
+.editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  border-top: 1px solid var(--rule);
+  font: 0.95rem/1.65 var(--font-code);
+}
+
+.gutter {
+  padding: 12px 10px 12px 14px;
+  min-width: 3.2em;
+  text-align: right;
+  white-space: pre;
+  color: var(--ink-soft);
+  background: var(--surface-2);
+  border-right: 1px solid var(--rule);
+  overflow: hidden;
+  user-select: none;
+}
+
+.editor textarea {
+  display: block;
+  width: 100%;
+  height: min(62vh, 30em);
+  margin: 0;
+  padding: 12px 14px;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  font: inherit;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 4;
+}
+
+.code-view {
+  position: relative;
+  border-top: 1px solid var(--rule);
+  padding: 10px 0;
+  max-height: min(62vh, 32em);
+  overflow: auto;
+  font: 0.95rem/1.65 var(--font-code);
+}
+
+.ln {
+  display: grid;
+  grid-template-columns: 2.4em max-content;
+  gap: 14px;
+  padding: 0 14px 0 10px;
+  white-space: pre;
+  min-width: max-content;
+}
+
+.ln .no {
+  text-align: right;
+  color: var(--ink-soft);
+  user-select: none;
+}
+
+.ln.is-current {
+  background: var(--accent-soft);
+  box-shadow: inset 4px 0 var(--accent);
+}
+
+.ln.is-error {
+  background: var(--error-soft);
+  box-shadow: inset 4px 0 var(--error);
+}
+
+.tk-kw {
+  color: var(--tk-kw);
+  font-weight: 600;
+}
+.tk-str {
+  color: var(--tk-str);
+}
+.tk-num {
+  color: var(--tk-num);
+}
+.tk-fn {
+  color: var(--tk-fn);
+}
+.tk-def {
+  color: var(--tk-def);
+  font-weight: 700;
+}
+/* les commentaires sont les phrases de la démarche : écrits « à la main », à l'encre bleue */
+.tk-cm {
+  font: 600 1.22em/1 var(--font-hand);
+  color: var(--hand);
+}
+
+.inputs {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--rule);
+}
+
+.inputs textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--rule);
+  background: var(--surface-2);
+  font-family: var(--font-code);
+  resize: vertical;
+}
+
+.hint {
+  margin: 0;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.error-box {
+  margin: 0 14px 14px;
+  padding: 10px 14px;
+  border: 2px solid var(--error);
+  border-radius: 10px;
+  background: var(--error-soft);
+}
+
+.stage .error-box {
+  margin: 0;
+}
+
+.error-box p {
+  margin: 0;
+}
+
+.error-box .error-title {
+  color: var(--error);
+  margin-bottom: 2px;
+}
+
+/* ------------------------------------------------------------------ le tableau : animation */
+
+.stage {
+  background-color: var(--surface);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 0 14px 12px;
+}
+
+.transport {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rule);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.icon-btn:hover:not(:disabled) {
+  border-color: var(--ink-soft);
+}
+
+.icon-btn.play {
+  width: 52px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.scrub {
+  flex: 1 1 180px;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speed input {
+  width: 110px;
+  accent-color: var(--accent);
+}
+
+.stale {
+  margin: 0 14px 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-size: 0.95rem;
+}
+
+.stage-body {
+  display: grid;
+  gap: 18px;
+  padding: 4px 14px 16px;
+  transition: opacity 0.2s;
+}
+
+body[data-stale] .stage-body {
+  opacity: 0.45;
+}
+
+/* phrase de la démarche, écrite à la main */
+.phrase-box {
+  display: grid;
+  gap: 2px;
+}
+
+.phrase {
+  margin: 0;
+  font: 600 clamp(1.45rem, 1.1rem + 1.2vw, 2rem)/1.15 var(--font-hand);
+  color: var(--hand);
+  text-wrap: balance;
+}
+
+.phrase::before {
+  content: "« ";
+}
+
+.phrase::after {
+  content: " »";
+}
+
+/* listes */
+.structures {
+  display: grid;
+  gap: 14px;
+}
+
+.array {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.array figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.aname {
+  font: 700 1.05rem var(--font-code);
+}
+
+.alias,
+.alen {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.track {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 14px 4px 4px;
+}
+
+.slot {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+}
+
+.cell {
+  min-width: 3.1rem;
+  height: 3.1rem;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink-soft);
+  border-radius: 8px;
+  background: var(--surface);
+  font: 600 1.2rem var(--font-code);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: opacity 0.25s;
+}
+
+.cell .val {
+  display: inline-block;
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot.is-ghost .cell {
+  border-style: dashed;
+  opacity: 0.45;
+  background: transparent;
+}
+
+.idx {
+  font: 0.8rem/1.2 var(--font-code);
+  color: var(--ink-soft);
+  min-height: 1.2em;
+}
+
+.tags {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 1.5rem;
+}
+
+.ptr {
+  font: 700 0.85rem/1.3 var(--font-code);
+  color: var(--accent);
+}
+
+.ptr::before {
+  content: "↑";
+  display: block;
+  text-align: center;
+  line-height: 1;
+}
+
+/* variable d'une boucle « for x in L » : elle se trouve sur l'élément en cours */
+.cursor {
+  font: 700 0.85rem/1.3 var(--font-code);
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--hl-read);
+  color: var(--on-hl);
+}
+
+.cursor::before {
+  content: "↑ ";
+}
+
+.cell.is-dim {
+  opacity: 0.3;
+}
+
+.slot.is-ghost .cell.is-missing {
+  border: 2px dashed var(--error);
+  color: var(--error);
+  opacity: 1;
+}
+
+.slot.is-ghost .cell.is-missing + .idx {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.cell.is-sliced {
+  background: color-mix(in srgb, var(--hl-read) 35%, var(--surface));
+}
+
+.cell.is-read {
+  background: var(--hl-read);
+  border-color: var(--on-hl);
+  color: var(--on-hl);
+  animation: glow 0.9s ease-out;
+}
+
+.cell.is-compared {
+  background: color-mix(in srgb, var(--hl-compare) 80%, var(--surface));
+  border-color: var(--on-hl);
+  color: var(--on-hl);
+  outline: 3px solid var(--hl-compare);
+  outline-offset: 2px;
+}
+
+.cell.is-written {
+  background: var(--hl-write);
+  border-color: var(--on-hl);
+  color: var(--on-hl);
+  animation: glow-write 0.9s ease-out;
+}
+
+.cell.is-swapped {
+  background: var(--hl-swap);
+  border-color: var(--on-hl);
+  color: var(--on-hl);
+}
+
+.array.is-changed .cell {
+  animation: glow-write 0.9s ease-out;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--hl-read) 75%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes glow-write {
+  from {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--hl-write) 75%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.empty-list {
+  align-self: center;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* variables et narration */
+.duo {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 720px) {
+  .duo {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+}
+
+.vars-box,
+.narration-box {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.vars {
+  display: grid;
+  gap: 10px;
+}
+
+.var-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.var-group.is-outer {
+  opacity: 0.75;
+}
+
+.group-title {
+  width: 100%;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.var {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  font: 1rem/1.3 var(--font-code);
+}
+
+.var .vname {
+  font-weight: 700;
+}
+
+.var .veq {
+  color: var(--ink-soft);
+}
+
+.var .vval {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.var.is-changed {
+  background: var(--hl-write);
+  border-color: var(--on-hl);
+  color: var(--on-hl);
+  animation: glow-write 0.9s ease-out;
+}
+
+.var.is-changed .veq {
+  color: inherit;
+}
+
+.var.is-compared {
+  outline: 3px solid var(--hl-compare);
+  outline-offset: 2px;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-family: var(--font-code);
+  font-size: 0.9rem;
+}
+
+.stack .group-title {
+  font-family: var(--font-ui);
+}
+
+.stack .frame + .frame::before {
+  content: "›";
+  margin-right: 8px;
+  color: var(--ink-soft);
+}
+
+.stack .frame.is-top {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.narration {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.narration li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font: 1rem/1.4 var(--font-code);
+  overflow-wrap: anywhere;
+}
+
+.narration li.flow {
+  font-family: var(--font-ui);
+  color: var(--ink-soft);
+}
+
+.narration li.note {
+  font: 600 1.3rem/1.2 var(--font-hand);
+  color: var(--error);
+}
+
+.narration li.error {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--error);
+}
+
+.pill {
+  font: 700 0.78rem/1.5 var(--font-ui);
+  padding: 0 9px;
+  border-radius: 999px;
+  color: var(--surface);
+}
+
+.pill.true {
+  background: var(--true);
+}
+
+.pill.false {
+  background: var(--false);
+}
+
+/* console */
+.console {
+  display: grid;
+  gap: 8px;
+}
+
+.console pre {
+  margin: 0;
+  min-height: 2.6em;
+  max-height: 11em;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--console-bg);
+  color: var(--console-ink);
+  font: 0.95rem/1.5 var(--font-code);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.console pre .muted {
+  color: inherit;
+  font-style: normal;
+  opacity: 0.6;
+}
+
+.console mark {
+  background: transparent;
+  color: var(--console-new);
+  font-weight: 600;
+}
+
+.footnote {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .brand {
+    font-size: 1.25rem;
+  }
+  .speed input {
+    width: 90px;
+  }
+  .cell {
+    min-width: 2.6rem;
+    height: 2.6rem;
+    font-size: 1.05rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1 class="brand">Démarche <span class="hand">pas à pas</span></h1>
+    <label class="picker" for="example"><span class="label">Exemple</span><select id="example"></select></label>
+  </header>
+
+  <main class="workspace">
+    <section class="panel sheet" aria-labelledby="sheet-title">
+      <div class="panel-head">
+        <h2 id="sheet-title" class="label">Programme</h2>
+        <div class="actions">
+          <button id="edit" class="btn" type="button" hidden>Modifier</button>
+          <button id="run" class="btn primary" type="button" title="Exécuter (Ctrl + Entrée)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>Exécuter
+          </button>
+        </div>
+      </div>
+      <div id="editor" class="editor">
+        <div class="gutter" aria-hidden="true"></div>
+        <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Programme en Python"></textarea>
+      </div>
+      <div id="code-view" class="code-view" hidden title="Double-clic pour modifier"></div>
+      <div id="inputs-box" class="inputs" hidden>
+        <label class="label" for="inputs">Entrées pour input() · une valeur par ligne</label>
+        <textarea id="inputs" rows="3" spellcheck="false"></textarea>
+      </div>
+      <div id="syntax-error" class="error-box" role="alert" hidden></div>
+      <p class="hint">Les commentaires (après <code>#</code>) jouent le rôle des phrases de la démarche : chacun s’affiche quand sa ligne s’exécute. Double-clic sur le code pour le modifier.</p>
+    </section>
+
+    <section class="panel stage" aria-labelledby="stage-title">
+      <div class="panel-head">
+        <h2 id="stage-title" class="label">Animation</h2>
+        <span id="counter" class="counter" aria-live="polite"></span>
+      </div>
+
+      <div class="player" role="toolbar" aria-label="Lecture de l’animation">
+        <div class="transport">
+          <button id="first" class="icon-btn" type="button" aria-label="Début" title="Début (Origine)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2.5v14H4zM13 5l-6.5 7 6.5 7zM20 5l-6.5 7 6.5 7z"/></svg>
+          </button>
+          <button id="prev" class="icon-btn" type="button" aria-label="Étape précédente" title="Étape précédente (←)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM18 5l-9 7 9 7z"/></svg>
+          </button>
+          <button id="play" class="icon-btn play" type="button" aria-label="Lecture" title="Lecture (Espace)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>
+          </button>
+          <button id="next" class="icon-btn" type="button" aria-label="Étape suivante" title="Étape suivante (→)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM15.5 5H18v14h-2.5z"/></svg>
+          </button>
+          <button id="last" class="icon-btn" type="button" aria-label="Fin" title="Fin (Fin)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5l6.5 7L4 19zM11 5l6.5 7-6.5 7zM17.5 5H20v14h-2.5z"/></svg>
+          </button>
+        </div>
+        <input id="scrub" class="scrub" type="range" min="0" max="0" value="0" aria-label="Choisir l’étape">
+        <label class="speed" for="speed">
+          <span class="label">Vitesse</span>
+          <input id="speed" type="range" min="0" max="100" value="38">
+        </label>
+      </div>
+
+      <p id="stale" class="stale" hidden>Le programme a changé : clique sur <strong>Exécuter</strong> pour mettre l’animation à jour.</p>
+
+      <div class="stage-body">
+        <div id="phrase" class="phrase-box" hidden>
+          <span class="label">Démarche</span>
+          <p class="phrase"></p>
+        </div>
+        <div id="structures" class="structures" aria-label="Listes"></div>
+        <div class="duo">
+          <div class="vars-box">
+            <h3 class="label">Variables</h3>
+            <div id="variables" class="vars"></div>
+            <div id="stack" class="stack" hidden></div>
+          </div>
+          <div class="narration-box">
+            <h3 class="label">Ce qui se passe</h3>
+            <ol id="narration" class="narration" aria-live="polite"></ol>
+          </div>
+        </div>
+        <div id="error" class="error-box" role="alert" hidden></div>
+        <div class="console">
+          <h3 class="label">Affichage (print)</h3>
+          <pre id="output"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footnote">
+    Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
+    Raccourcis : Espace (lecture / pause), ← → (étape par étape), Ctrl + Entrée (exécuter).
+  </footer>
+</div>
+<script>
+(()=>{var Et={SyntaxError:"Erreur de syntaxe",IndentationError:"Erreur d'indentation",NameError:"Nom inconnu",UnboundLocalError:"Variable locale sans valeur",TypeError:"Type incompatible",ValueError:"Valeur incorrecte",IndexError:"Indice hors de la liste",KeyError:"Cl\xE9 absente",ZeroDivisionError:"Division par z\xE9ro",RecursionError:"Trop d'appels imbriqu\xE9s",AssertionError:"Assertion fausse",AttributeError:"M\xE9thode ou attribut inconnu",ImportError:"Import impossible",EOFError:"Entr\xE9e manquante",InternalError:"Erreur interne",StepLimit:"Trop d\u2019\xE9tapes",NotSupported:"Pas encore pris en charge"},h=class extends Error{constructor(e,t,s=null){super(t),this.pyType=e,this.line=s}get title(){return Et[this.pyType]??this.pyType}};function B(r,e){return new h("SyntaxError",r,e)}var Qe=1,bt=1e6,w=class{constructor(e=[]){this.items=e,this.id=Qe++,this.version=0}touch(){this.version++}},N=class{constructor(e){this.items=e}},F=class r{constructor(){this.map=new Map,this.id=Qe++,this.version=0}static keyOf(e){if(e===null)return"N";switch(typeof e){case"boolean":return e?"n1":"n0";case"bigint":return"n"+e;case"number":return Number.isInteger(e)?"n"+BigInt(e):"f"+e;case"string":return"s"+e}if(e instanceof N)return"t"+JSON.stringify(e.items.map(r.keyOf));throw new h("TypeError",`${I(e)} ne peut pas servir de cl\xE9 de dictionnaire`)}get size(){return this.map.size}has(e){return this.map.has(r.keyOf(e))}get(e){return this.map.get(r.keyOf(e))?.[1]}set(e,t){let s=r.keyOf(e),n=this.map.get(s);this.map.set(s,[n?n[0]:e,t]),this.version++}delete(e){return this.version++,this.map.delete(r.keyOf(e))}keys(){return[...this.map.values()].map(e=>e[0])}values(){return[...this.map.values()].map(e=>e[1])}entries(){return[...this.map.values()]}},R=class{constructor(e,t,s){this.start=e,this.stop=t,this.step=s}get length(){let{start:e,stop:t,step:s}=this;return s>0n?t>e?Number((t-e+s-1n)/s):0:e>t?Number((e-t-s-1n)/-s):0}at(e){return this.start+BigInt(e)*this.step}},se=class{constructor(e,t){this.node=e,this.name=e.name,this.closure=t,this.defaults=[]}},j=class{constructor(e,t){this.name=e,this.fn=t}},ee=class{constructor(e,t,s){this.self=e,this.name=t,this.fn=s}},te=class{constructor(e,t){this.name=e,this.attrs=t}};function le(r){if(r===null)return"NoneType";switch(typeof r){case"bigint":return"int";case"number":return"float";case"boolean":return"bool";case"string":return"str"}return r instanceof w?"list":r instanceof N?"tuple":r instanceof F?"dict":r instanceof R?"range":r instanceof se?"function":r instanceof j||r instanceof ee?"builtin_function_or_method":r instanceof te?"module":"object"}var $t={int:"un entier (int)",float:"un flottant (float)",bool:"un bool\xE9en (bool)",str:"une cha\xEEne (str)",NoneType:"None",list:"une liste (list)",tuple:"un tuple",dict:"un dictionnaire (dict)",range:"un range",function:"une fonction",builtin_function_or_method:"une fonction",module:"un module"};function I(r){return $t[le(r)]??le(r)}function _(r){return typeof r=="bigint"||typeof r=="boolean"}function Y(r){let e=typeof r;return e==="bigint"||e==="number"||e==="boolean"}var O=r=>typeof r=="boolean"?r?1n:0n:r,K=r=>typeof r=="boolean"?r?1:0:Number(r);function kt(r){if(Number.isNaN(r))return"nan";if(r===1/0)return"inf";if(r===-1/0)return"-inf";if(r===0)return Object.is(r,-0)?"-0.0":"0.0";let[e,t]=r.toExponential().split("e"),s=Number(t),n=e.replace("-","").replace(".",""),i;return s<-4||s>=16?i=(n.length>1?n[0]+"."+n.slice(1):n)+"e"+(s<0?"-":"+")+String(Math.abs(s)).padStart(2,"0"):s<0?i="0."+"0".repeat(-s-1)+n:n.length<=s+1?i=n+"0".repeat(s+1-n.length)+".0":i=n.slice(0,s+1)+"."+n.slice(s+1),r<0?"-"+i:i}function xe(r){let e=r.includes("'")&&!r.includes('"')?'"':"'",t=e;for(let s of r)s===e||s==="\\"?t+="\\"+s:s===`
+`?t+="\\n":s==="	"?t+="\\t":s==="\r"?t+="\\r":s<" "||s==="\x7F"?t+="\\x"+s.charCodeAt(0).toString(16).padStart(2,"0"):t+=s;return t+e}function D(r,e=new Set){if(r===null)return"None";switch(typeof r){case"bigint":return r.toString();case"number":return kt(r);case"boolean":return r?"True":"False";case"string":return xe(r)}if(r instanceof w||r instanceof F){if(e.has(r))return r instanceof w?"[...]":"{...}";e.add(r);let t=r instanceof w?"["+r.items.map(s=>D(s,e)).join(", ")+"]":"{"+r.entries().map(([s,n])=>D(s,e)+": "+D(n,e)).join(", ")+"}";return e.delete(r),t}if(r instanceof N){let t=r.items.map(s=>D(s,e));return t.length===1?`(${t[0]},)`:`(${t.join(", ")})`}return r instanceof R?r.step===1n?`range(${r.start}, ${r.stop})`:`range(${r.start}, ${r.stop}, ${r.step})`:r instanceof se?`<function ${r.name}>`:r instanceof j?r.isType?`<class '${r.name}'>`:`<built-in function ${r.name}>`:r instanceof ee?`<built-in method ${r.name}>`:r instanceof te?`<module '${r.name}'>`:String(r)}function Q(r){return typeof r=="string"?r:D(r)}function V(r){if(r===null)return!1;switch(typeof r){case"boolean":return r;case"bigint":return r!==0n;case"number":return r!==0;case"string":return r.length>0}return r instanceof w||r instanceof N?r.items.length>0:r instanceof F?r.size>0:r instanceof R?r.length>0:!0}function Ye(r,e){if(r.length!==e.length)return!1;for(let t=0;t<r.length;t++)if(!Z(r[t],e[t]))return!1;return!0}function Z(r,e){return r===e?typeof r!="number"||!Number.isNaN(r):Y(r)&&Y(e)?typeof r=="number"||typeof e=="number"?K(r)===K(e):O(r)===O(e):r instanceof w&&e instanceof w||r instanceof N&&e instanceof N?Ye(r.items,e.items):r instanceof F&&e instanceof F?r.size===e.size&&r.entries().every(([t,s])=>e.has(t)&&Z(s,e.get(t))):r instanceof R&&e instanceof R?r.length===e.length&&(r.length===0||r.start===e.start&&(r.length===1||r.step===e.step)):!1}function J(r,e,t){if(Y(r)&&Y(e)){if(typeof r=="number"||typeof e=="number"){let i=K(r),o=K(e);return i<o?-1:i>o?1:i===o?0:NaN}let s=O(r),n=O(e);return s<n?-1:s>n?1:0}if(typeof r=="string"&&typeof e=="string")return r<e?-1:r>e?1:0;if(r instanceof w&&e instanceof w||r instanceof N&&e instanceof N){let s=Math.min(r.items.length,e.items.length);for(let n=0;n<s;n++)if(!Z(r.items[n],e.items[n]))return J(r.items[n],e.items[n],t);return r.items.length-e.items.length}throw new h("TypeError",`impossible de comparer ${I(r)} et ${I(e)} avec \xAB ${t} \xBB`)}function Me(r,e){if(r instanceof w||r instanceof N)return r.items.some(t=>Z(t,e));if(typeof r=="string"){if(typeof e!="string")throw new h("TypeError",`on ne peut chercher qu'une cha\xEEne dans une cha\xEEne, pas ${I(e)}`);return r.includes(e)}if(r instanceof F)return r.has(e);if(r instanceof R){if(!_(e)&&!(typeof e=="number"&&Number.isInteger(e)))return!1;let t=typeof e=="number"?BigInt(e):O(e),{start:s,stop:n,step:i}=r;return(i>0n?t>=s&&t<n:t<=s&&t>n)&&(t-s)%i===0n}throw new h("TypeError",`\xAB in \xBB ne s'applique pas \xE0 ${I(r)}`)}var ae=r=>new h("ZeroDivisionError",r);function Nt(r,e){let t=r/e;return r%e!==0n&&r<0n!=e<0n?t-1n:t}function St(r,e){let t=r%e;return t!==0n&&t<0n!=e<0n?t+e:t}function Lt(r,e,t){if(r==="/"){let s=K(t);if(s===0)throw ae("division par z\xE9ro");return K(e)/s}if(typeof e=="number"||typeof t=="number"){let s=K(e),n=K(t);switch(r){case"+":return s+n;case"-":return s-n;case"*":return s*n;case"//":if(n===0)throw ae("division enti\xE8re par z\xE9ro");return Math.floor(s/n);case"%":{if(n===0)throw ae("reste d\u2019une division par z\xE9ro");let i=s%n;return i!==0&&i<0!=n<0?i+n:i}case"**":if(s===0&&n<0)throw ae("0 ne peut pas \xEAtre \xE9lev\xE9 \xE0 une puissance n\xE9gative");return s**n}}else{let s=O(e),n=O(t);switch(r){case"+":return s+n;case"-":return s-n;case"*":return s*n;case"//":if(n===0n)throw ae("division enti\xE8re par z\xE9ro");return Nt(s,n);case"%":if(n===0n)throw ae("reste d\u2019une division par z\xE9ro");return St(s,n);case"**":if(n<0n){if(s===0n)throw ae("0 ne peut pas \xEAtre \xE9lev\xE9 \xE0 une puissance n\xE9gative");return Number(s)**Number(n)}if((s>1n||s<-1n)&&s.toString(2).length*Number(n)>4e6)throw new h("ValueError","r\xE9sultat trop grand pour \xEAtre calcul\xE9 ici");return s**n;case"&":return s&n;case"|":return s|n;case"^":return s^n;case"<<":if(n<0n)throw new h("ValueError","d\xE9calage n\xE9gatif");if(n>100000n)throw new h("ValueError","d\xE9calage trop grand");return s<<n;case">>":if(n<0n)throw new h("ValueError","d\xE9calage n\xE9gatif");return s>>n}}}function Oe(r){if(r>bt)throw new h("ValueError",`s\xE9quence trop grande (${r} \xE9l\xE9ments)`)}function Ze(r,e){let t=Math.max(0,Number(O(e)));if(typeof r=="string")return Oe(r.length*t),r.repeat(t);Oe(r.items.length*t);let s=[];for(let n=0;n<t;n++)s.push(...r.items);return r instanceof w?new w(s):new N(s)}function re(r,e,t){if(Y(e)&&Y(t)){let i=Lt(r,e,t);if(i!==void 0)return i}else if(r==="+"){if(typeof e=="string"&&typeof t=="string")return e+t;if(e instanceof w&&t instanceof w)return new w([...e.items,...t.items]);if(e instanceof N&&t instanceof N)return new N([...e.items,...t.items])}else if(r==="*"){let i=o=>typeof o=="string"||o instanceof w||o instanceof N;if(i(e)&&_(t))return Ze(e,t);if(_(e)&&i(t))return Ze(t,e)}let s=`\xAB ${r} \xBB ne s'applique pas \xE0 ${I(e)} et ${I(t)}`;throw typeof e=="string"!=(typeof t=="string")&&(Y(e)||Y(t))&&(s+=" (pour m\xE9langer texte et nombre, convertis avec str(\u2026) ou int(\u2026))"),new h("TypeError",s)}function Je(r,e){if(r==="not")return!V(e);if(typeof e=="number"){if(r==="-")return-e;if(r==="+")return e}else if(_(e)){let t=O(e);if(r==="-")return-t;if(r==="+")return t;if(r==="~")return~t}throw new h("TypeError",`\xAB ${r} \xBB ne s'applique pas \xE0 ${I(e)}`)}function ye(r,e){let t=Number(O(e));return t<0&&(t+=r),t>=0&&t<r?t:-1}function we(r,e,t,s){let n=g=>{if(!_(g))throw new h("TypeError",`les bornes d'une tranche doivent \xEAtre des entiers, pas ${I(g)}`);return Number(O(g))},i=s==null?1:n(s);if(i===0)throw new h("ValueError","le pas d'une tranche ne peut pas \xEAtre nul");let o=g=>{let m=n(g);return m<0?m+r:m},a=(g,m,y)=>Math.min(Math.max(g,m),y),l,c;i>0?(l=e==null?0:a(o(e),0,r),c=t==null?r:a(o(t),0,r)):(l=e==null?r-1:a(o(e),-1,r-1),c=t==null?-1:a(o(t),-1,r-1));let u=[];if(i>0)for(let g=l;g<c;g+=i)u.push(g);else for(let g=l;g>c;g+=i)u.push(g);return u}function ve(r){let e=0;if(r instanceof w||r instanceof N)return{kind:r instanceof w?"list":"tuple",ref:r,next:()=>e<r.items.length?{value:r.items[e],index:e++}:null};if(typeof r=="string"){let t=[...r];return{kind:"str",ref:r,next:()=>e<t.length?{value:t[e],index:e++}:null}}if(r instanceof R){let t=r.length;return{kind:"range",ref:r,next:()=>e<t?{value:r.at(e),index:e++}:null}}if(r instanceof F){let t=r.keys();return{kind:"dict",ref:r,next:()=>e<t.length?{value:t[e],index:e++}:null}}throw new h("TypeError",`${I(r)} ne se parcourt pas avec une boucle for`)}function P(r){if(r instanceof w||r instanceof N)return[...r.items];r instanceof R&&Oe(r.length);let e=ve(r),t=[];for(let s=e.next();s;s=e.next())t.push(s.value);return t}var U=r=>new h("TypeError",r),C=r=>new h("ValueError",r);function et(r,e){return`${r} ${e}${r>1?"s":""}`}function x(r,e,t,s=t){if(e.length>=t&&e.length<=s)return;let n=t===s?et(t,"argument"):`de ${t} \xE0 ${et(s,"argument")}`;throw U(`${r}() attend ${n}, mais en re\xE7oit ${e.length}`)}function de(r,e,t=[]){for(let s of e.keys())if(!t.includes(s))throw U(`${r}() n'accepte pas d'argument nomm\xE9 \xAB ${s} \xBB`)}function W(r,e){if(_(e))return O(e);let t=typeof e=="number"?" (utilise // pour une division enti\xE8re, ou int())":"";throw U(`${r} attend un entier, pas ${I(e)}${t}`)}function oe(r,e){if(Y(e))return e;throw U(`${r} attend un nombre, pas ${I(e)}`)}function z(r,e=60){let t=D(r);return t.length>e?t.slice(0,e-1)+"\u2026":t}function rt(r){let e=Math.floor(r),t=r-e;return t>.5?e+1:t<.5||e%2===0?e:e+1}function Ae(r,e){if(!Number.isFinite(r)||r===0)return r;if(e<0){let u=10**-e;return rt(r/u)*u}if(Math.abs(r)>=1e16||e>17)return r;let t=Math.abs(r).toFixed(Math.min(100,e+25)),[s,n]=t.split("."),i=s+n.slice(0,e),o=n.slice(e),a=o[0]>"5"||o[0]==="5"&&/[1-9]/.test(o.slice(1));o[0]==="5"&&!a&&!/[1-9]/.test(o.slice(1))&&(a=Number(i[i.length-1])%2===1);let l=BigInt(i)+(a?1n:0n),c=Number(l)/10**e;return r<0?-c:c}function Tt(r,e){return r.replace(/\B(?=(\d{3})+(?!\d))/g,e)}function me(r,e){if(!e)return Q(r);let t=/^(?:(.)?([<>=^]))?([+\- ])?(#)?(0)?(\d+)?([,_])?(?:\.(\d+))?([bcdeEfFgGnosxX%])?$/.exec(e);if(!t)throw C(`format \xAB ${e} \xBB non reconnu`);let[,s,n,i,,o,a,l,c,u]=t,g=Y(r);if(!g&&u&&u!=="s")throw C(`le format \xAB ${e} \xBB demande un nombre, pas ${I(r)}`);o&&!n&&(s="0",n="="),s=s??" ";let m,y="";if(!g)m=Q(r),c!==void 0&&(m=m.slice(0,Number(c))),n=n??"<";else{n=n??">";let d=r,E=typeof d=="number"?d<0||Object.is(d,-0):O(d)<0n;if(u==="d"||u==="b"||u==="o"||u==="x"||u==="X"||u==="n"||u==="c"){if(!_(d))throw C(`le format \xAB ${u} \xBB demande un entier`);let b=O(d),p=b<0n?-b:b;u==="c"?m=String.fromCodePoint(Number(p)):(m=p.toString({b:2,o:8,x:16,X:16,d:10,n:10}[u]),u==="X"&&(m=m.toUpperCase()))}else if(u||c!==void 0||typeof d=="number"){let b=K(d),p=Math.abs(b),v=c===void 0?6:Number(c);u==="f"||u==="F"?m=Ae(p,v).toFixed(v):u==="%"?m=Ae(p*100,v).toFixed(v)+"%":u==="e"||u==="E"?(m=p.toExponential(v).replace(/e([+-])(\d)$/,"e$10$2"),u==="E"&&(m=m.toUpperCase())):!u&&c===void 0?m=Q(p):(m=String(Number(p.toPrecision(Math.max(1,v)))),!u&&typeof d=="number"&&!/[.e]/.test(m)&&(m+=".0"),u==="G"&&(m=m.toUpperCase())),Number.isFinite(b)||(m=Number.isNaN(b)?"nan":"inf")}else m=(O(d)<0n?-O(d):O(d)).toString();if(l){let[b,...p]=m.split(".");m=[Tt(b,l),...p].join(".")}y=E?"-":i==="+"?"+":i===" "?" ":""}let L=y+m,A=a?Number(a):0;if(L.length>=A)return L;let T=A-L.length;switch(n){case"<":return L+s.repeat(T);case"^":return s.repeat(Math.floor(T/2))+L+s.repeat(Math.ceil(T/2));case"=":return y+s.repeat(T)+m;default:return s.repeat(T)+L}}function It(r,e,t){let s=0;return r.replace(/\{\{|\}\}|\{([^{}]*)\}/g,(n,i)=>{if(n==="{{")return"{";if(n==="}}")return"}";let[o,a=""]=i.split(/:(.*)/s),l;if(o===""?l=e[s++]:/^\d+$/.test(o)?l=e[Number(o)]:l=t.get(o),l===void 0)throw new h("IndexError",`format() : pas de valeur pour \xAB {${i}} \xBB`);return me(l,a)})}function it(r,e,t,s){de(s,e,["key","reverse"]);let n=e.get("key")??null,i=V(e.get("reverse")??!1),o=r.map(a=>({x:a,k:n?t.call(n,[a]):a}));o.sort((a,l)=>{let c=i?J(l.k,a.k,"<"):J(a.k,l.k,"<");return Number.isNaN(c)?0:c}),o.forEach((a,l)=>r[l]=a.x)}function ot(){let r=new Map,e=(n,i,o=!1)=>{let a=new j(n,i);a.isType=o,r.set(n,a)};e("print",(n,i,o)=>{de("print",i,["sep","end"]);let a=i.get("sep")??" ",l=i.get("end")??`
+`;if(typeof a!="string"||typeof l!="string")throw U("sep et end doivent \xEAtre des cha\xEEnes");return o.print(n.map(Q).join(a)+l),null}),e("input",(n,i,o)=>(x("input",n,0,1),o.input(n.length?Q(n[0]):""))),e("len",n=>{x("len",n,1);let i=n[0];if(typeof i=="string")return BigInt([...i].length);if(i instanceof w||i instanceof N)return BigInt(i.items.length);if(i instanceof F)return BigInt(i.size);if(i instanceof R)return BigInt(i.length);throw U(`${I(i)} n'a pas de longueur : len() s'applique aux listes, cha\xEEnes, tuples et dictionnaires`)}),e("range",(n,i)=>{de("range",i),x("range",n,1,3);let o=n.map(u=>W("range()",u)),[a,l,c]=o.length===1?[0n,o[0],1n]:[o[0],o[1],o[2]??1n];if(c===0n)throw C("le pas de range() ne peut pas \xEAtre 0");return new R(a,l,c)},!0),e("int",n=>{if(x("int",n,0,2),n.length===0)return 0n;let[i,o]=n;if(typeof i=="string"){let a=o===void 0?10:Number(W("int()",o)),l=i.trim().replace(/_/g,"").toLowerCase(),c=l.startsWith("-");(l[0]==="-"||l[0]==="+")&&(l=l.slice(1));let u={16:"0x",8:"0o",2:"0b"}[a];u&&l.startsWith(u)&&(l=l.slice(2));let g={10:/^\d+$/,16:/^[0-9a-f]+$/,8:/^[0-7]+$/,2:/^[01]+$/}[a];if(!g||!g.test(l)){let y=/^[+-]?\d*[.,]\d+$/.test(i.trim());throw C(`impossible de convertir ${xe(i)} en entier`+(y?" (c\u2019est un nombre \xE0 virgule : utilise float())":""))}let m=BigInt((u??"")+l);return c?-m:m}if(typeof i=="number"){if(!Number.isFinite(i))throw C(`impossible de convertir ${D(i)} en entier`);return BigInt(Math.trunc(i))}if(_(i))return O(i);throw U(`int() ne sait pas convertir ${I(i)}`)},!0),e("float",n=>{if(x("float",n,0,1),n.length===0)return 0;let i=n[0];if(typeof i=="string"){let o=i.trim().toLowerCase().replace(/_/g,"");if(/^[+-]?(inf|infinity)$/.test(o))return o.startsWith("-")?-1/0:1/0;if(/^[+-]?nan$/.test(o))return NaN;if(!/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/.test(o)){let a=o.includes(",")?" (en Python, la virgule d\xE9cimale s\u2019\xE9crit avec un point : 3.5)":"";throw C(`impossible de convertir ${xe(i)} en flottant${a}`)}return Number(o)}if(Y(i))return K(i);throw U(`float() ne sait pas convertir ${I(i)}`)},!0),e("str",n=>(x("str",n,0,1),n.length?Q(n[0]):""),!0),e("repr",n=>(x("repr",n,1),D(n[0]))),e("bool",n=>(x("bool",n,0,1),n.length?V(n[0]):!1),!0),e("list",n=>(x("list",n,0,1),new w(n.length?P(n[0]):[])),!0),e("tuple",n=>(x("tuple",n,0,1),new N(n.length?P(n[0]):[])),!0),e("dict",(n,i)=>{x("dict",n,0,1);let o=new F;if(n.length){let a=n[0];if(a instanceof F)a.entries().forEach(([l,c])=>o.set(l,c));else for(let l of P(a)){let c=P(l);if(c.length!==2)throw C("dict() attend des paires (cl\xE9, valeur)");o.set(c[0],c[1])}}for(let[a,l]of i)o.set(a,l);return o},!0),e("type",n=>{x("type",n,1);let i=le(n[0]);if(r.has(i)&&r.get(i).isType)return r.get(i);let o=new j(i,()=>{throw U(`impossible d'appeler le type ${i}`)});return o.isType=!0,o}),e("isinstance",n=>{x("isinstance",n,2);let[i,o]=n;return(o instanceof N?o.items:[o]).some(l=>{if(!(l instanceof j)||!l.isType)throw U("le second argument de isinstance() doit \xEAtre un type");return le(i)===l.name||l.name==="int"&&typeof i=="boolean"})}),e("abs",n=>{x("abs",n,1);let i=oe("abs()",n[0]);if(typeof i=="number")return Math.abs(i);let o=O(i);return o<0n?-o:o});let t=(n,i)=>(o,a,l)=>{if(de(n,a,["key","default"]),o.length===0)throw U(`${n}() attend au moins un argument`);let c=o.length===1?P(o[0]):o;if(c.length===0){if(a.has("default"))return a.get("default");throw C(`${n}() d'une s\xE9quence vide`)}let u=a.get("key")??null,g=c[0],m=u?l.call(u,[g]):g;for(let y of c.slice(1)){let L=u?l.call(u,[y]):y,A=J(L,m,i<0?"<":">");(i<0?A<0:A>0)&&(g=y,m=L)}return g};e("min",t("min",-1)),e("max",t("max",1)),e("sum",n=>{x("sum",n,1,2);let i=n.length>1?n[1]:0n;if(typeof i=="string")throw U("sum() n'additionne pas des cha\xEEnes : utilise ''.join(\u2026)");for(let o of P(n[0]))i=re("+",i,o);return i}),e("round",n=>{x("round",n,1,2);let[i,o]=n;if(oe("round()",i),o==null){if(_(i))return O(i);if(!Number.isFinite(i))throw C(`impossible d'arrondir ${D(i)} \xE0 un entier`);return BigInt(rt(i))}let a=Number(W("round()",o));if(_(i)){if(a>=0)return O(i);let l=10n**BigInt(-a),c=O(i),u=c/l,g=c-u*l,m=2n*(g<0n?-g:g),y=u;return(m>l||m===l&&u%2n!==0n)&&(y+=c<0n?-1n:1n),y*l}return Ae(i,a)}),e("pow",n=>(x("pow",n,2),re("**",n[0],n[1]))),e("divmod",n=>(x("divmod",n,2),new N([re("//",n[0],n[1]),re("%",n[0],n[1])]))),e("sorted",(n,i,o)=>{x("sorted",n,1);let a=P(n[0]);return it(a,i,o,"sorted"),new w(a)}),e("reversed",n=>(x("reversed",n,1),new w(P(n[0]).reverse()))),e("enumerate",(n,i)=>{x("enumerate",n,1,2);let o=W("enumerate()",n[1]??i.get("start")??0n);return new w(P(n[0]).map((a,l)=>new N([BigInt(l)+o,a])))}),e("zip",n=>{let i=n.map(P),o=i.length?Math.min(...i.map(a=>a.length)):0;return new w(Array.from({length:o},(a,l)=>new N(i.map(c=>c[l]))))}),e("map",(n,i,o)=>{if(n.length<2)throw U("map() attend une fonction et une s\xE9quence");let a=n.slice(1).map(P),l=Math.min(...a.map(c=>c.length));return new w(Array.from({length:l},(c,u)=>o.call(n[0],a.map(g=>g[u]))))}),e("filter",(n,i,o)=>{x("filter",n,2);let[a,l]=n;return new w(P(l).filter(c=>V(a===null?c:o.call(a,[c]))))}),e("any",n=>(x("any",n,1),P(n[0]).some(V))),e("all",n=>(x("all",n,1),P(n[0]).every(V))),e("chr",n=>{x("chr",n,1);let i=Number(W("chr()",n[0]));if(i<0||i>1114111)throw C("chr() : code hors limites");return String.fromCodePoint(i)}),e("ord",n=>{x("ord",n,1);let i=n[0];if(typeof i!="string"||[...i].length!==1)throw U("ord() attend un seul caract\xE8re");return BigInt(i.codePointAt(0))});let s=(n,i,o)=>a=>{x(n,a,1);let l=W(`${n}()`,a[0]);return(l<0n?"-":"")+o+(l<0n?-l:l).toString(i)};return e("bin",s("bin",2,"0b")),e("oct",s("oct",8,"0o")),e("hex",s("hex",16,"0x")),e("format",n=>(x("format",n,1,2),me(n[0],n.length>1?Q(n[1]):""))),r}function ie(r,e,t,s={}){r.emit({type:"mutate",method:t,ref:e.id,target:r.targetText,...s})}var Fe={append(r,e,t,s){return x("append",e,1),r.items.push(e[0]),r.touch(),ie(s,r,"append",{index:r.items.length-1,value:z(e[0])}),null},extend(r,e,t,s){x("extend",e,1);let n=P(e[0]);return r.items.push(...n),r.touch(),ie(s,r,"extend",{count:n.length}),null},insert(r,e,t,s){x("insert",e,2);let n=r.items.length,i=Number(W("insert()",e[0]));return i<0&&(i=Math.max(0,i+n)),i=Math.min(i,n),r.items.splice(i,0,e[1]),r.touch(),ie(s,r,"insert",{index:i,value:z(e[1])}),null},pop(r,e,t,s){if(x("pop",e,0,1),r.items.length===0)throw new h("IndexError","pop() sur une liste vide");let n=ye(r.items.length,e.length?W("pop()",e[0]):-1n);if(n<0)throw new h("IndexError",`pop() : indice ${D(e[0])} hors de la liste`);let[i]=r.items.splice(n,1);return r.touch(),ie(s,r,"pop",{index:n,value:z(i)}),i},remove(r,e,t,s){x("remove",e,1);let n=r.items.findIndex(i=>Z(i,e[0]));if(n<0)throw C(`remove() : ${D(e[0])} n'est pas dans la liste`);return r.items.splice(n,1),r.touch(),ie(s,r,"remove",{index:n,value:z(e[0])}),null},index(r,e){x("index",e,1,3);let t=e.length>1?tt(r.items.length,e[1]):0,s=e.length>2?tt(r.items.length,e[2]):r.items.length;for(let n=t;n<s;n++)if(Z(r.items[n],e[0]))return BigInt(n);throw C(`index() : ${D(e[0])} n'est pas dans la liste`)},count(r,e){return x("count",e,1),BigInt(r.items.filter(t=>Z(t,e[0])).length)},reverse(r,e,t,s){return x("reverse",e,0),r.items.reverse(),r.touch(),ie(s,r,"reverse"),null},sort(r,e,t,s){return x("sort",e,0),it(r.items,t,s,"sort"),r.touch(),ie(s,r,"sort"),null},copy(r,e){return x("copy",e,0),new w([...r.items])},clear(r,e,t,s){return x("clear",e,0),r.items.length=0,r.touch(),ie(s,r,"clear"),null}};function tt(r,e){let t=Number(W("index()",e));return t<0&&(t+=r),Math.min(Math.max(t,0),r)}var Ot=r=>/^\s+$/.test(r),nt={upper:r=>r.toUpperCase(),lower:r=>r.toLowerCase(),capitalize:r=>r&&r[0].toUpperCase()+r.slice(1).toLowerCase(),title:r=>r.toLowerCase().replace(/(^|[^\p{L}])(\p{L})/gu,(e,t,s)=>t+s.toUpperCase()),swapcase:r=>[...r].map(e=>e===e.toUpperCase()?e.toLowerCase():e.toUpperCase()).join(""),strip:(r,e)=>Ce(r,e[0],!0,!0),lstrip:(r,e)=>Ce(r,e[0],!0,!1),rstrip:(r,e)=>Ce(r,e[0],!1,!0),split(r,e,t){x("split",e,0,2);let s=e[0]??t.get("sep")??null;if(s===null)return new w(r.split(/\s+/).filter(n=>n!==""));if(s==="")throw C("split() : s\xE9parateur vide");return new w(r.split(s))},join(r,e){x("join",e,1);let t=P(e[0]);return t.forEach(s=>{if(typeof s!="string")throw U(`join() n'assemble que des cha\xEEnes, pas ${I(s)} (convertis avec str())`)}),t.join(r)},replace(r,e){x("replace",e,2,3);let[t,s]=e;if(typeof t!="string"||typeof s!="string")throw U("replace() attend deux cha\xEEnes");return r.split(t).join(s)},find:(r,e)=>(x("find",e,1),BigInt(r.indexOf(e[0]))),index(r,e){x("index",e,1);let t=r.indexOf(e[0]);if(t<0)throw C(`${D(e[0])} n'est pas dans la cha\xEEne`);return BigInt(t)},count:(r,e)=>(x("count",e,1),BigInt(e[0]===""?r.length+1:r.split(e[0]).length-1)),startswith:(r,e)=>r.startsWith(e[0]),endswith:(r,e)=>r.endsWith(e[0]),isdigit:r=>/^\d+$/.test(r),isnumeric:r=>/^\p{N}+$/u.test(r),isalpha:r=>/^\p{L}+$/u.test(r),isalnum:r=>/^[\p{L}\p{N}]+$/u.test(r),isspace:r=>Ot(r),islower:r=>/\p{Ll}/u.test(r)&&r===r.toLowerCase(),isupper:r=>/\p{Lu}/u.test(r)&&r===r.toUpperCase(),center:(r,e)=>Pe(r,e,"^"),ljust:(r,e)=>Pe(r,e,"<"),rjust:(r,e)=>Pe(r,e,">"),zfill:(r,e)=>r.padStart(Number(W("zfill()",e[0])),"0"),format:(r,e,t)=>It(r,e,t)};function Ce(r,e,t,s){let n=e==null?null:[...e],i=c=>n?n.includes(c):/\s/.test(c),o=[...r],a=0,l=o.length;if(t)for(;a<l&&i(o[a]);)a++;if(s)for(;l>a&&i(o[l-1]);)l--;return o.slice(a,l).join("")}function Pe(r,e,t){let s=Number(W("largeur",e[0]));return me(r,`${e[1]??" "}${t}${s}`)}var Mt={keys:r=>new w(r.keys()),values:r=>new w(r.values()),items:r=>new w(r.entries().map(([e,t])=>new N([e,t]))),get:(r,e)=>(x("get",e,1,2),r.has(e[0])?r.get(e[0]):e[1]??null),pop(r,e){if(x("pop",e,1,2),!r.has(e[0])){if(e.length>1)return e[1];throw new h("KeyError",`la cl\xE9 ${D(e[0])} n'existe pas dans le dictionnaire`)}let t=r.get(e[0]);return r.delete(e[0]),t},copy(r){let e=new F;return r.entries().forEach(([t,s])=>e.set(t,s)),e}},Ct={index:(r,e)=>Fe.index(r,e),count:(r,e)=>Fe.count(r,e)},Pt={push:"append",add:"append",ajouter:"append",length:"len(\u2026)",size:"len(\u2026)",longueur:"len(\u2026)",taille:"len(\u2026)"};function at(r,e){if(r instanceof te){if(r.attrs.has(e))return r.attrs.get(e);throw new h("AttributeError",`le module ${r.name} ne contient pas \xAB ${e} \xBB`)}let t=null;r instanceof w?t=Fe:typeof r=="string"?t=nt:r instanceof F?t=Mt:r instanceof N&&(t=Ct);let s=t&&Object.prototype.hasOwnProperty.call(t,e)?t[e]:null;if(s){let i=t===nt?(o,a,l)=>(["split","format"].includes(e)||de(e,l),s(o,a,l)):s;return new ee(r,e,i)}let n=Pt[e];throw new h("AttributeError",`${I(r)} n'a pas de m\xE9thode \xAB ${e} \xBB`+(n?` : en Python, on utilise ${n}`:""))}function At(){let r=new Map,e=(s,n)=>r.set(s,new j(s,n)),t=(s,n)=>e(s,i=>(x(s,i,1),n(K(oe(`${s}()`,i[0])))));r.set("pi",Math.PI),r.set("e",Math.E),r.set("tau",2*Math.PI),r.set("inf",1/0),r.set("nan",NaN),e("sqrt",s=>{x("sqrt",s,1);let n=K(oe("sqrt()",s[0]));if(n<0)throw C("racine carr\xE9e d'un nombre n\xE9gatif");return Math.sqrt(n)});for(let[s,n]of Object.entries({floor:Math.floor,ceil:Math.ceil,trunc:Math.trunc}))e(s,i=>{x(s,i,1);let o=oe(`${s}()`,i[0]);if(_(o))return O(o);if(!Number.isFinite(o))throw C(`${s}() d'une valeur infinie`);return BigInt(n(o))});return t("fabs",Math.abs),t("exp",Math.exp),t("sin",Math.sin),t("cos",Math.cos),t("tan",Math.tan),t("asin",Math.asin),t("acos",Math.acos),t("atan",Math.atan),t("degrees",s=>s*180/Math.PI),t("radians",s=>s*Math.PI/180),t("log2",s=>{if(s<=0)throw C("log2() : le nombre doit \xEAtre strictement positif");return Math.log2(s)}),t("log10",s=>{if(s<=0)throw C("log10() : le nombre doit \xEAtre strictement positif");return Math.log10(s)}),e("log",s=>{x("log",s,1,2);let n=K(oe("log()",s[0]));if(n<=0)throw C("log() : le nombre doit \xEAtre strictement positif");return s.length>1?Math.log(n)/Math.log(K(s[1])):Math.log(n)}),e("hypot",s=>Math.hypot(...s.map(n=>K(oe("hypot()",n))))),e("gcd",s=>{let[n,i]=s.map(o=>W("gcd()",o));for(n=n<0n?-n:n,i=i<0n?-i:i;i;)[n,i]=[i,n%i];return n}),e("factorial",s=>{x("factorial",s,1);let n=W("factorial()",s[0]);if(n<0n)throw C("factorial() d\u2019un nombre n\xE9gatif");if(n>5000n)throw C("factorial() : nombre trop grand pour ce simulateur");let i=1n;for(let o=2n;o<=n;o++)i*=o;return i}),e("isqrt",s=>{let n=W("isqrt()",s[0]);if(n<0n)throw C("isqrt() d\u2019un nombre n\xE9gatif");let i=BigInt(Math.floor(Math.sqrt(Number(n))));for(;i*i>n;)i--;for(;(i+1n)*(i+1n)<=n;)i++;return i}),r}function Ft(){let r=new Map,e=(s,n)=>r.set(s,new j(s,n)),t=(s,n)=>BigInt(Math.floor(s.random()*Number(n)));return e("random",(s,n,i)=>(x("random",s,0),i.random())),e("randint",(s,n,i)=>{x("randint",s,2);let[o,a]=s.map(l=>W("randint()",l));if(a<o)throw C("randint(a, b) demande a <= b");return o+t(i,a-o+1n)}),e("randrange",(s,n,i)=>{x("randrange",s,1,3);let o=s.map(l=>W("randrange()",l)),a=o.length===1?new R(0n,o[0],1n):new R(o[0],o[1],o[2]??1n);if(a.length===0)throw C("randrange() : intervalle vide");return a.at(Number(t(i,a.length)))}),e("uniform",(s,n,i)=>{x("uniform",s,2);let[o,a]=s.map(l=>K(oe("uniform()",l)));return o+(a-o)*i.random()}),e("choice",(s,n,i)=>{x("choice",s,1);let o=P(s[0]);if(!o.length)throw new h("IndexError","choice() sur une s\xE9quence vide");return o[Math.floor(i.random()*o.length)]}),e("shuffle",(s,n,i)=>{x("shuffle",s,1);let o=s[0];if(!(o instanceof w))throw U("shuffle() attend une liste");for(let a=o.items.length-1;a>0;a--){let l=Math.floor(i.random()*(a+1));[o.items[a],o.items[l]]=[o.items[l],o.items[a]]}return o.touch(),i.emit({type:"mutate",method:"shuffle",ref:o.id,target:i.argText(0)}),null}),e("sample",(s,n,i)=>{x("sample",s,2);let o=P(s[0]),a=Number(W("sample()",s[1]));if(a<0||a>o.length)throw C("sample() : \xE9chantillon plus grand que la population");for(let l=o.length-1;l>0;l--){let c=Math.floor(i.random()*(l+1));[o[l],o[c]]=[o[c],o[l]]}return new w(o.slice(0,a))}),e("seed",(s,n,i)=>(i.seed(s.length?s[0]:null),null)),r}function qt(){let r=new Map,e=(t,s)=>r.set(t,new j(t,s));return e("time",()=>Date.now()/1e3),e("perf_counter",()=>performance.now()/1e3),e("sleep",()=>null),r}var st={math:At,random:Ft,time:qt};function qe(r){let e=st[r];if(!e)throw new h("ImportError",`le module \xAB ${r} \xBB n'est pas disponible ici (modules disponibles : ${Object.keys(st).join(", ")})`);return new te(r,e())}var Re=new Set(["False","None","True","and","as","assert","async","await","break","class","continue","def","del","elif","else","except","finally","for","from","global","if","import","in","is","lambda","nonlocal","not","or","pass","raise","return","try","while","with","yield"]),Bt=["**=","//=",">>=","<<=","->","**","//","==","!=","<=",">=","+=","-=","*=","/=","%=","&=","|=","^=","<<",">>",":=","+","-","*","/","%","<",">","=","(",")","[","]","{","}",",",":",".",";","@","&","|","^","~"],Be={")":"(","]":"[","}":"{"},ue=`utilise des guillemets droits " ou ' (pas des guillemets typographiques)`,Dt={"\u2264":"\xE9cris <= au lieu de \u2264","\u2265":"\xE9cris >= au lieu de \u2265","\u2260":"\xE9cris != au lieu de \u2260","\u2190":"en Python, l'affectation s'\xE9crit avec =","\xD7":"la multiplication s'\xE9crit *","\xF7":"la division s'\xE9crit /","\u201C":ue,"\u201D":ue,"\u2018":ue,"\u2019":ue,"\xAB":ue,"\xBB":ue,"!":"\xAB non \xBB s'\xE9crit not et \xAB diff\xE9rent de \xBB s'\xE9crit !="},pe=r=>r>="0"&&r<="9",Rt=/[\p{L}\p{Nl}_]/u,De=/[\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}]/u,Kt=/^(r|u|f|b|br|rb|fr|rf)$/i;function Ke(r){let e=[],t=new Map,s=[0],n=[],i=r.length,o=0,a=1,l=0,c=!0,u=(d,E,b,p,v=a,f={})=>e.push({type:d,value:E,line:v,col:b-l,start:b,end:p,...f}),g=()=>{r[o]==="\r"&&r[o+1]===`
+`?o+=2:o+=1,a++,l=o},m=d=>{let E=o;for(;o<i&&r[o]!==`
+`&&r[o]!=="\r";)o++;t.set(a,{text:r.slice(E+1,o).trim(),alone:d})};for(;o<i;){if(c&&n.length===0){let p=0,v=o;for(;v<i&&(r[v]===" "||r[v]==="	"||r[v]==="\f");)p=r[v]==="	"?(Math.floor(p/8)+1)*8:r[v]==="\f"?0:p+1,v++;if(v>=i||r[v]===`
+`||r[v]==="\r"||r[v]==="#"){o=v,r[o]==="#"&&m(!0),o<i&&g();continue}let f=s[s.length-1];if(p>f){if(e.length===0)throw new h("IndentationError","la premi\xE8re ligne ne doit pas \xEAtre indent\xE9e (d\xE9cal\xE9e vers la droite)",a);s.push(p),u("INDENT",p,v,v)}else if(p<f){for(;p<s[s.length-1];)s.pop(),u("DEDENT",p,v,v);if(p!==s[s.length-1])throw new h("IndentationError","ce retrait ne correspond \xE0 aucun niveau d\u2019indentation des lignes pr\xE9c\xE9dentes",a)}o=v,c=!1;continue}let d=r[o];if(d===`
+`||d==="\r"){n.length===0&&(u("NEWLINE","",o,o),c=!0),g();continue}if(d===" "||d==="	"||d==="\f"){o++;continue}if(d==="#"){m(!1);continue}if(d==="\\"&&(r[o+1]===`
+`||r[o+1]==="\r")){o++,g();continue}if(pe(d)||d==="."&&pe(r[o+1]??"")){L();continue}if(Rt.test(d)){let p=o;for(;o<i&&De.test(r[o]);)o++;let v=r.slice(p,o);(r[o]==='"'||r[o]==="'")&&Kt.test(v)?A(v.toLowerCase(),p):u(Re.has(v)?"KEYWORD":"NAME",v,p,o);continue}if(d==='"'||d==="'"){A("",o);continue}let E=Bt.find(p=>r.startsWith(p,o));if(E){if(E==="("||E==="["||E==="{")n.push({char:E,line:a});else if(E in Be){let p=n.pop();if(!p)throw B(`\xAB ${E} \xBB fermant sans \xAB ${Be[E]} \xBB ouvrant correspondant`,a);if(p.char!==Be[E])throw B(`\xAB ${E} \xBB ne correspond pas au \xAB ${p.char} \xBB ouvert ligne ${p.line}`,a)}u("OP",E,o,o+E.length),o+=E.length;continue}let b=Dt[d];throw B(`caract\xE8re inattendu \xAB ${d} \xBB`+(b?` : ${b}`:""),a)}if(n.length>0){let d=n[n.length-1];throw B(`le \xAB ${d.char} \xBB ouvert ligne ${d.line} n'est jamais referm\xE9`,d.line)}let y=e[e.length-1];for(y&&y.type!=="NEWLINE"&&y.type!=="DEDENT"&&u("NEWLINE","",i,i);s.length>1;)s.pop(),u("DEDENT",0,i,i);return u("EOF","",i,i),{tokens:e,comments:t};function L(){let d=o,E=!1,b;if(r[o]==="0"&&/[xXoObB]/.test(r[o+1]??"")){let p={x:16,o:8,b:2}[r[o+1].toLowerCase()];o+=2;let v=o;for(;o<i&&/[0-9a-fA-F_]/.test(r[o]);)o++;let f=r.slice(v,o).replace(/_/g,"");if(!{16:/^[0-9a-f]+$/i,8:/^[0-7]+$/,2:/^[01]+$/}[p].test(f))throw B(`nombre mal \xE9crit : ${r.slice(d,o)}`,a);b=BigInt({16:"0x",8:"0o",2:"0b"}[p]+f)}else{for(;o<i&&(pe(r[o])||r[o]==="_");)o++;if(r[o]==="."&&r[o+1]!==".")for(E=!0,o++;o<i&&(pe(r[o])||r[o]==="_");)o++;if((r[o]==="e"||r[o]==="E")&&(pe(r[o+1]??"")||/[+-]/.test(r[o+1]??"")))for(E=!0,o+=2;o<i&&pe(r[o]);)o++;let p=r.slice(d,o).replace(/_/g,"");b=E?Number(p):BigInt(p)}if(o<i&&De.test(r[o])){let p=o;for(;p<i&&De.test(r[p]);)p++;let v=r.slice(d,p);throw B(`\xAB ${v} \xBB n'est pas un nombre valide`+(/^\d+[\p{L}_]/u.test(v)?` (pour multiplier, \xE9cris ${r.slice(d,o)}*${r.slice(o,p)})`:""),a)}u("NUMBER",b,d,o,a,{isFloat:E})}function A(d,E){if(d.includes("b"))throw new h("NotSupported",'les cha\xEEnes d\u2019octets (b"\u2026") ne sont pas prises en charge',a);let b=d.includes("r"),p=d.includes("f"),v=a;o=E+d.length;let f=r[o],S=r.startsWith(f.repeat(3),o),M=S?f.repeat(3):f;o+=M.length;let G=o,q="";for(;;){if(o>=i)throw B(`cha\xEEne de caract\xE8res non termin\xE9e : il manque le ${M} fermant`,v);if(r.startsWith(M,o))break;let H=r[o];if((H===`
+`||H==="\r")&&!S)throw B(`cha\xEEne de caract\xE8res non termin\xE9e : il manque le ${M} fermant avant la fin de la ligne`,v);if(H==="\\"&&o+1<i){let Ie=r[o+1];if(Ie===`
+`||Ie==="\r"){(b||p)&&(q+=`\\
+`),o++,g();continue}if(b||p){q+=H+Ie,o+=2;continue}let vt=T();q+=vt;continue}if(H===`
+`||H==="\r"){q+=`
+`,g();continue}q+=H,o++}let ne=o;o+=M.length,p?u("FSTRING",q,E,o,v,{raw:r.slice(G,ne),rawStart:G,isRaw:b}):u("STRING",q,E,o,v)}function T(){let d=r[o+1],E={n:`
+`,t:"	",r:"\r","\\":"\\","'":"'",'"':'"',a:"\x07",b:"\b",f:"\f",v:"\v"};if(d in E)return o+=2,E[d];let b={x:2,u:4,U:8}[d];if(b){let p=r.slice(o+2,o+2+b);if(p.length!==b||!/^[0-9a-fA-F]+$/.test(p))throw B(`\xE9chappement \\${d} mal \xE9crit`,a);return o+=2+b,String.fromCodePoint(parseInt(p,16))}if(d>="0"&&d<="7"){let p=o+1;for(;p<o+4&&r[p]>="0"&&r[p]<="7";)p++;let v=parseInt(r.slice(o+1,p),8);return o=p,String.fromCharCode(v)}return o+=2,"\\"+d}}function lt(r,e){let t="";for(let s=0;s<r.length;s++){let n=r[s];if(n!=="\\"||s+1>=r.length){t+=n;continue}let i=r[s+1],o={n:`
+`,t:"	",r:"\r","\\":"\\","'":"'",'"':'"',a:"\x07",b:"\b",f:"\f",v:"\v","\n":""};if(i in o)t+=o[i],s++;else if(i==="x"||i==="u"||i==="U"){let a={x:2,u:4,U:8}[i],l=r.slice(s+2,s+2+a);if(l.length!==a||!/^[0-9a-fA-F]+$/.test(l))throw B(`\xE9chappement \\${i} mal \xE9crit`,e);t+=String.fromCodePoint(parseInt(l,16)),s+=1+a}else t+="\\"+i,s++}return t}var _t=new Set(["<",">","==",">=","<=","!="]),ct=new Set(["+=","-=","*=","/=","//=","%=","**=","&=","|=","^=","<<=",">>="]),Ut=new Set(["=",")","]","}",":",";",...ct]);function ut(r){let{tokens:e,comments:t}=Ke(r);return{type:"Module",body:new Ee(e,r).parseFile(),comments:t,source:r}}var X=(r,e)=>new h("NotSupported",`${r} n'est pas encore pris en charge`,e),Ee=class{constructor(e,t){this.tokens=e,this.src=t,this.pos=0,this.lastEnd=0}get tok(){return this.tokens[this.pos]}peek(e=1){return this.tokens[Math.min(this.pos+e,this.tokens.length-1)]}next(){let e=this.tokens[this.pos];return this.pos<this.tokens.length-1&&this.pos++,this.lastEnd=e.end,e}isOp(e,t=this.tok){return t.type==="OP"&&t.value===e}isKw(e,t=this.tok){return t.type==="KEYWORD"&&t.value===e}acceptOp(e){return this.isOp(e)?this.next():null}acceptKw(e){return this.isKw(e)?this.next():null}expectOp(e,t){if(this.isOp(e))return this.next();throw this.error(t??`\xAB ${e} \xBB attendu \xE0 la place de ${this.describe(this.tok)}`)}expectName(e){if(this.tok.type==="NAME")return this.next();throw this.tok.type==="KEYWORD"?this.error(`\xAB ${this.tok.value} \xBB est un mot r\xE9serv\xE9 de Python : il ne peut pas servir de nom`):this.error(e)}error(e,t=this.tok){return B(e,t.line)}describe(e){switch(e.type){case"NEWLINE":return"la fin de la ligne";case"EOF":return"la fin du programme";case"INDENT":return"une indentation";case"DEDENT":return"la fin du bloc";case"STRING":case"FSTRING":return"une cha\xEEne de caract\xE8res";case"NUMBER":return`le nombre ${this.src.slice(e.start,e.end)}`;default:return`\xAB ${e.value} \xBB`}}node(e,t,s){return{type:e,line:t.line,start:t.start,end:this.lastEnd,...s}}parseFile(){let e=[];for(;this.tok.type!=="EOF";){if(this.tok.type==="NEWLINE"){this.next();continue}if(this.tok.type==="INDENT")throw this.unexpectedIndent();e.push(...this.parseStatement())}return e}unexpectedIndent(){return new h("IndentationError","indentation inattendue : cette ligne est d\xE9cal\xE9e vers la droite alors qu\u2019aucun bloc ne commence (pas de \xAB : \xBB avant)",this.tok.line)}parseStatement(){let e=this.tok;if(e.type==="KEYWORD")switch(e.value){case"if":return[this.parseIf()];case"while":return[this.parseWhile()];case"for":return[this.parseFor()];case"def":return[this.parseDef()];case"elif":case"else":throw this.error(`\xAB ${e.value} \xBB sans \xAB if \xBB juste avant, au m\xEAme niveau d'indentation`);case"class":throw X("La d\xE9finition de classes (class)",e.line);case"try":case"except":case"finally":throw X("La gestion des exceptions (try / except)",e.line);case"with":throw X("L\u2019instruction with",e.line);case"async":case"await":throw X("La programmation asynchrone",e.line)}return this.parseSimpleStatements()}parseSimpleStatements(){let e=[this.parseSmallStatement()];for(;this.acceptOp(";")&&!(this.tok.type==="NEWLINE"||this.tok.type==="EOF");)e.push(this.parseSmallStatement());if(this.tok.type!=="NEWLINE"&&this.tok.type!=="EOF"){let t=e[0];throw t.type==="ExprStmt"&&t.value.type==="Name"&&t.value.id==="print"?this.error("il manque les parenth\xE8ses : \xE9cris print(\u2026)"):this.error(`${this.describe(this.tok)} inattendu : il manque peut-\xEAtre un op\xE9rateur, une virgule ou une parenth\xE8se`)}return this.tok.type==="NEWLINE"&&this.next(),e}atStatementEnd(){let e=this.tok;return e.type==="NEWLINE"||e.type==="EOF"||this.isOp(";")}parseSmallStatement(){let e=this.tok;if(e.type==="KEYWORD")switch(e.value){case"pass":case"break":case"continue":return this.next(),this.node(e.value[0].toUpperCase()+e.value.slice(1),e,{});case"return":{this.next();let n=this.atStatementEnd()?null:this.parseExprList();return this.node("Return",e,{value:n})}case"import":return this.parseImport();case"from":return this.parseFromImport();case"assert":{this.next();let n=this.parseExpr(),i=this.acceptOp(",")?this.parseExpr():null;return this.node("Assert",e,{test:n,msg:i})}case"global":{this.next();let n=[this.expectName("nom de variable attendu apr\xE8s global").value];for(;this.acceptOp(",");)n.push(this.expectName("nom de variable attendu").value);return this.node("Global",e,{names:n})}case"del":{this.next();let n=this.parseExprList(),i=n.type==="Tuple"?n.elts:[n];for(let o of i)if(o.type!=="Name"&&o.type!=="Subscript")throw this.error("on ne peut supprimer (del) qu\u2019une variable ou un \xE9l\xE9ment",e);return this.node("Delete",e,{targets:i})}case"nonlocal":throw X("L\u2019instruction nonlocal",e.line);case"raise":throw X("L\u2019instruction raise",e.line);case"yield":throw X("L\u2019instruction yield (g\xE9n\xE9rateurs)",e.line)}let t=this.parseExprList();if(this.isOp("=")){let n=[t];for(;this.acceptOp("=");)n.push(this.parseExprList());let i=n.pop();for(let o of n)this.checkTarget(o);return this.node("Assign",e,{targets:n,value:i})}if(this.tok.type==="OP"&&ct.has(this.tok.value)){let n=this.next().value.slice(0,-1);if(t.type!=="Name"&&t.type!=="Subscript")throw this.error(`\xE0 gauche de \xAB ${n}= \xBB il faut une variable ou un \xE9l\xE9ment comme L[i]`,e);let i=this.parseExprList();return this.node("AugAssign",e,{target:t,op:n,value:i})}if(this.isOp(":")&&t.type==="Name"){this.next(),this.parseExpr();let n=this.acceptOp("=")?this.parseExprList():null;return this.node("AnnAssign",e,{target:t,value:n})}let s=t.type==="Compare"&&t.ops.length===1&&t.ops[0]==="==";return this.node("ExprStmt",e,{value:t,suspiciousEquality:s})}checkTarget(e){switch(e.type){case"Name":case"Subscript":return;case"Tuple":case"List":e.elts.forEach(n=>this.checkTarget(n));return;case"Attribute":throw X("L\u2019affectation d\u2019un attribut",e.line)}let t=this.src.slice(e.start,e.end),s=`\xE0 gauche de \xAB = \xBB il faut une variable (ou un \xE9l\xE9ment comme L[i]), pas \xAB ${t} \xBB`;throw e.type==="Call"&&(s=`on ne peut pas affecter une valeur \xE0 un appel de fonction (\xAB ${t} \xBB)`),e.type==="Compare"&&(s="pour tester une \xE9galit\xE9, \xE9cris == ; un seul = sert \xE0 donner une valeur \xE0 une variable"),B(s,e.line)}parseImport(){let e=this.next(),t=[];do{let s=this.parseDottedName(),n=this.acceptKw("as")?this.expectName("nom attendu apr\xE8s as").value:null;t.push({name:s,asname:n})}while(this.acceptOp(","));return this.node("Import",e,{names:t})}parseFromImport(){let e=this.next(),t=this.parseDottedName();if(!this.acceptKw("import"))throw this.error("\xAB import \xBB attendu (from module import nom)");if(this.acceptOp("*"))return this.node("ImportFrom",e,{module:t,names:"*"});let s=this.acceptOp("("),n=[];do{if(s&&this.isOp(")"))break;let i=this.expectName("nom attendu apr\xE8s import").value,o=this.acceptKw("as")?this.expectName("nom attendu apr\xE8s as").value:null;n.push({name:i,asname:o})}while(this.acceptOp(","));return s&&this.expectOp(")"),this.node("ImportFrom",e,{module:t,names:n})}parseDottedName(){let e=this.expectName("nom de module attendu").value;for(;this.acceptOp(".");)e+="."+this.expectName("nom attendu apr\xE8s \xAB . \xBB").value;return e}expectColon(e){if(this.isOp(":"))return this.next();if(this.isOp("="))throw this.error("pour tester une \xE9galit\xE9, \xE9cris == ; un seul = sert \xE0 donner une valeur \xE0 une variable");if(e==="else"&&this.isKw("if"))throw this.error("\xAB sinon si \xBB s\u2019\xE9crit elif en Python");let t=this.tok.type==="NEWLINE"?"":` (trouv\xE9 ${this.describe(this.tok)})`;throw this.error(`\xAB : \xBB attendu \xE0 la fin de la ligne du ${e}${t}`)}parseBlock(e){if(this.tok.type!=="NEWLINE")return this.parseSimpleStatements();if(this.next(),this.tok.type!=="INDENT")throw new h("IndentationError",`bloc indent\xE9 attendu apr\xE8s le \xAB : \xBB de la ligne ${e} : d\xE9cale vers la droite les lignes du bloc`,this.tok.line);this.next();let t=[];for(;this.tok.type!=="DEDENT"&&this.tok.type!=="EOF";){if(this.tok.type==="INDENT")throw this.unexpectedIndent();t.push(...this.parseStatement())}return this.tok.type==="DEDENT"&&this.next(),t}parseIf(){let e=this.next(),t=this.parseExpr();this.expectColon(e.value);let s={line:e.line,start:e.start,end:this.lastEnd},n=this.parseBlock(e.line),i=[],o=null;if(this.isKw("elif"))i=[this.parseIf()];else if(this.isKw("else")){let a=this.next();o=a.line,this.expectColon("else"),i=this.parseBlock(a.line)}return{type:"If",...s,test:t,body:n,orelse:i,elseLine:o,isElif:e.value==="elif"}}parseWhile(){let e=this.next(),t=this.parseExpr();this.expectColon("while");let s={line:e.line,start:e.start,end:this.lastEnd},n=this.parseBlock(e.line),i=[];if(this.isKw("else")){let o=this.next();this.expectColon("else"),i=this.parseBlock(o.line)}return{type:"While",...s,test:t,body:n,orelse:i}}parseFor(){let e=this.next(),t=this.parseTargetList();if(!this.acceptKw("in"))throw this.error("\xAB in \xBB attendu : une boucle for s\u2019\xE9crit for x in L:");let s=this.parseExprList();this.expectColon("for");let n={line:e.line,start:e.start,end:this.lastEnd},i=this.parseBlock(e.line),o=[];if(this.isKw("else")){let a=this.next();this.expectColon("else"),o=this.parseBlock(a.line)}return{type:"For",...n,target:t,iter:s,body:i,orelse:o}}parseTargetList(){let e=this.parseBitOr(),t=e;if(this.isOp(",")){let s=[e];for(;this.acceptOp(",")&&!(this.isKw("in")||this.isOp("="));)s.push(this.parseBitOr());t={type:"Tuple",elts:s,line:e.line,start:e.start,end:this.lastEnd}}return this.checkTarget(t),t}parseParams(e){let t=[];for(;!this.isOp(e);){if(this.isOp("*")||this.isOp("**"))throw X("Les param\xE8tres *args et **kwargs",this.tok.line);let s=this.expectName("nom de param\xE8tre attendu").value;if(t.some(i=>i.name===s))throw this.error(`le param\xE8tre \xAB ${s} \xBB appara\xEEt deux fois`);e===")"&&this.acceptOp(":")&&this.parseExpr();let n=this.acceptOp("=")?this.parseExpr():null;if(!n&&t.some(i=>i.default))throw this.error("un param\xE8tre sans valeur par d\xE9faut ne peut pas suivre un param\xE8tre qui en a une");if(t.push({name:s,default:n}),!this.acceptOp(","))break}return t}parseDef(){let e=this.next(),t=this.expectName("nom de fonction attendu apr\xE8s def").value;this.expectOp("(","\xAB ( \xBB attendu apr\xE8s le nom de la fonction");let s=this.parseParams(")");this.expectOp(")","\xAB ) \xBB attendu \xE0 la fin des param\xE8tres"),this.acceptOp("->")&&this.parseExpr(),this.expectColon("def");let n={line:e.line,start:e.start,end:this.lastEnd},i=this.parseBlock(e.line),o=i[0],a=o?.type==="ExprStmt"&&o.value.type==="Constant"&&typeof o.value.value=="string";return{type:"FunctionDef",...n,name:t,params:s,body:i,docstring:a?o.value.value:null}}parseExprList(){let e=this.parseExpr();if(!this.isOp(","))return e;let t=[e];for(;this.acceptOp(",");){let s=this.tok;if(s.type==="NEWLINE"||s.type==="EOF"||s.type==="OP"&&Ut.has(s.value))break;t.push(this.parseExpr())}return{type:"Tuple",elts:t,line:e.line,start:e.start,end:this.lastEnd}}parseExpr(){if(this.isKw("lambda"))return this.parseLambda();let e=this.parseOrTest();if(!this.isKw("if"))return e;this.next();let t=this.parseOrTest();if(!this.acceptKw("else"))throw this.error("\xAB else \xBB attendu : une expression conditionnelle s\u2019\xE9crit a if condition else b");let s=this.parseExpr();return{type:"IfExp",test:t,body:e,orelse:s,line:e.line,start:e.start,end:this.lastEnd}}parseLambda(){let e=this.next(),t=this.parseParams(":");this.expectOp(":","\xAB : \xBB attendu apr\xE8s les param\xE8tres de lambda");let s=this.parseExpr();return this.node("Lambda",e,{params:t,body:s})}parseOrTest(){return this.parseBoolOp("or",()=>this.parseAndTest())}parseAndTest(){return this.parseBoolOp("and",()=>this.parseNotTest())}parseBoolOp(e,t){let s=t();if(!this.isKw(e))return s;let n=[s];for(;this.acceptKw(e);)n.push(t());return{type:"BoolOp",op:e,values:n,line:s.line,start:s.start,end:this.lastEnd}}parseNotTest(){if(this.isKw("not")){let e=this.next(),t=this.parseNotTest();return this.node("UnaryOp",e,{op:"not",operand:t})}return this.parseComparison()}parseComparison(){let e=this.parseBitOr(),t=[],s=[];for(;;){let n;if(this.tok.type==="OP"&&_t.has(this.tok.value))n=this.next().value;else if(this.isKw("in"))this.next(),n="in";else if(this.isKw("not")&&this.isKw("in",this.peek()))this.next(),this.next(),n="not in";else if(this.isKw("is"))this.next(),n=this.acceptKw("not")?"is not":"is";else break;t.push(n),s.push(this.parseBitOr())}return t.length===0?e:{type:"Compare",left:e,ops:t,comparators:s,line:e.line,start:e.start,end:this.lastEnd}}binaryLevel(e,t){let s=t();for(;this.tok.type==="OP"&&e.includes(this.tok.value);){let n=this.next().value,i=t();s={type:"BinOp",op:n,left:s,right:i,line:s.line,start:s.start,end:this.lastEnd}}return s}parseBitOr(){return this.binaryLevel(["|"],()=>this.parseBitXor())}parseBitXor(){return this.binaryLevel(["^"],()=>this.parseBitAnd())}parseBitAnd(){return this.binaryLevel(["&"],()=>this.parseShift())}parseShift(){return this.binaryLevel(["<<",">>"],()=>this.parseArith())}parseArith(){return this.binaryLevel(["+","-"],()=>this.parseTerm())}parseTerm(){return this.binaryLevel(["*","/","//","%","@"],()=>this.parseFactor())}parseFactor(){let e=this.tok;if(e.type==="OP"&&(e.value==="-"||e.value==="+"||e.value==="~")){this.next();let t=this.parseFactor();return this.node("UnaryOp",e,{op:e.value,operand:t})}return this.parsePower()}parsePower(){let e=this.parsePrimary();if(!this.acceptOp("**"))return e;let t=this.parseFactor();return{type:"BinOp",op:"**",left:e,right:t,line:e.line,start:e.start,end:this.lastEnd}}parsePrimary(){let e=this.parseAtom();for(;;)if(this.isOp("("))e=this.parseCall(e);else if(this.isOp("["))e=this.parseSubscript(e);else if(this.isOp(".")){this.next();let t=this.expectName("nom de m\xE9thode attendu apr\xE8s \xAB . \xBB").value;e={type:"Attribute",value:e,attr:t,line:e.line,start:e.start,end:this.lastEnd}}else return e}parseCall(e){let t=this.next(),s=[],n=[];for(;!this.isOp(")");){if(this.isOp("*")||this.isOp("**"))throw X("Le d\xE9paquetage d\u2019arguments (*args)",this.tok.line);if(this.tok.type==="NAME"&&this.isOp("=",this.peek())){let i=this.next().value;this.next(),n.push({arg:i,value:this.parseExpr()})}else{if(n.length)throw this.error("un argument sans nom ne peut pas suivre un argument nomm\xE9 (nom=valeur)");let i=this.parseExpr();this.isKw("for")&&(i=this.parseComprehension(i,"GeneratorExp",t)),s.push(i)}if(!this.acceptOp(","))break}return this.expectOp(")",`\xAB ) \xBB attendu \xE0 la place de ${this.describe(this.tok)} : il manque une parenth\xE8se fermante ou une virgule`),{type:"Call",func:e,args:s,keywords:n,line:e.line,start:e.start,end:this.lastEnd}}parseSubscript(e){this.next();let t;if(this.isOp(":"))t=this.parseSliceRest(null);else{let s=this.parseExprList();t=this.isOp(":")?this.parseSliceRest(s):s}return this.expectOp("]",`\xAB ] \xBB attendu \xE0 la place de ${this.describe(this.tok)}`),{type:"Subscript",value:e,slice:t,line:e.line,start:e.start,end:this.lastEnd}}parseSliceRest(e){let t=this.next(),s=this.isOp("]")||this.isOp(":")?null:this.parseExpr(),n=null;return this.acceptOp(":")&&!this.isOp("]")&&(n=this.parseExpr()),{type:"Slice",lower:e,upper:s,step:n,line:t.line,start:e?.start??t.start,end:this.lastEnd}}parseComprehension(e,t,s){let n=[];for(;this.acceptKw("for");){let i=this.parseTargetList();if(!this.acceptKw("in"))throw this.error("\xAB in \xBB attendu dans la compr\xE9hension (\u2026 for x in L)");let o=this.parseOrTest(),a=[];for(;this.acceptKw("if");)a.push(this.parseOrTest());n.push({target:i,iter:o,ifs:a})}return{type:t,elt:e,generators:n,line:s.line,start:s.start,end:this.lastEnd}}parseAtom(){let e=this.tok;switch(e.type){case"NAME":return this.next(),this.node("Name",e,{id:e.value});case"NUMBER":return this.next(),this.node("Constant",e,{value:e.value});case"STRING":case"FSTRING":return this.parseStrings();case"KEYWORD":{let t={True:!0,False:!1,None:null};if(e.value in t)return this.next(),this.node("Constant",e,{value:t[e.value]});if(e.value==="lambda")return this.parseLambda();throw this.error(`le mot-cl\xE9 \xAB ${e.value} \xBB n'a rien \xE0 faire ici`)}case"OP":if(e.value==="(")return this.parseParen();if(e.value==="[")return this.parseListDisplay();if(e.value==="{")return this.parseBraceDisplay();break}throw e.type==="NEWLINE"||e.type==="EOF"?this.error("expression incompl\xE8te : il manque quelque chose en fin de ligne"):e.type==="INDENT"||e.type==="DEDENT"?this.error("expression incompl\xE8te"):this.error(`expression attendue \xE0 la place de ${this.describe(e)}`)}parseParen(){let e=this.next();if(this.acceptOp(")"))return this.node("Tuple",e,{elts:[]});let t=this.parseExpr();if(this.isKw("for")){let s=this.parseComprehension(t,"GeneratorExp",e);return this.expectOp(")"),s.end=this.lastEnd,s}if(this.isOp(",")){let s=[t];for(;this.acceptOp(",")&&!this.isOp(")");)s.push(this.parseExpr());return this.expectOp(")",`\xAB ) \xBB attendu \xE0 la place de ${this.describe(this.tok)}`),this.node("Tuple",e,{elts:s})}return this.expectOp(")",`\xAB ) \xBB attendu \xE0 la place de ${this.describe(this.tok)}`),{...t,start:e.start,end:this.lastEnd}}parseListDisplay(){let e=this.next(),t=[];if(!this.isOp("]")){let s=this.parseExpr();if(this.isKw("for")){let n=this.parseComprehension(s,"ListComp",e);return this.expectOp("]",`\xAB ] \xBB attendu \xE0 la place de ${this.describe(this.tok)}`),n.end=this.lastEnd,n}for(t.push(s);this.acceptOp(",")&&!this.isOp("]");)t.push(this.parseExpr())}return this.expectOp("]",`\xAB ] \xBB attendu \xE0 la place de ${this.describe(this.tok)} : il manque un crochet fermant ou une virgule`),this.node("List",e,{elts:t})}parseBraceDisplay(){let e=this.next(),t=[],s=[];if(!this.isOp("}")){let n=this.parseExpr();if(!this.isOp(":"))throw X("Les ensembles (set)",e.line);this.next();let i=this.parseExpr();if(this.isKw("for"))throw X("Les dictionnaires en compr\xE9hension",e.line);for(t.push(n),s.push(i);this.acceptOp(",")&&!this.isOp("}");)t.push(this.parseExpr()),this.expectOp(":","\xAB : \xBB attendu entre la cl\xE9 et la valeur"),s.push(this.parseExpr())}return this.expectOp("}",`\xAB } \xBB attendu \xE0 la place de ${this.describe(this.tok)}`),this.node("Dict",e,{keys:t,values:s})}parseStrings(){let e=this.tok,t=[],s=!1;for(;this.tok.type==="STRING"||this.tok.type==="FSTRING";){let n=this.next();n.type==="STRING"?t.push({kind:"text",value:n.value}):(s=!0,t.push(...this.parseFStringParts(n)))}return s?this.node("FString",e,{parts:t}):this.node("Constant",e,{value:t.map(n=>n.value).join("")})}parseFStringParts(e){let{raw:t,rawStart:s,isRaw:n}=e,i=[],o="",a=()=>{o&&i.push({kind:"text",value:n?o:lt(o,e.line)}),o=""},l=0;for(;l<t.length;){let c=t[l];if(c==="{"&&t[l+1]==="{")o+="{",l+=2;else if(c==="}"&&t[l+1]==="}")o+="}",l+=2;else{if(c==="}")throw B("accolade \xAB } \xBB isol\xE9e dans la f-string : \xE9cris }} pour afficher une accolade",e.line);c==="{"?(a(),l=this.parseFStringField(e,t,s,l,i)):c==="\\"&&!n&&l+1<t.length?(o+=c+t[l+1],l+=2):(o+=c,l++)}}return a(),i}parseFStringField(e,t,s,n,i){let o=0,a=null,l=-1,c=-1,u=n+1;for(;u<t.length;u++){let b=t[u];if(a){b===a&&(a=null);continue}if(b==="'"||b==='"')a=b;else if("([{".includes(b))o++;else if(o>0&&")]}".includes(b))o--;else{if(o===0&&b==="}")break;if(o===0&&b==="!"&&t[u+1]!=="="&&l<0)l=u;else if(o===0&&b===":"&&c<0){c=u,u=t.indexOf("}",u),u<0&&(u=t.length);break}}}if(u>=t.length)throw B("accolade \xAB { \xBB non referm\xE9e dans la f-string",e.line);let g=Math.min(...[l,c,u].filter(b=>b>=0)),m=t.slice(n+1,g),y=null,L=m.trimEnd();if(L.endsWith("=")&&!/[=!<>]=$/.test(L)&&(y=m,m=L.slice(0,-1)),!m.trim())throw B("expression vide entre accolades dans la f-string",e.line);let A=l>=0?t.slice(l+1,c>=0?c:u).trim():null;if(A!==null&&!["r","s","a"].includes(A))throw B(`conversion \xAB !${A} \xBB inconnue dans la f-string`,e.line);let T=c>=0?t.slice(c+1,u):"";if(T.includes("{"))throw X("Un format imbriqu\xE9 dans une f-string",e.line);let d=m.length-m.trimStart().length,E=Wt(m.trim(),s+n+1+d,e.line);return i.push({kind:"expr",expr:E,conversion:A,formatSpec:T,debug:y}),u+1}};function Wt(r,e,t){let{tokens:s}=Ke(r),n=new Ee(s,r),i=n.parseExprList();if(n.tok.type!=="NEWLINE"&&n.tok.type!=="EOF")throw B(`expression mal \xE9crite dans la f-string : ${r}`,t);return _e(i,e,t),i}function _e(r,e,t){if(Array.isArray(r)){r.forEach(s=>_e(s,e,t));return}if(!(!r||typeof r!="object")){typeof r.start=="number"&&typeof r.type=="string"&&(r.start+=e,r.end+=e,r.line=t);for(let s of Object.values(r))s&&typeof s=="object"&&_e(s,e,t)}}var zt={maxSteps:1e4,maxDepth:200,maxOps:5e6},Ue=Symbol("break"),We=Symbol("continue"),be=class{constructor(e,t){this.value=e,this.line=t}},Vt={afficher:"en Python, on affiche avec print(\u2026)",\u00E9crire:"en Python, on affiche avec print(\u2026)",ecrire:"en Python, on affiche avec print(\u2026)",longueur:"en Python, la longueur s\u2019obtient avec len(\u2026)",taille:"en Python, la longueur s\u2019obtient avec len(\u2026)",si:"en Python, \xAB si \xBB s\u2019\xE9crit if",sinon:"en Python, \xAB sinon \xBB s\u2019\xE9crit else",pour:"en Python, \xAB pour \xBB s\u2019\xE9crit for",tantque:"en Python, \xAB tant que \xBB s\u2019\xE9crit while",renvoyer:"en Python, \xAB renvoyer \xBB s\u2019\xE9crit return",retourner:"en Python, \xAB renvoyer \xBB s\u2019\xE9crit return",vrai:"en Python, \xAB vrai \xBB s\u2019\xE9crit True (avec une majuscule)",faux:"en Python, \xAB faux \xBB s\u2019\xE9crit False (avec une majuscule)",true:"en Python, on \xE9crit True (avec une majuscule)",false:"en Python, on \xE9crit False (avec une majuscule)",none:"en Python, on \xE9crit None (avec une majuscule)",null:"en Python, \xAB rien \xBB s\u2019\xE9crit None",et:"en Python, \xAB et \xBB s\u2019\xE9crit and",ou:"en Python, \xAB ou \xBB s\u2019\xE9crit or",non:"en Python, \xAB non \xBB s\u2019\xE9crit not"},pt={randint:"from random import randint",choice:"from random import choice",shuffle:"from random import shuffle",random:"import random",sqrt:"from math import sqrt",floor:"from math import floor",ceil:"from math import ceil",pi:"from math import pi",math:"import math",time:"import time"},jt=r=>r instanceof se||r instanceof j||r instanceof ee||r instanceof te;function ze(r){return{type:r.pyType,title:r.title,message:r.message,line:r.line}}function ht(r,e={}){let t;try{t=ut(r),he(t.body)}catch(s){if(!(s instanceof h))throw s;return{ok:!1,phase:"syntax",error:ze(s),steps:[],output:"",comments:new Map,meta:{}}}return new Ve(t,e).run()}function he(r,e=!1,t=!1){for(let s of r)switch(s.type){case"Break":case"Continue":if(!e)throw new h("SyntaxError",`\xAB ${s.type.toLowerCase()} \xBB en dehors d\u2019une boucle`,s.line);break;case"Return":if(!t)throw new h("SyntaxError","\xAB return \xBB en dehors d\u2019une fonction",s.line);break;case"If":he(s.body,e,t),he(s.orelse,e,t);break;case"While":case"For":he(s.body,!0,t),he(s.orelse,e,t);break;case"FunctionDef":he(s.body,!1,!0);break}}function fe(r,e=new Map,t=null){let s=(i,o)=>{e.has(i)||e.set(i,[]),e.get(i).push(o)},n=(i,o)=>{i.type==="Name"?s(i.id,o):(i.type==="Tuple"||i.type==="List")&&i.elts.forEach(a=>n(a,o))};for(let i of r)switch(i.type){case"Assign":i.targets.forEach(o=>n(o,i.line));break;case"AugAssign":case"AnnAssign":n(i.target,i.line);break;case"Delete":i.targets.forEach(o=>n(o,i.line));break;case"For":n(i.target,i.line),fe(i.body,e,t),fe(i.orelse,e,t);break;case"While":case"If":fe(i.body,e,t),fe(i.orelse,e,t);break;case"FunctionDef":s(i.name,i.line);break;case"Import":i.names.forEach(o=>s(o.asname??o.name.split(".")[0],i.line));break;case"ImportFrom":i.names!=="*"&&i.names.forEach(o=>s(o.asname??o.name,i.line));break;case"Global":t&&i.names.forEach(o=>t.add(o));break}return e}function Gt(r){let e=new Set,t=new Set(r.params.map(s=>s.name));if(r.type==="FunctionDef")for(let s of fe(r.body,new Map,e).keys())t.add(s);for(let s of e)t.delete(s);return{locals:t,globals:e}}function Ht(r,e){let t=Array.from({length:e.length+1},(s,n)=>n);for(let s=1;s<=r.length;s++){let n=t[0];t[0]=s;for(let i=1;i<=e.length;i++){let o=t[i];t[i]=Math.min(t[i]+1,t[i-1]+1,n+(r[s-1]===e[i-1]?0:1)),n=o}}return t[e.length]}function Xt(r){let e=typeof r=="string"?r:String(r),t=2166136261;for(let s=0;s<e.length;s++)t=Math.imul(t^e.charCodeAt(s),16777619);return t>>>0}var $e=class{constructor(e,t,s,n){this.name=e,this.fn=t,this.vars=s,this.isModule=t===null,this.locals=n?.locals??new Set,this.globalNames=n?.globals??new Set,this.compScopes=[],this.loops=[],this.line=null}},Ve=class{constructor(e,t){this.ast=e,this.src=e.source,this.limits={...zt,...t.limits},this.inputs=[...t.inputs??[]],this.builtins=ot(),this.globals=new Map,this.frames=[new $e("<module>",null,this.globals,null)],this.hiddenNames=new Set,this.steps=[],this.events=[],this.output="",this.ops=0,this.silent=0,this.lastCell=null,this.curLine=null,this.listCache=new Map,this.indexNames=new Map,this.assignLines=fe(e.body),this.seedRandom(t.seed??null)}get frame(){return this.frames[this.frames.length-1]}text(e){return this.src.slice(e.start,e.end)}run(){let e=null;this.step(null,"start");try{this.execBlock(this.ast.body),this.step(null,"end")}catch(s){e=this.toPyError(s),this.steps.push({kind:"error",line:e.line,events:this.events,error:ze(e),...this.snapshot()}),this.events=[]}let t={};for(let[s,n]of this.indexNames)t[s]=[...n];return{ok:!e,phase:"run",error:e&&ze(e),steps:this.steps,output:this.output,comments:this.ast.comments,meta:{indexNames:t}}}toPyError(e){if(e instanceof h)return e.line==null&&(e.line=this.curLine),e;if(e instanceof RangeError&&/call stack/i.test(e.message))return new h("RecursionError","trop d\u2019appels imbriqu\xE9s : la r\xE9cursion ne s\u2019arr\xEAte peut-\xEAtre jamais",this.curLine);let t=new h("InternalError",`erreur interne du simulateur (${e?.message??e})`,this.curLine);return t.cause=e,t}emit(e){this.silent===0&&this.events.push(e)}step(e,t="line"){if(this.steps.length>=this.limits.maxSteps)throw new h("StepLimit",`programme arr\xEAt\xE9 apr\xE8s ${this.limits.maxSteps.toLocaleString("fr-FR")} \xE9tapes : une boucle ne s'arr\xEAte peut-\xEAtre jamais (v\xE9rifie que sa condition finit par devenir fausse)`,e);e!=null&&(this.frame.line=e),this.steps.push({kind:t,line:e,events:this.events,...this.snapshot()}),this.events=[]}tick(){if(++this.ops>this.limits.maxOps)throw new h("StepLimit","programme arr\xEAt\xE9 : trop de calculs pour \xEAtre anim\xE9")}snapshot(){let e={},t=n=>{n instanceof w&&!(n.id in e)&&(e[n.id]=this.snapList(n),n.items.forEach(t))};return{frames:this.frames.map(n=>{let i=[];for(let[a,l]of n.vars)jt(l)||n.isModule&&this.hiddenNames.has(a)||(i.push([a,this.snapValue(l)]),t(l));let o=n.loops.map(a=>(t(a.list),{ref:a.list.id,index:a.index,var:a.var,label:a.label}));return{name:n.name,vars:i,loops:o}}),heap:e,out:this.output.length}}snapValue(e){return e instanceof w?{t:"list",ref:e.id}:{t:le(e),r:z(e,120)}}snapList(e){let t=this.listCache.get(e.id);if(t&&t.version===e.version)return t.snap;let s={items:e.items.map(n=>this.snapValue(n))};return e.items.some(n=>n instanceof F)||this.listCache.set(e.id,{version:e.version,snap:s}),s}recordIndexName(e,t){let s=null;t.type==="Name"?s=t.id:t.type==="BinOp"&&(t.op==="+"||t.op==="-")&&t.left.type==="Name"&&t.right.type==="Constant"&&(s=t.left.id),s&&(this.indexNames.has(e.id)||this.indexNames.set(e.id,new Set),this.indexNames.get(e.id).add(s))}lookup(e,t){let s=this.frame;for(let n=s.compScopes.length-1;n>=0;n--)if(s.compScopes[n].has(e))return s.compScopes[n].get(e);if(!s.isModule&&!s.globalNames.has(e)){if(s.vars.has(e))return s.vars.get(e);if(s.locals.has(e)){let n=`la variable locale \xAB ${e} \xBB est utilis\xE9e avant d'avoir re\xE7u une valeur dans ${s.name}()`;throw this.globals.has(e)&&(n+=` ; comme ${e} re\xE7oit une valeur dans la fonction, Python la consid\xE8re comme locale (ajoute \xAB global ${e} \xBB pour modifier la variable globale)`),new h("UnboundLocalError",n,t.line)}for(let n=s.fn.closure;n;n=n.fn?n.fn.closure:null)if(n.vars.has(e))return n.vars.get(e)}if(this.globals.has(e))return this.globals.get(e);if(this.builtins.has(e))return this.builtins.get(e);throw this.nameError(e,t)}nameError(e,t){let s=this.assignLines.get(e);if(s){let o=s.find(a=>a>t.line)??s[0];return new h("NameError",`la variable \xAB ${e} \xBB n'a pas encore de valeur \xE0 ce moment du programme (elle n'en re\xE7oit une qu'\xE0 la ligne ${o})`,t.line)}let n=this.similarName(e,!1),i=n?`voulais-tu \xE9crire \xAB ${n} \xBB ?`:Vt[e.toLowerCase()];if(!i&&pt[e]&&(i=`il faut d'abord l'importer : ${pt[e]}`),!i){let o=this.similarName(e,!0);i=o?`voulais-tu \xE9crire \xAB ${o} \xBB ?`:"aucune variable ni fonction ne porte ce nom"}return new h("NameError",`\xAB ${e} \xBB n'est pas d\xE9fini : ${i}`,t.line)}similarName(e,t){let s=this.frame,n=new Set([...s.vars.keys(),...this.globals.keys()]);if(t)for(let a of this.builtins.keys())n.add(a);for(let a of s.compScopes)for(let l of a.keys())n.add(l);let i=null,o=1/0;for(let a of n){if(a===e)continue;let l=a.toLowerCase()===e.toLowerCase()?0:Ht(a,e),c=e.length>=5?2:1;l<=c&&l<o&&(i=a,o=l)}return i}assignName(e,t,s=!0){let n=this.frame;n.isModule||n.globalNames.has(e)?(this.globals.set(e,t),this.hiddenNames.delete(e)):n.vars.set(e,t),s&&this.emit({type:"assign",name:e,value:z(t)})}execBlock(e){for(let t of e)this.execStmt(t)}execStmt(e){switch(this.curLine=e.line,e.type){case"Assign":return this.execAssign(e);case"AugAssign":return this.execAugAssign(e);case"AnnAssign":return e.value&&this.assignTarget(e.target,this.evalExpr(e.value)),this.step(e.line);case"ExprStmt":return e.value.type==="Constant"&&typeof e.value.value=="string"?void 0:(this.evalExpr(e.value),e.suspiciousEquality&&this.emit({type:"note",text:"Cette ligne compare deux valeurs mais ne change rien. Pour donner une valeur \xE0 une variable, on \xE9crit un seul =."}),this.step(e.line));case"If":return this.execIf(e);case"While":return this.execWhile(e);case"For":return this.execFor(e);case"FunctionDef":return this.assignName(e.name,this.makeFunction(e),!1),this.emit({type:"def",name:e.name,params:e.params.map(t=>t.name)}),this.step(e.line);case"Return":throw new be(e.value?this.evalExpr(e.value):null,e.line);case"Pass":return this.step(e.line);case"Break":throw this.emit({type:"break"}),this.step(e.line),Ue;case"Continue":throw this.emit({type:"continue"}),this.step(e.line),We;case"Import":for(let{name:t,asname:s}of e.names)this.importName(s??t,qe(t));return this.emit({type:"import",names:e.names.map(t=>t.name)}),this.step(e.line);case"ImportFrom":{let t=qe(e.module),s=e.names==="*"?[...t.attrs.keys()].map(n=>({name:n,asname:null})):e.names;for(let{name:n,asname:i}of s){if(!t.attrs.has(n))throw new h("ImportError",`le module ${e.module} ne contient pas \xAB ${n} \xBB`,e.line);this.importName(i??n,t.attrs.get(n))}return this.emit({type:"import",module:e.module,names:e.names==="*"?["*"]:e.names.map(n=>n.name)}),this.step(e.line)}case"Assert":{if(!V(this.evalExpr(e.test))){let t=e.msg?Q(this.evalExpr(e.msg)):"";throw new h("AssertionError",t||`la condition \xAB ${this.text(e.test)} \xBB est fausse`,e.line)}return this.emit({type:"assert",src:this.text(e.test)}),this.step(e.line)}case"Global":return;case"Delete":return e.targets.forEach(t=>this.deleteTarget(t)),this.step(e.line)}throw new h("NotSupported",`L\u2019instruction ${e.type} n'est pas encore prise en charge`,e.line)}importName(e,t){this.assignName(e,t,!1),this.frame.isModule&&this.hiddenNames.add(e)}execAssign(e){let t=e.targets[0],s=e.targets.length===1&&t.type==="Tuple"&&t.elts.length===2&&t.elts.every(l=>l.type==="Subscript")&&e.value.type==="Tuple"&&e.value.elts.length===2&&e.value.elts.every(l=>l.type==="Subscript"),n,i=null;if(s){let l=[];n=new N(e.value.elts.map(c=>{this.lastCell=null;let u=this.evalExpr(c);return l.push(this.lastCell),u})),i=l}else this.lastCell=null,n=this.evalExpr(e.value),e.value.type==="Subscript"&&(i=this.lastCell);let o=this.events.length,a=null;for(let l of e.targets)a=this.assignTarget(l,n,s?null:i);if(s&&Array.isArray(a)){let[l,c]=a,[u,g]=i;l&&c&&u&&g&&l.ref===c.ref&&u.ref===l.ref&&g.ref===l.ref&&u.index===c.index&&g.index===l.index&&this.silent===0&&(this.events=this.events.filter((y,L)=>L<o||y.type!=="write"),this.emit({type:"swap",ref:l.ref,i:l.index,j:c.index,name:this.text(t.elts[0].value)}))}this.step(e.line)}execAugAssign(e){let t=e.target;if(t.type==="Name"){let s=this.lookup(t.id,t),n=this.inplace(e.op,s,this.evalExpr(e.value));this.assignName(t.id,n)}else{let s=this.evalExpr(t.value);if(t.slice.type==="Slice")throw new h("NotSupported","L\u2019op\xE9ration sur une tranche n\u2019est pas prise en charge",t.line);let n=this.evalExpr(t.slice),i=this.getItem(s,n,t),o=this.inplace(e.op,i,this.evalExpr(e.value));this.setItem(s,n,o,t,null)}this.step(e.line)}inplace(e,t,s){return e==="+"&&t instanceof w?(t.items.push(...P(s)),t.touch(),this.emit({type:"mutate",method:"extend",ref:t.id}),t):re(e,t,s)}execIf(e){let t=V(this.evalExpr(e.test)),s=e.orelse.length?e.orelse[0].isElif?"elif":"else":"none";this.emit({type:"test",kind:e.isElif?"elif":"if",src:this.text(e.test),result:t,next:s}),this.step(e.line),this.execBlock(t?e.body:e.orelse)}execWhile(e){for(;;){let t=V(this.evalExpr(e.test));if(this.emit({type:"test",kind:"while",src:this.text(e.test),result:t}),this.step(e.line),!t)break;try{this.execBlock(e.body)}catch(s){if(s===Ue)return;if(s!==We)throw s}}this.execBlock(e.orelse)}execFor(e){let t=this.evalExpr(e.iter),s;try{s=ve(t)}catch(c){throw c instanceof h&&c.line==null&&(c.line=e.line),c}let n=this.text(e.target),i=this.text(e.iter),o=this.frame,a=s.kind==="list"?{list:t,index:-1,var:n,label:i}:null;a&&o.loops.push(a);let l=!1;for(let c=s.next();c;c=s.next()){a&&(a.index=c.index,this.emit({type:"read",ref:t.id,index:c.index})),this.assignTarget(e.target,c.value),this.emit({type:"iter",var:n,iter:i,kind:s.kind,index:c.index,value:z(c.value),ref:a?t.id:null}),this.step(e.line);try{this.execBlock(e.body)}catch(u){if(u===Ue){l=!0;break}if(u!==We)throw u}}a&&o.loops.splice(o.loops.indexOf(a),1),l||(this.emit({type:"loopEnd",var:n,iter:i,kind:s.kind}),this.step(e.line),this.execBlock(e.orelse))}deleteTarget(e){if(e.type==="Name"){let n=this.frame,i=n.isModule||n.globalNames.has(e.id)?this.globals:n.vars;if(!i.has(e.id))throw this.nameError(e.id,e);i.delete(e.id),this.emit({type:"delete",name:e.id});return}let t=this.evalExpr(e.value);if(e.slice.type==="Slice")throw new h("NotSupported","del sur une tranche n\u2019est pas pris en charge",e.line);let s=this.evalExpr(e.slice);if(t instanceof w){let n=this.checkIndex(t,s,e);t.items.splice(n,1),t.touch(),this.emit({type:"mutate",method:"del",ref:t.id,index:n,target:this.text(e.value)})}else if(t instanceof F){if(!t.has(s))throw new h("KeyError",`la cl\xE9 ${z(s)} n'existe pas`,e.line);t.delete(s)}else throw new h("TypeError",`del ne s'applique pas \xE0 ${I(t)}`,e.line)}assignTarget(e,t,s=null){switch(e.type){case"Name":return this.assignName(e.id,t),null;case"Subscript":{let n=this.evalExpr(e.value);if(e.slice.type==="Slice")return this.setSlice(n,e,t);let i=this.evalExpr(e.slice);return this.setItem(n,i,t,e,s)}case"Tuple":case"List":{let n=this.unpack(t,e.elts.length,e.line);return e.elts.map((i,o)=>this.assignTarget(i,n[o]))}}throw new h("NotSupported","Ce type d\u2019affectation n\u2019est pas pris en charge",e.line)}unpack(e,t,s){if(!(e instanceof w||e instanceof N||typeof e=="string"||e instanceof R))throw new h("TypeError",`impossible de r\xE9partir ${I(e)} entre ${t} variables`,s);let n=P(e);if(n.length!==t)throw new h("ValueError",n.length>t?`trop de valeurs \xE0 r\xE9partir : ${n.length} valeurs pour ${t} variables`:`pas assez de valeurs \xE0 r\xE9partir : ${n.length} pour ${t} variables`,s);return n}checkIndex(e,t,s,n=e.items?.length){if(!_(t)){let o=typeof t=="number"?" (utilise // pour une division enti\xE8re)":"";throw new h("TypeError",`un indice doit \xEAtre un entier, pas ${I(t)}${o}`,s.line)}let i=ye(n,t);if(i<0){e instanceof w&&this.emit({type:"outOfRange",ref:e.id,index:Number(O(t))});let o=typeof e=="string"?"la cha\xEEne":e instanceof N?"le tuple":e instanceof R?"le range":"la liste",a=n===0?`${o.split(" ")[0]==="la"?"elle":"il"} est vide`:`les indices vont de 0 \xE0 ${n-1}`;throw new h("IndexError",`indice ${D(t)} hors de ${o} ${this.text(s.value)} : ${a}`,s.line)}return i}getItem(e,t,s){if(this.lastCell=null,e instanceof w||e instanceof N){let n=this.checkIndex(e,t,s);return e instanceof w&&(this.recordIndexName(e,s.slice),this.emit({type:"read",ref:e.id,index:n}),this.lastCell={ref:e.id,index:n}),e.items[n]}if(typeof e=="string"){let n=[...e];return n[this.checkIndex(e,t,s,n.length)]}if(e instanceof F){if(!e.has(t))throw new h("KeyError",`la cl\xE9 ${z(t)} n'existe pas dans le dictionnaire ${this.text(s.value)}`,s.line);return e.get(t)}if(e instanceof R)return e.at(this.checkIndex(e,t,s,e.length));throw new h("TypeError",`${I(e)} ne s'indexe pas avec des crochets`,s.line)}setItem(e,t,s,n,i){if(e instanceof w){let o=this.checkIndex(e,t,n);return e.items[o]=s,e.touch(),this.recordIndexName(e,n.slice),this.emit({type:"write",ref:e.id,index:o,value:z(s),name:this.text(n.value),from:i&&i.ref===e.id?i.index:null}),{ref:e.id,index:o}}if(e instanceof F)return e.set(t,s),this.emit({type:"dictSet",name:this.text(n.value),key:z(t),value:z(s)}),null;throw typeof e=="string"?new h("TypeError","une cha\xEEne de caract\xE8res ne peut pas \xEAtre modifi\xE9e : construis une nouvelle cha\xEEne",n.line):e instanceof N?new h("TypeError","un tuple ne peut pas \xEAtre modifi\xE9",n.line):new h("TypeError",`${I(e)} ne permet pas de modifier un \xE9l\xE9ment avec des crochets`,n.line)}sliceBounds(e){let t=e.slice;return[t.lower,t.upper,t.step].map(s=>s?this.evalExpr(s):null)}getSlice(e,t){let[s,n,i]=this.sliceBounds(t);if(e instanceof w||e instanceof N){let o=we(e.items.length,s,n,i);e instanceof w&&o.length&&this.emit({type:"slice",ref:e.id,indices:o});let a=o.map(l=>e.items[l]);return e instanceof w?new w(a):new N(a)}if(typeof e=="string"){let o=[...e];return we(o.length,s,n,i).map(a=>o[a]).join("")}throw new h("TypeError",`${I(e)} ne se d\xE9coupe pas en tranches`,t.line)}setSlice(e,t,s){if(!(e instanceof w))throw new h("TypeError",`${I(e)} ne permet pas de modifier une tranche`,t.line);let[n,i,o]=this.sliceBounds(t);if(o!==null&&!(_(o)&&O(o)===1n))throw new h("NotSupported","L\u2019affectation d\u2019une tranche avec un pas n\u2019est pas prise en charge",t.line);let a=we(e.items.length,n,i,null),l=a.length?a[0]:Math.min(Math.max(n===null?0:Yt(e.items.length,n),0),e.items.length),c=P(s);return e.items.splice(l,a.length,...c),e.touch(),this.emit({type:"mutate",method:"slice",ref:e.id,target:this.text(t.value),index:l,count:c.length}),null}evalExpr(e){switch(this.tick(),this.curLine=e.line,e.type){case"Constant":return e.value;case"Name":return this.lookup(e.id,e);case"List":return new w(e.elts.map(t=>this.evalExpr(t)));case"Tuple":return new N(e.elts.map(t=>this.evalExpr(t)));case"Dict":{let t=new F;return e.keys.forEach((s,n)=>t.set(this.evalExpr(s),this.evalExpr(e.values[n]))),t}case"BinOp":{let t=this.evalExpr(e.left),s=this.evalExpr(e.right);return this.located(e,()=>re(e.op,t,s))}case"UnaryOp":{let t=this.evalExpr(e.operand);return this.located(e,()=>Je(e.op,t))}case"BoolOp":{let t=null;for(let s of e.values)if(t=this.evalExpr(s),e.op==="and"?!V(t):V(t))return t;return t}case"Compare":return this.evalCompare(e);case"IfExp":return V(this.evalExpr(e.test))?this.evalExpr(e.body):this.evalExpr(e.orelse);case"Call":return this.evalCall(e);case"Subscript":{let t=this.evalExpr(e.value);if(e.slice.type==="Slice")return this.getSlice(t,e);let s=this.evalExpr(e.slice);return this.getItem(t,s,e)}case"Attribute":{let t=this.evalExpr(e.value);return this.located(e,()=>at(t,e.attr))}case"ListComp":case"GeneratorExp":return this.evalComprehension(e);case"FString":return this.evalFString(e);case"Lambda":return this.makeFunction(e);case"Slice":throw new h("SyntaxError","une tranche (a:b) ne s\u2019\xE9crit qu\u2019entre crochets",e.line)}throw new h("NotSupported",`L\u2019expression ${e.type} n'est pas prise en charge`,e.line)}located(e,t){try{return t()}catch(s){throw s instanceof h&&s.line==null&&(s.line=e.line),s}}operandInfo(e){return e.type==="Subscript"&&this.lastCell?{cell:this.lastCell}:e.type==="Name"?{name:e.id}:null}evalCompare(e){let t=e.left;this.lastCell=null;let s=this.evalExpr(t),n=this.operandInfo(t);for(let i=0;i<e.ops.length;i++){let o=e.ops[i],a=e.comparators[i];this.lastCell=null;let l=this.evalExpr(a),c=this.operandInfo(a),u=this.located(e,()=>ft(o,s,l));if(this.emit({type:"compare",src:`${this.text(t)} ${o} ${this.text(a)}`,op:o,left:z(s,40),right:z(l,40),result:u,operands:[n,c]}),!u)return!1;s=l,t=a,n=c}return!0}evalCall(e){let t=this.evalExpr(e.func),s=e.args.map(i=>this.evalExpr(i)),n=new Map;for(let i of e.keywords)n.set(i.arg,this.evalExpr(i.value));return this.callFunction(t,s,n,e)}callFunction(e,t,s,n){if(e instanceof se)return this.callUser(e,t,s,n);if(e instanceof j)return this.located(n,()=>e.fn(t,s,this.ctx(n)));if(e instanceof ee)return this.located(n,()=>e.fn(e.self,t,s,this.ctx(n)));let i=e instanceof w?" (pour lire un \xE9l\xE9ment, utilise des crochets : L[i])":"";throw new h("TypeError",`${I(e)} ne peut pas \xEAtre appel\xE9 comme une fonction${i}`,n.line)}ctx(e){return{emit:t=>this.emit(t),print:t=>{this.output+=t,this.emit({type:"print",text:t})},input:t=>this.readInput(t),call:(t,s,n=new Map)=>this.callFunction(t,s,n,e),random:()=>this.random(),seed:t=>this.seedRandom(t),targetText:e.func?.type==="Attribute"?this.text(e.func.value):null,argText:t=>e.args?.[t]?this.text(e.args[t]):null}}readInput(e){if(this.output+=e,this.inputs.length===0)throw new h("EOFError","input() attend une valeur : \xE9cris-la dans le champ \xAB Entr\xE9es \xBB (une valeur par ligne), puis relance");let t=this.inputs.shift();return this.output+=t+`
+`,this.emit({type:"input",prompt:e,value:t}),t}seedRandom(e){let t=e==null?Math.floor(Math.random()*4294967296):Xt(e);this.random=()=>{t=t+1831565813|0;let s=t;return s=Math.imul(s^s>>>15,s|1),s^=s+Math.imul(s^s>>>7,s|61),((s^s>>>14)>>>0)/4294967296}}makeFunction(e){let t=new se(e,this.frame.isModule?null:this.frame);return e.type==="Lambda"&&(t.name="<lambda>"),t.defaults=e.params.map(s=>s.default?this.evalExpr(s.default):void 0),t}callUser(e,t,s,n){let i=e.node,o=e.name;if(this.frames.length>this.limits.maxDepth)throw new h("RecursionError",`plus de ${this.limits.maxDepth} appels imbriqu\xE9s de ${o}() : la r\xE9cursion ne s'arr\xEAte peut-\xEAtre jamais (as-tu pr\xE9vu un cas de base ?)`,n.line);let a=i.params;if(t.length>a.length)throw new h("TypeError",`${o}() attend ${a.length} argument${a.length>1?"s":""}, mais en re\xE7oit ${t.length}`,n.line);let l=new Map;t.forEach((y,L)=>l.set(a[L].name,y));for(let[y,L]of s){if(!a.some(A=>A.name===y))throw new h("TypeError",`${o}() n'a pas de param\xE8tre \xAB ${y} \xBB`,n.line);if(l.has(y))throw new h("TypeError",`${o}() re\xE7oit deux valeurs pour \xAB ${y} \xBB`,n.line);l.set(y,L)}let c=new Map;a.forEach((y,L)=>{if(l.has(y.name))c.set(y.name,l.get(y.name));else if(y.default)c.set(y.name,e.defaults[L]);else throw new h("TypeError",`il manque l'argument \xAB ${y.name} \xBB dans l'appel de ${o}()`,n.line)}),i.scope??(i.scope=Gt(i));let u=new $e(o,e,c,i.scope);if(this.frames.push(u),i.type==="Lambda"){this.silent++;try{return this.evalExpr(i.body)}finally{this.silent--,this.frames.pop()}}this.emit({type:"call",name:o,args:a.map(y=>[y.name,z(c.get(y.name))])}),this.step(i.line,"call");let g=null,m=null;try{this.execBlock(i.body)}catch(y){if(!(y instanceof be))throw y;g=y.value,m=y.line}return this.emit({type:"return",name:o,value:z(g),implicit:m===null}),this.step(m??u.line??i.line,"return"),this.frames.pop(),g}evalComprehension(e){let t=this.frame,s=new Map,n=[];t.compScopes.push(s),this.silent++;try{let i=o=>{if(o===e.generators.length){n.push(this.evalExpr(e.elt));return}let a=e.generators[o],l=ve(this.evalExpr(a.iter));for(let c=l.next();c;c=l.next())this.tick(),this.assignCompTarget(a.target,c.value,s),a.ifs.every(u=>V(this.evalExpr(u)))&&i(o+1)};i(0)}finally{this.silent--,t.compScopes.pop()}return new w(n)}assignCompTarget(e,t,s){if(e.type==="Name"){s.set(e.id,t);return}if(e.type==="Tuple"||e.type==="List"){let n=this.unpack(t,e.elts.length,e.line);e.elts.forEach((i,o)=>this.assignCompTarget(i,n[o],s));return}throw new h("NotSupported","Cette forme de compr\xE9hension n\u2019est pas prise en charge",e.line)}evalFString(e){let t="";for(let s of e.parts){if(s.kind==="text"){t+=s.value;continue}let n=this.evalExpr(s.expr),i=s.conversion==="r"||s.conversion==="a"?D(n):s.conversion==="s"?Q(n):n,o=this.located(e,()=>me(i,s.formatSpec));s.debug!==null?t+=s.debug+(s.conversion||s.formatSpec?o:D(n)):t+=o}return t}};function Yt(r,e){let t=Number(O(e));return t<0?t+r:t}function ft(r,e,t){switch(r){case"==":return Z(e,t);case"!=":return!Z(e,t);case"<":return J(e,t,r)<0;case"<=":return J(e,t,r)<=0;case">":return J(e,t,r)>0;case">=":return J(e,t,r)>=0;case"in":return Me(t,e);case"not in":return!Me(t,e);case"is":return e===t||_(e)&&_(t)&&Z(e,t)&&typeof e==typeof t;case"is not":return!ft("is",e,t)}throw new h("NotSupported",`comparaison ${r}`)}function $(r,e={},...t){let s=document.createElement(r);for(let[n,i]of Object.entries(e??{}))i==null||i===!1||(n==="class"?s.className=i:n==="text"?s.textContent=i:n.startsWith("on")?s.addEventListener(n.slice(2),i):s.setAttribute(n,i===!0?"":i));for(let n of t.flat())n==null||n===!1||s.append(n instanceof Node?n:String(n));return s}var ke=()=>typeof matchMedia=="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches;var je="    ",Zt=new Set(["print","len","range","int","float","str","bool","list","tuple","dict","abs","min","max","sum","round","sorted","reversed","enumerate","zip","input","type","isinstance","map","filter","any","all","chr","ord","bin","hex","oct","divmod","pow","format","repr"]),Qt=/("""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|[rRfFuU]{0,2}"(?:\\.|[^"\\\n])*"?|[rRfFuU]{0,2}'(?:\\.|[^'\\\n])*'?|#[^\n]*|\d[\d_]*(?:\.\d*)?(?:[eE][+-]?\d+)?|\.\d+|[\p{L}_][\p{L}\p{N}_]*|\n|[^\S\n]+|.)/gu,Jt=r=>r.replace(/[&<>"]/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[e]);function en(r){let e=[""],t="";for(let[s]of r.matchAll(Qt)){if(s===`
+`){e.push("");continue}let n=null;s[0]==="#"?n="tk-cm":/^[rRfFuU]{0,2}["']/.test(s)?n="tk-str":/^[\d.]/.test(s)&&/\d/.test(s)?n="tk-num":/^[\p{L}_]/u.test(s)&&(Re.has(s)?n="tk-kw":t==="def"?n="tk-def":Zt.has(s)&&(n="tk-fn")),/^\s+$/.test(s)||(t=s),s.split(`
+`).forEach((a,l)=>{l>0&&e.push("");let c=Jt(a);e[e.length-1]+=n&&a?`<span class="${n}">${c}</span>`:c})}return e}var Ne=class{constructor(e,{onChange:t,onRun:s}){this.root=e,this.textarea=e.querySelector("textarea"),this.gutter=e.querySelector(".gutter"),this.onChange=t,this.onRun=s,this.textarea.addEventListener("input",()=>{this.updateGutter(),this.onChange(this.value)}),this.textarea.addEventListener("scroll",()=>{this.gutter.scrollTop=this.textarea.scrollTop}),this.textarea.addEventListener("keydown",n=>this.onKey(n))}get value(){return this.textarea.value}set value(e){this.textarea.value=e,this.updateGutter()}updateGutter(){let e=this.textarea.value.split(`
+`).length;this.lineCount!==e&&(this.lineCount=e,this.gutter.textContent=Array.from({length:e},(t,s)=>s+1).join(`
+`))}focusLine(e){let t=this.value.split(`
+`),s=t.slice(0,e-1).reduce((o,a)=>o+a.length+1,0),n=s+(t[e-1]?.length??0);this.textarea.focus({preventScroll:!0}),this.textarea.setSelectionRange(s,n);let i=parseFloat(getComputedStyle(this.textarea).lineHeight)||24;this.textarea.scrollTop=Math.max(0,(e-3)*i)}insert(e,t=this.textarea.selectionStart,s=this.textarea.selectionEnd){let n=this.textarea;n.setSelectionRange(t,s),document.execCommand&&document.execCommand("insertText",!1,e)||(n.setRangeText(e,t,s,"end"),n.dispatchEvent(new Event("input")))}onKey(e){let t=this.textarea;if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault(),this.onRun();return}let{selectionStart:s,selectionEnd:n,value:i}=t,o=i.lastIndexOf(`
+`,s-1)+1;if(e.key==="Tab"){e.preventDefault();let a=i.indexOf(`
+`,n-(n>s&&i[n-1]===`
+`?1:0)),l=i.slice(o,a===-1?i.length:a);if(s===n&&!e.shiftKey){this.insert(je.slice((s-o)%4));return}let u=l.split(`
+`).map(g=>e.shiftKey?g.replace(/^ {1,4}/,""):je+g).join(`
+`);this.insert(u,o,o+l.length),t.setSelectionRange(o,o+u.length);return}if(e.key==="Enter"&&s===n){e.preventDefault();let a=i.slice(o,s),l=/^ */.exec(a)[0];a.replace(/#.*$/,"").trimEnd().endsWith(":")?l+=je:/^\s*(return|pass|break|continue)\b/.test(a)&&(l=l.slice(4)),this.insert(`
+`+l);return}if(e.key==="Backspace"&&s===n&&s>o){let a=i.slice(o,s);if(/^ +$/.test(a)){e.preventDefault();let l=a.length%4||4;this.insert("",s-l,s)}}}},Se=class{constructor(e){this.root=e,this.lines=[]}render(e){this.root.textContent="";let t=en(e);t.length>1&&t[t.length-1]===""&&t.pop(),this.lines=t.map((s,n)=>{let i=document.createElement("div");return i.className="ln",i.dataset.line=String(n+1),i.innerHTML=`<span class="no">${n+1}</span><span class="src">${s||" "}</span>`,this.root.append(i),i}),this.current=null}setCurrent(e,t){this.current&&this.current.classList.remove("is-current","is-error","is-call");let s=e?this.lines[e-1]:null;if(this.current=s,!s)return;s.classList.add(t==="error"?"is-error":"is-current"),t==="call"&&s.classList.add("is-call");let n=s.offsetTop,i=this.root;(n<i.scrollTop+8||n+s.offsetHeight>i.scrollTop+i.clientHeight-8)&&(i.scrollTop=Math.max(0,n-i.clientHeight/3))}};var ce=[{id:"parcours",group:"Parcourir une liste",title:"Parcours simple",code:`L = [4, 12, 7, 2, 33]
+for x in L:   # parcours la liste L
+    pass
+`},{id:"maximum",group:"Parcourir une liste",title:"Maximum",code:`L = [4, 12, 7, 2, 33]
+m = L[0]
+for x in L:       # parcours la liste L
+    if x > m:     # chaque fois que la valeur x rencontr\xE9e est sup\xE9rieure \xE0 m,
+        m = x     # cela devient la nouvelle valeur de m
+`},{id:"minimum-indice",group:"Parcourir une liste",title:"Minimum et sa position",code:`L = [9, 4, 12, 2, 7, 5]
+imin = 0
+for i in range(1, len(L)):   # pour chaque indice i \xE0 partir de 1
+    if L[i] < L[imin]:       # si l'\xE9l\xE9ment d'indice i est plus petit que le minimum actuel
+        imin = i             # on retient sa position
+print("minimum :", L[imin], "\xE0 l'indice", imin)
+`},{id:"moyenne",group:"Parcourir une liste",title:"Moyenne",code:`notes = [12, 15, 8, 17, 10]
+s = 0
+for n in notes:   # on parcourt les notes
+    s = s + n     # en les additionnant une \xE0 une
+moyenne = s / len(notes)
+print(moyenne)
+`},{id:"comptage",group:"Parcourir une liste",title:"Compter les occurrences",code:`L = [3, 1, 3, 2, 3, 1]
+nb = 0
+for x in L:          # parcours la liste L
+    if x == 3:       # chaque fois qu'on rencontre 3,
+        nb = nb + 1  # on augmente le compteur
+print(nb)
+`},{id:"appartient",group:"Rechercher",title:"Recherche d\u2019une valeur",code:`def appartient(v, L):
+    for x in L:          # parcours la liste L
+        if x == v:       # d\xE8s qu'on trouve v,
+            return True  # on s'arr\xEAte : v est dans la liste
+    return False         # liste parcourue en entier sans trouver v
+
+L = [5, 3, 8, 1, 9]
+print(appartient(8, L))
+print(appartient(4, L))
+`},{id:"recherche-while",group:"Rechercher",title:"Premi\xE8re position (boucle while)",code:`L = [5, 3, 8, 1, 9]
+v = 8
+i = 0
+while i < len(L) and L[i] != v:   # tant qu'on n'est pas au bout et qu'on n'a pas trouv\xE9 v
+    i = i + 1                     # on avance d'une case
+if i < len(L):
+    print(v, "est \xE0 l'indice", i)
+else:
+    print(v, "n'est pas dans la liste")
+`},{id:"dichotomie",group:"Rechercher",title:"Recherche dichotomique",code:`def dichotomie(L, v):
+    debut = 0
+    fin = len(L) - 1
+    while debut <= fin:               # tant que la zone de recherche n'est pas vide
+        milieu = (debut + fin) // 2   # on regarde l'\xE9l\xE9ment du milieu
+        if L[milieu] == v:
+            return milieu             # trouv\xE9 !
+        elif L[milieu] < v:
+            debut = milieu + 1        # v ne peut \xEAtre que dans la moiti\xE9 droite
+        else:
+            fin = milieu - 1          # v ne peut \xEAtre que dans la moiti\xE9 gauche
+    return None                       # zone vide : v n'est pas dans la liste
+
+L = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+print(dichotomie(L, 23))
+`},{id:"tri-selection",group:"Trier",title:"Tri par s\xE9lection",code:`def tri_selection(T):
+    n = len(T)
+    for i in range(n - 1):
+        imin = i                        # on cherche le minimum de la partie non tri\xE9e
+        for j in range(i + 1, n):
+            if T[j] < T[imin]:
+                imin = j
+        T[i], T[imin] = T[imin], T[i]   # on le place en position i
+
+L = [7, 3, 9, 1, 5, 2]
+tri_selection(L)
+print(L)
+`},{id:"tri-insertion",group:"Trier",title:"Tri par insertion",code:`def tri_insertion(T):
+    for i in range(1, len(T)):
+        cle = T[i]                        # l'\xE9l\xE9ment \xE0 ins\xE9rer
+        j = i
+        while j > 0 and T[j - 1] > cle:   # on d\xE9cale vers la droite les \xE9l\xE9ments plus grands
+            T[j] = T[j - 1]
+            j = j - 1
+        T[j] = cle                        # on ins\xE8re cle \xE0 sa place
+
+L = [7, 3, 9, 1, 5, 2]
+tri_insertion(L)
+print(L)
+`},{id:"rendu-monnaie",group:"Algorithme glouton",title:"Rendu de monnaie",code:`pieces = [200, 100, 50, 20, 10, 5, 2, 1]
+somme = 263
+rendu = []
+for p in pieces:          # des plus grosses pi\xE8ces aux plus petites
+    while somme >= p:     # tant que la pi\xE8ce p ne d\xE9passe pas ce qu'il reste \xE0 rendre,
+        rendu.append(p)   # on la rend
+        somme = somme - p
+print(rendu)
+`},{id:"oubli-initialisation",group:"D\xE9marches \xE0 corriger",title:"m n\u2019a pas de valeur de d\xE9part",code:`L = [4, 12, 7, 2, 33]
+for x in L:       # parcours la liste L
+    if x > m:     # chaque fois que la valeur x rencontr\xE9e est sup\xE9rieure \xE0 m,
+        m = x     # cela devient la nouvelle valeur de m
+`},{id:"maximum-zero",group:"D\xE9marches \xE0 corriger",title:"m commence \xE0 0",code:`L = [-4, -12, -7, -2, -33]
+m = 0
+for x in L:       # parcours la liste L
+    if x > m:     # chaque fois que x est sup\xE9rieure \xE0 m,
+        m = x     # cela devient la nouvelle valeur de m
+print(m)          # est-ce vraiment le maximum de L ?
+`},{id:"indice-de-trop",group:"D\xE9marches \xE0 corriger",title:"Un indice de trop",code:`L = [4, 12, 7, 2, 33]
+for i in range(len(L)):    # pour chaque indice i de la liste
+    if L[i] > L[i + 1]:    # on compare l'\xE9l\xE9ment au suivant
+        print(L[i], "est plus grand que", L[i + 1])
+`},{id:"boucle-infinie",group:"D\xE9marches \xE0 corriger",title:"La boucle qui ne s\u2019arr\xEAte pas",code:`L = [5, 3, 8, 1, 9]
+v = 8
+i = 0
+while L[i] != v:       # tant qu'on n'a pas trouv\xE9 v
+    suivant = i + 1    # on calcule l'indice suivant\u2026 mais i ne change jamais
+`}],Ge="maximum";var Le=class{constructor({onShow:e,onState:t}){this.onShow=e,this.onState=t,this.count=0,this.index=0,this.playing=!1,this.timer=null,this.delay=600}load(e,t=0){this.pause(),this.count=e,this.show(t)}show(e){this.count!==0&&(this.index=Math.min(Math.max(e,0),this.count-1),this.onShow(this.index),this.onState())}get atEnd(){return this.index>=this.count-1}play(){this.count<2||(this.atEnd&&this.show(0),this.playing=!0,this.onState(),this.schedule())}schedule(){clearTimeout(this.timer),this.timer=setTimeout(()=>{if(this.playing){if(this.atEnd){this.pause();return}this.show(this.index+1),this.atEnd?this.pause():this.schedule()}},this.delay)}pause(){clearTimeout(this.timer),this.playing&&(this.playing=!1,this.onState())}toggle(){this.playing?this.pause():this.play()}step(e){this.pause(),this.show(this.index+e)}setDelay(e){this.delay=e,this.playing&&this.schedule()}};var tn=r=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(r);function nn(r){if(r.kind==="while")return r.result?"Condition vraie : on fait un tour de boucle":"Condition fausse : la boucle while s\u2019arr\xEAte";let e=r.kind==="elif"?"du elif":"du if";return r.result?`Condition vraie : on ex\xE9cute le bloc ${e}`:r.next==="else"?"Condition fausse : on passe au bloc else":r.next==="elif"?"Condition fausse : on teste le elif suivant":`Condition fausse : on saute le bloc ${e}`}function sn(r){let e=r.target??"la liste";switch(r.method){case"append":return`${r.value} est ajout\xE9 \xE0 la fin de ${e}`;case"insert":return`${r.value} est ins\xE9r\xE9 dans ${e} \xE0 l\u2019indice ${r.index}`;case"pop":return`${r.value} est retir\xE9 de ${e} (indice ${r.index})`;case"remove":return`${r.value} est retir\xE9 de ${e}`;case"del":return`L\u2019\xE9l\xE9ment d\u2019indice ${r.index} est supprim\xE9 de ${e}`;case"sort":return`${e} est tri\xE9e`;case"reverse":return`${e} est invers\xE9e`;case"extend":return`${e} est prolong\xE9e`;case"clear":return`${e} est vid\xE9e`;case"shuffle":return`${e} est m\xE9lang\xE9e`;case"slice":return`Une tranche de ${e} est remplac\xE9e`}return`${e} est modifi\xE9e`}function dt(r,e){if(r.kind==="start")return[{text:"Pr\xEAt. Lance l\u2019animation avec \u25B6 ou la touche Espace.",tone:"flow"}];let t=[],s=new Set(r.events.filter(n=>n.type==="iter").map(n=>n.var));for(let n of r.events)switch(n.type){case"iter":(n.kind==="list"||n.kind==="tuple")&&tn(n.iter)?t.push({text:`${n.var} \u2190 ${n.iter}[${n.index}] = ${n.value}`}):t.push({text:`${n.var} \u2190 ${n.value}`});break;case"loopEnd":t.push({text:n.kind==="range"?`Fin de la boucle for : ${n.var} a pris toutes ses valeurs`:`Fin du parcours de ${n.iter}`,tone:"flow"});break;case"assign":s.has(n.name)||t.push({text:`${n.name} \u2190 ${n.value}`});break;case"compare":{let i=`${n.left} ${n.op} ${n.right}`;t.push({text:i===n.src?n.src:`${n.src}   \u27F6   ${i}`,result:n.result});break}case"test":t.push({text:nn(n),tone:"flow"});break;case"write":t.push({text:n.from!==null?`${n.name}[${n.index}] \u2190 ${n.name}[${n.from}] = ${n.value}`:`${n.name}[${n.index}] \u2190 ${n.value}`});break;case"swap":t.push({text:n.i===n.j?`${n.name}[${n.i}] est \xE9chang\xE9 avec lui-m\xEAme : il reste \xE0 sa place`:`\xC9change de ${n.name}[${n.i}] et ${n.name}[${n.j}]`});break;case"mutate":t.push({text:sn(n)});break;case"call":t.push({text:`Appel de ${n.name}(${n.args.map(([i,o])=>`${i} = ${o}`).join(", ")})`,tone:"flow"});break;case"return":t.push({text:n.implicit?`${n.name}() se termine sans return : elle renvoie None`:`${n.name}() renvoie ${n.value}`,tone:"flow"});break;case"print":t.push({text:`Affiche : ${n.text.replace(/\n$/,"")}`});break;case"input":t.push({text:`Lit l\u2019entr\xE9e : ${n.value}`});break;case"def":t.push({text:`D\xE9finition de la fonction ${n.name}(${n.params.join(", ")})`,tone:"flow"});break;case"import":t.push({text:n.module?`Import de ${n.names.join(", ")} depuis ${n.module}`:`Import du module ${n.names.join(", ")}`,tone:"flow"});break;case"assert":t.push({text:`V\xE9rification : ${n.src}`,result:!0});break;case"note":t.push({text:n.text,tone:"note"});break;case"break":t.push({text:"break : on sort imm\xE9diatement de la boucle",tone:"flow"});break;case"continue":t.push({text:"continue : on passe directement au tour suivant",tone:"flow"});break;case"dictSet":t.push({text:`${n.name}[${n.key}] \u2190 ${n.value}`});break;case"delete":t.push({text:`La variable ${n.name} est supprim\xE9e`});break}if(r.kind==="end"&&t.push({text:"Fin du programme.",tone:"flow"}),r.kind==="error"){let n=r.error.line?` \xE0 la ligne ${r.error.line}`:"";t.push({text:`Arr\xEAt${n} : ${r.error.title.toLowerCase()}`,tone:"error"})}if(t.length===0&&r.line){let n=e[r.line-1]?.trim()??"";t.push({text:n.startsWith("pass")?"pass : il n\u2019y a rien \xE0 faire":"Rien de visible \xE0 cette \xE9tape",tone:"flow"})}return t}function mt(r,e){if(!r||!e)return null;let t=e.get(r);if(t&&!t.alone&&t.text)return t.text;let s=[];for(let i=r-1;e.get(i)?.alone;i--)s.unshift(e.get(i).text);return s.filter(Boolean).join(" ")||null}var gt=[["debut","fin"],["deb","fin"],["gauche","droite"],["g","d"],["bas","haut"],["inf","sup"],["lo","hi"]],rn=new Set(["StepLimit","NotSupported","InternalError"]),on=r=>r.charAt(0).toUpperCase()+r.slice(1);function He(r,e,t){r.has(e)||r.set(e,[]),r.get(e).push(t)}function Xe(r){let e=r.line?` \xB7 ligne ${r.line}`:"",t=rn.has(r.type)?"":` \xB7 ${r.type}`;return[$("p",{class:"error-title"},$("strong",{},r.title),`${t}${e}`),$("p",{},on(r.message))]}var Te=class{constructor(e){this.els=e,this.run=null,this.moveDuration=450}load(e,t){this.run=e,this.lines=t.split(`
+`),this.exclusive=new Map}render(e,{animate:t=!0}={}){let s=this.run.steps[e],n=e>0?this.run.steps[e-1]:null;this.renderPhrase(s),this.renderStructures(s),this.renderVariables(s),this.renderStack(s),this.renderNarration(s),this.renderError(s),this.renderOutput(s,n),t&&!ke()&&this.animateMoves(s)}renderPhrase(e){let t=mt(e.line,this.run.comments);this.els.phrase.hidden=!t,t&&(this.els.phraseText.textContent=t)}collectLists(e){let t=e.frames,s=t[t.length-1],n=t[0],i=new Map,o=a=>(i.has(a)||i.set(a,{ref:a,names:[],globals:[],anon:null}),i.get(a));for(let[a,l]of s.vars)l.t==="list"&&o(l.ref).names.push(a);if(s!==n)for(let[a,l]of n.vars)l.t==="list"&&o(l.ref).globals.push(a);for(let a of s===n?[s]:[s,n])for(let l of a.loops){let c=e.heap[l.ref]?.items??[];!i.has(l.ref)&&c.every(u=>u.t!=="tuple"&&u.t!=="list")&&(o(l.ref).anon=l.label)}return[...i.values()]}renderStructures(e){let t=this.els.structures;t.textContent="";let s=this.collectLists(e);if(s.length===0){t.append($("p",{class:"empty"},"Les listes du programme appara\xEEtront ici."));return}for(let n of s)t.append(this.renderList(n,e))}cellText(e,t,s=0){if(e.t!=="list")return e.r;let n=t[e.ref];if(!n||s>2)return"[\u2026]";let i="["+n.items.map(o=>this.cellText(o,t,s+1)).join(", ")+"]";return i.length>40?i.slice(0,39)+"\u2026]":i}renderList(e,t){let s=t.heap[e.ref]?.items??[],n=s.length,i=t.frames,o=i[i.length-1],a=e.names.length||e.anon?o:i[0],{marks:l,whole:c}=this.cellMarks(e.ref,t,a),u=this.pointers(e.ref,a,n),g=new Map;for(let p of a.loops)p.ref===e.ref&&p.index>=0&&He(g,p.index,p.var);let m=this.zone(e.ref,a,n),y=e.names[0]??e.globals[0]??e.anon,L=new Set(t.events.filter(p=>p.type==="outOfRange"&&p.ref===e.ref&&p.index>=n&&p.index<=n+6).map(p=>p.index)),A=u.has(-1)?-1:0,T=Math.max(u.has(n)?n:n-1,...L),d=$("div",{class:"track"});for(let p=A;p<=T;p++){let v=p<0||p>=n,f=L.has(p),S=["cell",...l.get(p)??[]];f&&S.push("is-missing"),!v&&m&&(p<m[0]||p>m[1])&&S.push("is-dim");let M=f?"?":v?"":this.cellText(s[p],t.heap),G=f?`${y}[${p}] n\u2019existe pas`:v?"hors de la liste":`${y}[${p}] = ${M}`,q=$("div",{class:S.join(" "),"data-index":p,title:G},$("span",{class:"val"},M)),ne=[...(g.get(p)??[]).map(H=>$("span",{class:"cursor",title:`${H} parcourt la liste : il vaut cet \xE9l\xE9ment`},H)),...(u.get(p)??[]).map(H=>$("span",{class:"ptr",title:`${H} = ${p}`},H))];d.append($("div",{class:v?"slot is-ghost":"slot"},q,$("span",{class:"idx"},v&&!f?"":String(p)),$("div",{class:"tags"},ne)))}n===0&&d.append($("span",{class:"empty-list"},"liste vide"));let E=$("figcaption",{},$("span",{class:"aname"},e.names.length?e.names.join(" = "):y)),b=e.globals.filter(p=>!e.names.includes(p));return e.names.length&&b.length?E.append($("span",{class:"alias"},`m\xEAme liste que ${b.join(", ")}`)):!e.names.length&&e.globals.length?E.append($("span",{class:"alias"},"variable globale")):e.anon&&E.append($("span",{class:"alias"},"liste parcourue")),E.append($("span",{class:"alen"},n===1?"1 \xE9l\xE9ment":`${n} \xE9l\xE9ments`)),$("figure",{class:c?"array is-changed":"array","data-ref":e.ref},E,d)}cellMarks(e,t,s){let n=new Map,i=!1,o=(a,l)=>He(n,a,l);for(let a of t.events)switch(a.type){case"read":a.ref===e&&o(a.index,"is-read");break;case"compare":for(let l of a.operands)if(l?.cell?.ref===e)o(l.cell.index,"is-compared");else if(l?.name){let c=s.loops.find(u=>u.ref===e&&u.var===l.name);c&&o(c.index,"is-compared")}break;case"write":a.ref===e&&o(a.index,"is-written");break;case"swap":a.ref===e&&(o(a.i,"is-swapped"),o(a.j,"is-swapped"));break;case"mutate":if(a.ref!==e)break;a.method==="append"||a.method==="insert"?o(a.index,"is-written"):a.method!=="pop"&&a.method!=="remove"&&a.method!=="del"&&(i=!0);break;case"slice":a.ref===e&&a.indices.forEach(l=>o(l,"is-sliced"));break}return{marks:n,whole:i}}pointers(e,t,s){let n=new Map,i=new Map(t.vars),o=[...this.run.meta.indexNames?.[e]??[]];if(o.length)for(let[a,l]of gt)i.get(a)?.t==="int"&&i.get(l)?.t==="int"&&o.push(a,l);for(let a of new Set(o)){let l=i.get(a);if(l?.t!=="int")continue;let c=Number(l.r);c>=-1&&c<=s&&He(n,c,a)}return n}zone(e,t,s){if(!this.run.meta.indexNames?.[e])return null;let n=new Map(t.vars);for(let[i,o]of gt){let a=n.get(i),l=n.get(o);if(!(a?.t!=="int"||l?.t!=="int"))return[Number(a.r),Number(l.r)-(this.isExclusive(e,o)?1:0)]}return null}isExclusive(e,t){let s=`${e}:${t}`;if(!this.exclusive.has(s)){let n=this.run.steps.some(i=>{let o=i.heap[e];return o?i.frames.some(a=>{let l=a.vars.find(([c])=>c===t)?.[1];return l?.t==="int"&&Number(l.r)===o.items.length}):!1});this.exclusive.set(s,n)}return this.exclusive.get(s)}renderVariables(e){let t=this.els.variables;t.textContent="";let s=e.frames,n=s[s.length-1],i=s[0],o=new Set(e.events.filter(u=>u.type==="assign").map(u=>u.name)),a=new Set(e.events.filter(u=>u.type==="compare").flatMap(u=>u.operands.filter(g=>g?.name).map(g=>g.name))),l=n===i?[[n,null]]:[[n,`dans ${n.name}()`],[i,"variables globales"]],c=0;for(let[u,g]of l){let m=u.vars.filter(([,T])=>T.t!=="list");if(!m.length)continue;let y=u===n,L=T=>y||!n.vars.some(([d])=>d===T),A=m.map(([T,d])=>{let E=["var"];return o.has(T)&&L(T)&&E.push("is-changed"),a.has(T)&&L(T)&&E.push("is-compared"),$("div",{class:E.join(" "),title:`${T} = ${d.r} (${d.t})`},$("span",{class:"vname"},T),$("span",{class:"veq"},"="),$("span",{class:"vval"},d.r))});c+=A.length,t.append($("div",{class:y?"var-group":"var-group is-outer"},g?$("span",{class:"group-title"},g):null,A))}c||t.append($("p",{class:"empty"},"Aucune variable (hors listes) pour l\u2019instant."))}renderStack(e){let t=this.els.stack,s=e.frames;t.hidden=s.length<2,!(s.length<2)&&(t.textContent="",t.append($("span",{class:"group-title"},"Appels en cours"),...s.map((n,i)=>$("span",{class:i===s.length-1?"frame is-top":"frame"},i===0?"programme":`${n.name}()`))))}renderNarration(e){let t=this.els.narration;t.textContent="";for(let s of dt(e,this.lines)){let n=$("li",{class:s.tone??null},$("span",{class:"ntext"},s.text));s.result!==void 0&&n.append($("span",{class:`pill ${s.result?"true":"false"}`},s.result?"Vrai":"Faux")),t.append(n)}}renderError(e){let t=this.els.error;t.hidden=e.kind!=="error",!t.hidden&&(t.textContent="",t.append(...Xe(e.error)))}renderOutput(e,t){let s=this.els.output,n=this.run.output,i=e.out,o=t?Math.min(t.out,i):i;if(s.textContent="",i===0){s.append($("span",{class:"muted"},"Rien n\u2019a encore \xE9t\xE9 affich\xE9."));return}s.append(n.slice(0,o)),i>o&&s.append($("mark",{},n.slice(o,i))),s.scrollTop=s.scrollHeight}animateMoves(e){for(let t of e.events)t.type==="swap"&&t.i!==t.j?(this.fly(t.ref,t.j,t.i,-1),this.fly(t.ref,t.i,t.j,1)):t.type==="write"&&t.from!==null&&t.from!==t.index?this.fly(t.ref,t.from,t.index,-1):t.type==="mutate"&&(t.method==="append"||t.method==="insert")&&this.cell(t.ref,t.index)?.querySelector(".val")?.animate([{transform:"scale(0.2)",opacity:0},{transform:"scale(1)",opacity:1}],{duration:this.moveDuration,easing:"cubic-bezier(.2,.8,.2,1.2)"})}cell(e,t){return this.els.structures.querySelector(`.array[data-ref="${e}"] .cell[data-index="${t}"]`)}fly(e,t,s,n){let i=this.cell(e,t),o=this.cell(e,s),a=o?.querySelector(".val");if(!i||!a||!a.animate)return;let l=i.getBoundingClientRect().left-o.getBoundingClientRect().left;a.animate([{transform:`translate(${l}px, 0)`},{transform:`translate(${l/2}px, ${n*12}px)`,offset:.5},{transform:"translate(0, 0)"}],{duration:this.moveDuration,easing:"ease-in-out"})}};var k=r=>document.getElementById(r),ge={get(r){try{return localStorage.getItem(`demarche:${r}`)}catch{return null}},set(r,e){try{localStorage.setItem(`demarche:${r}`,e)}catch{}}},xt=r=>.5*24**(r/100),yt={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'};function an(r){let e=r.steps.findIndex(t=>t.events.some(s=>s.type==="iter"||s.type==="compare"));return e>0?e:0}function wt(){document.documentElement.lang="fr";let r=k("example"),e=k("inputs"),t=null,s="edit",n=new Te({phrase:k("phrase"),phraseText:k("phrase").querySelector(".phrase"),structures:k("structures"),variables:k("variables"),stack:k("stack"),narration:k("narration"),error:k("error"),output:k("output")}),i=new Se(k("code-view")),o=new Ne(k("editor"),{onChange:A,onRun:()=>T()}),a=new Le({onShow(f){let S=t.steps[f];n.render(f),i.setCurrent(S.line,S.kind),k("scrub").value=String(f),k("counter").textContent=`\xC9tape ${f+1} / ${t.steps.length}`+(S.line?` \xB7 ligne ${S.line}`:"")},onState:d}),l=$("option",{value:""},"Mon programme");r.append(l);let c=new Map;for(let f of ce){if(!c.has(f.group)){let S=$("optgroup",{label:f.group});c.set(f.group,S),r.append(S)}c.get(f.group).append($("option",{value:f.id},f.title))}function u(f,S){o.value=f,r.value=S??"",m()}function g(f,{autoplay:S=!0}={}){let M=ce.find(G=>G.id===f);if(M){u(M.code,M.id),ge.set("code",M.code);try{history.replaceState(null,"",`#${M.id}`)}catch{}T({autoplay:S})}}r.addEventListener("change",()=>{r.value&&g(r.value)}),addEventListener("hashchange",()=>{let f=decodeURIComponent(location.hash.slice(1));f&&f!==r.value&&g(f)});function m(){k("inputs-box").hidden=!/\binput\s*\(/.test(o.value)}function y(f){s=f,k("editor").hidden=f!=="edit",k("code-view").hidden=f!=="run",k("edit").hidden=f!=="run",document.body.dataset.mode=f}function L(f){k("stale").hidden=!f,document.body.toggleAttribute("data-stale",f),f&&a.pause(),d()}function A(f){ge.set("code",f);let S=ce.find(M=>M.id===r.value);S&&S.code!==f&&(r.value=""),m(),k("syntax-error").hidden=!0,t&&L(!0)}function T({autoplay:f=!0,startAt:S=()=>0}={}){let M=o.value,G=e.value.split(`
+`);G[G.length-1]===""&&G.pop();let q=ht(M,{inputs:G}),ne=k("syntax-error");if(ne.hidden=!0,q.phase==="syntax"){y("edit"),ne.textContent="",ne.append(...Xe(q.error)),ne.hidden=!1,q.error.line&&o.focusLine(q.error.line),t?L(!0):k("structures").replaceChildren($("p",{class:"empty"},"L\u2019animation appara\xEEtra d\xE8s que le programme pourra s\u2019ex\xE9cuter."));return}t=q,n.load(q,M),i.render(M),y("run"),L(!1),k("scrub").max=String(q.steps.length-1),a.load(q.steps.length,S(q)),f&&!ke()&&a.play()}k("run").addEventListener("click",()=>T()),k("edit").addEventListener("click",()=>{a.pause(),y("edit"),o.textarea.focus()}),k("code-view").addEventListener("dblclick",f=>{let S=Number(f.target.closest(".ln")?.dataset.line);a.pause(),y("edit"),S&&o.focusLine(S)});function d(){let f=!!t&&k("stale").hidden,S=k("play");for(let G of["first","prev","next","last","scrub"])k(G).disabled=!f;S.disabled=!f||a.count<2,f&&(k("first").disabled=k("prev").disabled=a.index===0,k("next").disabled=k("last").disabled=a.atEnd),S.innerHTML=a.playing?yt.pause:yt.play;let M=a.playing?"Pause":"Lecture";S.setAttribute("aria-label",M),S.title=`${M} (Espace)`,S.classList.toggle("is-playing",a.playing)}k("first").addEventListener("click",()=>a.step(-1/0)),k("prev").addEventListener("click",()=>a.step(-1)),k("play").addEventListener("click",()=>a.toggle()),k("next").addEventListener("click",()=>a.step(1)),k("last").addEventListener("click",()=>a.step(1/0)),k("scrub").addEventListener("input",f=>{a.pause(),a.show(Number(f.target.value))});let E=k("speed"),b=()=>{let f=1e3/xt(Number(E.value));a.setDelay(f),n.moveDuration=Math.min(450,f*.8),E.setAttribute("aria-valuetext",`${xt(Number(E.value)).toFixed(1).replace(".",",")} \xE9tapes par seconde`)};E.value=ge.get("speed")??E.value,b(),E.addEventListener("input",()=>{b(),ge.set("speed",E.value)}),document.addEventListener("keydown",f=>{if(s!=="run"||!t||f.altKey||f.ctrlKey||f.metaKey||f.target.closest('textarea, input:not([type="range"]), select')||f.target.closest("button")&&(f.key===" "||f.key==="Enter"))return;let M={" ":()=>a.toggle(),ArrowRight:()=>a.step(1),ArrowLeft:()=>a.step(-1),Home:()=>a.step(-1/0),End:()=>a.step(1/0)}[f.key];M&&(f.target.type==="range"&&f.key!==" "||(f.preventDefault(),M()))});let p=ce.find(f=>f.id===decodeURIComponent(location.hash.slice(1))),v=ge.get("code");p?u(p.code,p.id):v&&v.trim()?u(v,ce.find(f=>f.code===v)?.id??""):u(ce.find(f=>f.id===Ge).code,Ge),T({autoplay:!1,startAt:an})}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",wt):wt();})();
+</script>
+</body>
+</html>

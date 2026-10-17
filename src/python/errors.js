@@ -17,7 +17,7 @@ export const ERROR_TITLES = {
   ImportError: 'Import impossible',
   EOFError: 'Entrée manquante',
   InternalError: 'Erreur interne',
-  StepLimit: 'Programme arrêté',
+  StepLimit: 'Trop d’étapes',
   NotSupported: 'Pas encore pris en charge',
 };
 
