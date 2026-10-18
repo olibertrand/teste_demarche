@@ -9,6 +9,7 @@ import { MAX_DEMARCHE_LINES } from '../translate/prompt.js';
 import { h } from './dom.js';
 import { CodeView, Editor, plainLines } from './editor.js';
 import { DEFAULT_DEMARCHE, DEFAULT_EXAMPLE, DEMARCHE_EXAMPLES, EXAMPLES } from './examples.js';
+import { HAND_FONTS, applyHandFont } from './handwriting.js';
 import { Player } from './player.js';
 import { Stage, describeError } from './stage.js';
 
@@ -504,6 +505,19 @@ function start() {
     if (move > 0) player.next();
     else player.prev();
   });
+
+  // ---------------------------------------------------------------- écriture (choix provisoire)
+
+  const handFont = $('hand-font');
+  handFont.append(...HAND_FONTS.map((f) => h('option', { value: f.id, style: `font-family: "${f.family}"` }, f.label)));
+  handFont.value = applyHandFont(store.get('ecriture'));
+  handFont.addEventListener('change', () => {
+    store.set('ecriture', applyHandFont(handFont.value));
+    stage.fitPhrase();
+  });
+  // la taille de la phrase dépend de l'écriture (une fois sa police chargée) et de la largeur de la page
+  document.fonts?.addEventListener('loadingdone', () => stage.fitPhrase());
+  window.addEventListener('resize', () => stage.fitPhrase());
 
   // ---------------------------------------------------------------- ouverture
 

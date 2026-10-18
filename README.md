@@ -21,6 +21,10 @@ du Python.
   précédente** (ou ←) revient en arrière. Il n'y a pas de lecture automatique : c'est l'élève qui
   avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
+- Le menu **Écriture** (provisoire) change l'écriture « à la main » des phrases de la démarche,
+  pour comparer plusieurs polices en situation : Patrick Hand, Playpen Sans, Delius, Comic Neue,
+  Klee One, Gochi Hand, Playwrite FR (cursive scolaire) ou des lettres d'imprimerie. Le choix est
+  gardé dans le navigateur.
 
 ### La démarche en français
 
@@ -111,7 +115,8 @@ src/python/   tokenizer.js, parser.js  → analyse du programme
               interpreter.js           → exécution et enregistrement de la trace
               values.js, builtins.js   → valeurs Python, fonctions et modules
 src/translate/ prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
-src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js
+src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js,
+              handwriting.js (écritures du menu « Écriture »)
 src/style.css
 src/fonts/    polices stockées avec l'application (licence SIL OFL), voir LISEZMOI.md
 index.html    page de développement (modules JS, nécessite un petit serveur)

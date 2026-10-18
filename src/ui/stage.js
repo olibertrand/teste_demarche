@@ -34,6 +34,7 @@ export class Stage {
     this.els = els;
     this.run = null;
     this.moveDuration = 450;
+    this.phrase = '';
   }
 
   /**
@@ -80,16 +81,37 @@ export class Stage {
 
   renderPhrase(step) {
     this.els.phrase.hidden = !this.hasPhrases;
-    const text = this.phraseOf ? this.phraseOf(step.line) : phraseFor(step.line, this.run.comments);
+    this.phrase = (this.phraseOf ? this.phraseOf(step.line) : phraseFor(step.line, this.run.comments)) ?? '';
+    this.fitPhrase();
+  }
+
+  /**
+   * Écrit la phrase à la plus grande taille où elle tient : deux, trois ou quatre lignes dans la même
+   * hauteur ; au-delà, la fin est coupée. À refaire quand l'écriture ou la largeur de la page change.
+   */
+  fitPhrase() {
     const el = this.els.phraseText;
-    el.textContent = text ?? '';
+    el.textContent = this.phrase;
     el.dataset.lines = '2';
-    if (!text || !this.hasPhrases) return;
-    // trop longue pour deux lignes : plus petit, dans la même hauteur
+    if (!this.phrase || this.els.phrase.hidden) return;
+    // une ligne de trop dépasse d'une ligne entière ; les lettres de certaines écritures débordent
+    // un peu de leur ligne sans en ajouter une
+    const fits = () => el.scrollHeight <= el.clientHeight + parseFloat(getComputedStyle(el).lineHeight) / 2;
     for (const lines of ['3', '4']) {
-      if (el.scrollHeight <= el.clientHeight + 1) break;
+      if (fits()) return;
       el.dataset.lines = lines;
     }
+    if (fits()) return;
+    const words = this.phrase.split(' ');
+    let fit = 0; // nombre de mots qui tiennent, suivis de « … »
+    let tooMany = words.length;
+    while (tooMany - fit > 1) {
+      const n = (fit + tooMany) >> 1;
+      el.textContent = `${words.slice(0, n).join(' ')}…`;
+      if (fits()) fit = n;
+      else tooMany = n;
+    }
+    el.textContent = `${words.slice(0, fit).join(' ')}…`;
   }
 
   // ---------------------------------------------------------------- listes
