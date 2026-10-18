@@ -36,13 +36,30 @@ export class Stage {
     this.moveDuration = 450;
   }
 
-  load(run, source) {
+  /**
+   * @param {{phraseOf?: (line: number|null) => string|null}} [options] phrase de la démarche pour une
+   *   ligne du programme ; par défaut, le commentaire de la ligne.
+   */
+  load(run, source, { phraseOf = null } = {}) {
     this.run = run;
     this.lines = source.split('\n');
     this.exclusive = new Map();
+    this.phraseOf = phraseOf;
     // Ces zones gardent la même hauteur pendant toute l'exécution : rien ne saute d'une étape à l'autre.
-    this.hasPhrases = [...run.comments.values()].some((c) => c.text);
+    this.hasPhrases = Boolean(phraseOf) || [...run.comments.values()].some((c) => c.text);
     this.hasCalls = run.steps.some((s) => s.kind === 'call');
+  }
+
+  /** Scène vide, avant toute exécution. */
+  clear(message) {
+    this.run = null;
+    this.els.phrase.hidden = true;
+    this.els.structures.replaceChildren(h('p', { class: 'empty' }, message));
+    this.els.variables.replaceChildren();
+    this.els.stack.hidden = true;
+    this.els.narration.replaceChildren();
+    this.els.error.hidden = true;
+    this.els.output.replaceChildren(h('span', { class: 'muted' }, 'Rien n’a encore été affiché.'));
   }
 
   render(k, { animate = true } = {}) {
@@ -62,7 +79,8 @@ export class Stage {
 
   renderPhrase(step) {
     this.els.phrase.hidden = !this.hasPhrases;
-    this.els.phraseText.textContent = phraseFor(step.line, this.run.comments) ?? '';
+    const text = this.phraseOf ? this.phraseOf(step.line) : phraseFor(step.line, this.run.comments);
+    this.els.phraseText.textContent = text ?? '';
   }
 
   // ---------------------------------------------------------------- listes

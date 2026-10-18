@@ -205,3 +205,63 @@ while L[i] != v:       # tant qu'on n'a pas trouvé v
 ];
 
 export const DEFAULT_EXAMPLE = 'maximum';
+
+// Démarches en français, à traduire en Python par Claude (version en ligne sur claude.ai).
+export const DEMARCHE_EXAMPLES = [
+  {
+    id: 'demarche-parcours',
+    title: 'Parcours d’une liste',
+    text: `L = [4,12,7,2,33]
+parcours la liste L
+`,
+  },
+  {
+    id: 'demarche-maximum',
+    title: 'Maximum',
+    text: `L = [4,12,7,2,33]
+m = L[0]
+parcours la liste L
+chaque fois que la valeur x rencontrée est supérieure à m, cela devient la nouvelle valeur de m
+`,
+  },
+  {
+    id: 'demarche-somme',
+    title: 'Somme et moyenne',
+    text: `notes = [12, 15, 8, 17, 10]
+s = 0
+pour chaque note n de la liste notes, on ajoute n à s
+la moyenne est s divisé par le nombre de notes
+on affiche la moyenne
+`,
+  },
+  {
+    id: 'demarche-pairs',
+    title: 'Compter les nombres pairs',
+    text: `L = [3, 8, 6, 1, 4]
+c = 0
+pour chaque élément x de L
+si x est pair, on augmente c de 1
+on affiche c
+`,
+  },
+  {
+    id: 'demarche-recherche',
+    title: 'Recherche d’une valeur',
+    text: `L = [5, 3, 8, 1, 9]
+v = 8
+i = 0
+tant que l’élément d’indice i n’est pas v, on passe à l’indice suivant
+on affiche i
+`,
+  },
+  {
+    id: 'demarche-sans-depart',
+    title: 'Maximum sans valeur de départ (à corriger)',
+    text: `L = [4,12,7,2,33]
+parcours la liste L
+chaque fois que la valeur x rencontrée est supérieure à m, cela devient la nouvelle valeur de m
+`,
+  },
+];
+
+export const DEFAULT_DEMARCHE = 'demarche-maximum';

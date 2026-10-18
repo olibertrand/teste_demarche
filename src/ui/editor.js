@@ -12,7 +12,7 @@ const BUILTIN_NAMES = new Set([
 const TOKEN =
   /("""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|[rRfFuU]{0,2}"(?:\\.|[^"\\\n])*"?|[rRfFuU]{0,2}'(?:\\.|[^'\\\n])*'?|#[^\n]*|\d[\d_]*(?:\.\d*)?(?:[eE][+-]?\d+)?|\.\d+|[\p{L}_][\p{L}\p{N}_]*|\n|[^\S\n]+|.)/gu;
 
-const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+export const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 /** Coloration syntaxique : renvoie le HTML de chaque ligne. */
 export function highlight(source) {
@@ -141,15 +141,20 @@ export class Editor {
   }
 }
 
+/** Démarche en français : pas de coloration, chaque ligne telle qu'elle est écrite. */
+export const plainLines = (text) => text.split('\n').map(escapeHtml);
+
 export class CodeView {
-  constructor(root) {
+  /** @param {{format?: (source: string) => string[]}} [options] HTML de chaque ligne (Python coloré par défaut) */
+  constructor(root, { format = highlight } = {}) {
     this.root = root;
+    this.format = format;
     this.lines = [];
   }
 
   render(source) {
     this.root.textContent = '';
-    const lines = highlight(source);
+    const lines = this.format(source);
     if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop(); // dernière ligne vide
     this.lines = lines.map((html, i) => {
       const row = document.createElement('div');
