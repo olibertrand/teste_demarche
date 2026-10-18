@@ -80,7 +80,15 @@ export class Stage {
   renderPhrase(step) {
     this.els.phrase.hidden = !this.hasPhrases;
     const text = this.phraseOf ? this.phraseOf(step.line) : phraseFor(step.line, this.run.comments);
-    this.els.phraseText.textContent = text ?? '';
+    const el = this.els.phraseText;
+    el.textContent = text ?? '';
+    el.dataset.lines = '2';
+    if (!text || !this.hasPhrases) return;
+    // trop longue pour deux lignes : plus petit, dans la même hauteur
+    for (const lines of ['3', '4']) {
+      if (el.scrollHeight <= el.clientHeight + 1) break;
+      el.dataset.lines = lines;
+    }
   }
 
   // ---------------------------------------------------------------- listes

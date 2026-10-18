@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { run } from '../src/python/interpreter.js';
 import { assemble } from '../src/translate/assemble.js';
 import { buildPrompt, demarcheLines } from '../src/translate/prompt.js';
+import { DEMARCHE_EXAMPLES as EXAMPLES_DEMARCHE } from '../src/ui/examples.js';
 
 const MAXIMUM = `L = [4,12,7,2,33]
 m = L[0]
@@ -31,6 +32,7 @@ test('la consigne numérote les lignes de la démarche en sautant les lignes vid
   const prompt = buildPrompt(text);
   assert.match(prompt, /1\| L = \[1, 2\]\n3\| parcours la liste L\n/);
   assert.match(prompt, /traduis ce qui est écrit, pas ce que l'élève voulait dire/);
+  assert.match(prompt, /annonce le but de la démarche/);
 });
 
 test('la traduction du maximum devient un programme commenté et exécutable', () => {
@@ -123,4 +125,58 @@ test('une erreur de la démarche est gardée : l’animation la montrera', () =>
   const r = run(t.python);
   assert.equal(r.error.type, 'NameError');
   assert.equal(r.error.line, 3);
+});
+
+test('les exemples de la consigne sont des réponses que le contrôle accepte', () => {
+  const prompt = buildPrompt('x = 1');
+  const examples = [...prompt.matchAll(/Démarche :\n([\s\S]*?)\nRéponse :\n([\s\S]*?)\n\(/g)];
+  assert.equal(examples.length, 2);
+  for (const [, numbered, json] of examples) {
+    const text = numbered
+      .split('\n')
+      .map((l) => l.replace(/^\d+\| /, ''))
+      .join('\n');
+    const t = assemble(JSON.parse(json), text);
+    assert.ok(t.ok, t.message);
+  }
+  // exemple 2 : une passe du tri à bulles, avec des échanges reconnus par l'animation
+  const [, numbered, json] = examples[1];
+  const t = assemble(JSON.parse(json), numbered.replace(/^\d+\| /gm, ''));
+  const r = run(t.python);
+  assert.ok(r.ok);
+  assert.equal(r.steps.at(-1).heap[r.steps.at(-1).frames[0].vars[0][1].ref].items.map((v) => v.r).join(' '), '3 5 1 8');
+});
+
+test('tri par sélection décrit par un élève : la traduction attendue trie la liste', () => {
+  const text = EXAMPLES_DEMARCHE.find((e) => e.id === 'demarche-tri-selection').text;
+  // traduction de référence, telle que la consigne la décrit (renvois « On recommence », « On continue de même »)
+  const answer = {
+    lignes: [
+      { code: 'L = [4, 12, 7, 2, 33]', demarche: 1 },
+      { code: 'for j in range(1, len(L)):', demarche: 2 },
+      { code: '    if L[j] < L[0]:', demarche: 2 },
+      { code: '        L[0], L[j] = L[j], L[0]', demarche: 2 },
+      { code: 'for j in range(2, len(L)):', demarche: 3 },
+      { code: '    if L[j] < L[1]:', demarche: 3 },
+      { code: '        L[1], L[j] = L[j], L[1]', demarche: 3 },
+      { code: 'for j in range(3, len(L)):', demarche: 4 },
+      { code: '    if L[j] < L[2]:', demarche: 4 },
+      { code: '        L[2], L[j] = L[j], L[2]', demarche: 4 },
+      { code: 'for i in range(3, len(L)):', demarche: 5 },
+      { code: '    for j in range(i + 1, len(L)):', demarche: 5 },
+      { code: '        if L[j] < L[i]:', demarche: 5 },
+      { code: '            L[i], L[j] = L[j], L[i]', demarche: 5 },
+    ],
+    hypotheses: [{ demarche: 3, texte: '« On recommence » : même méthode avec la 2e position, sur la suite de la liste.' }],
+    incompris: [],
+  };
+  const t = assemble(answer, text);
+  assert.ok(t.ok, t.message);
+  assert.deepEqual([...new Set(t.map)], [1, 2, 3, 4, 5]);
+  const r = run(t.python);
+  assert.ok(r.ok);
+  const last = r.steps.at(-1);
+  assert.equal(last.heap[last.frames[0].vars.find(([n]) => n === 'L')[1].ref].items.map((v) => v.r).join(' '), '2 4 7 12 33');
+  const swaps = r.steps.flatMap((s) => s.events.filter((e) => e.type === 'swap'));
+  assert.equal(swaps.length, 4);
 });

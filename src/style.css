@@ -513,15 +513,27 @@ body[data-stale] .stage-body {
 }
 
 .phrase {
+  --size: clamp(1.45rem, 1.1rem + 1.2vw, 2rem); /* taille d'une phrase courte */
+  --lines: 2;
   margin: 0;
-  height: 2.3em; /* toujours deux lignes : la scène ne bouge pas d'une étape à l'autre */
+  /* hauteur fixe (deux lignes de la grande taille) : la scène ne bouge pas d'une étape à l'autre ;
+     une phrase plus longue s'écrit plus petit, sur trois ou quatre lignes, dans la même hauteur */
+  height: calc(var(--size) * 2.3);
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font: 600 clamp(1.45rem, 1.1rem + 1.2vw, 2rem)/1.15 var(--font-hand);
+  -webkit-line-clamp: var(--lines);
+  font: 600 calc(var(--size) * 2 / var(--lines)) / 1.15 var(--font-hand);
   color: var(--hand);
   text-wrap: balance;
+}
+
+.phrase[data-lines="3"] {
+  --lines: 3;
+}
+
+.phrase[data-lines="4"] {
+  --lines: 4;
 }
 
 .phrase::before {

@@ -255,6 +255,16 @@ on affiche i
 `,
   },
   {
+    id: 'demarche-tri-selection',
+    title: 'Tri par sélection : premières idées',
+    text: `démarche pour trier la liste L = [4,12,7,2,33]
+on parcourt la liste pour placer son minimum en tete (chaque fois qu'on rencontre eun nombre plus petit que le 1er de la liste, n l'échange avec le 1er de la liste.
+On recommence pour placer le 2e plus petit en 2e position
+On recommence pour placer le 3e plus petit en 3e position
+On continue de même jusqu'à ce que toute la liste soit triée
+`,
+  },
+  {
     id: 'demarche-sans-depart',
     title: 'Maximum sans valeur de départ (à corriger)',
     text: `L = [4,12,7,2,33]
