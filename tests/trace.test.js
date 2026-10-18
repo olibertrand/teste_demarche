@@ -38,19 +38,30 @@ test('parcours : le curseur de boucle suit l’élément visité puis disparaît
   assert.equal(last.frames[0].loops.length, 0);
 });
 
-test('tri par sélection : les échanges sont reconnus comme tels', () => {
+test('tri par sélection : l’échange se fait en trois lignes, avec temp', () => {
   const r = run(example('tri-selection'));
   assert.ok(r.ok);
   assert.equal(r.output, '[1, 2, 3, 5, 7, 9]\n');
-  const swaps = events(r, 'swap');
-  assert.equal(swaps.length, 5);
-  assert.deepEqual([swaps[0].i, swaps[0].j], [0, 3]);
-  // dernier tour : le minimum est déjà à sa place, la case est « échangée » avec elle-même
-  assert.deepEqual([swaps[4].i, swaps[4].j], [4, 4]);
-  assert.equal(swaps[0].name, 'T');
-  // l'échange remplace les deux écritures
-  const swapStep = r.steps.find((s) => s.events.some((e) => e.type === 'swap'));
-  assert.ok(!swapStep.events.some((e) => e.type === 'write'));
+  // premier échange : T[0] (7) et T[3] (1)
+  const k = r.steps.findIndex((s) => s.events.some((e) => e.type === 'assign' && e.name === 'temp'));
+  const [keep, move, back] = r.steps.slice(k, k + 3).map((s) => s.events.find((e) => e.type === 'assign' || e.type === 'write'));
+  assert.deepEqual([keep.name, keep.value, keep.fromText, keep.fromCell.index], ['temp', '7', 'T[0]', 0]);
+  assert.deepEqual([move.index, move.from, move.value], [0, 3, '1']);
+  assert.deepEqual([back.index, back.fromVar, back.value], [3, 'temp', '7']);
+});
+
+test('une affectation ne donne une valeur qu’à une seule variable', () => {
+  for (const code of ['a, b = 1, 2', 'L = [1, 2]\nL[0], L[1] = L[1], L[0]', '[a, b] = [1, 2]', 'def f():\n    x, y = 0, 0\nf()']) {
+    const r = run(code);
+    assert.equal(r.phase, 'syntax', code);
+    assert.equal(r.error.type, 'NotAllowed');
+    assert.match(r.error.message, /temp = a, puis a = b, puis b = temp/);
+  }
+  const chained = run('a = b = 0');
+  assert.equal(chained.error.type, 'NotAllowed');
+  assert.match(chained.error.message, /une affectation par ligne/);
+  // le parcours avec deux variables reste possible
+  assert.ok(run('for i, x in enumerate([5, 6]):\n    print(i, x)').ok);
 });
 
 test('tri par insertion : les décalages indiquent la case d’origine', () => {

@@ -94,9 +94,24 @@ export function check(src) {
   }
 }
 
+// Dans ce Python, une affectation ne donne une valeur qu'à une seule variable :
+// un échange s'écrit en trois lignes, avec une variable temporaire.
+const MULTIPLE_ASSIGNMENT =
+  'une affectation ne donne une valeur qu’à une seule variable : « a, b = … » n’est pas autorisé ici. ' +
+  'Pour échanger deux valeurs, utilise une variable temporaire : temp = a, puis a = b, puis b = temp';
+const CHAINED_ASSIGNMENT =
+  'une affectation ne donne une valeur qu’à une seule variable : « a = b = … » n’est pas autorisé ici. ' +
+  'Écris une affectation par ligne';
+
 function validate(body, inLoop = false, inFunction = false) {
   for (const s of body) {
     switch (s.type) {
+      case 'Assign':
+        if (s.targets.length > 1) throw new PyError('NotAllowed', CHAINED_ASSIGNMENT, s.line);
+        if (s.targets[0].type === 'Tuple' || s.targets[0].type === 'List') {
+          throw new PyError('NotAllowed', MULTIPLE_ASSIGNMENT, s.line);
+        }
+        break;
       case 'Break':
       case 'Continue':
         if (!inLoop) throw new PyError('SyntaxError', `« ${s.type.toLowerCase()} » en dehors d’une boucle`, s.line);
@@ -424,7 +439,7 @@ class Interpreter {
     return best;
   }
 
-  assignName(name, value, event = true) {
+  assignName(name, value, event = true, origin = null) {
     const f = this.frame;
     if (f.isModule || f.globalNames.has(name)) {
       this.globals.set(name, value);
@@ -432,7 +447,10 @@ class Interpreter {
     } else {
       f.vars.set(name, value);
     }
-    if (event) this.emit({ type: 'assign', name, value: shortRepr(value) });
+    if (!event) return;
+    const ev = { type: 'assign', name, value: shortRepr(value) };
+    if (origin?.cell) Object.assign(ev, { fromCell: origin.cell, fromText: origin.text });
+    this.emit(ev);
   }
 
   // ---------------------------------------------------------------- instructions
@@ -520,49 +538,17 @@ class Interpreter {
   }
 
   execAssign(s) {
-    // T[i], T[j] = T[j], T[i] : on reconnaît l'échange pour l'animer comme tel
-    const target = s.targets[0];
-    const swapShape =
-      s.targets.length === 1 &&
-      target.type === 'Tuple' &&
-      target.elts.length === 2 &&
-      target.elts.every((e) => e.type === 'Subscript') &&
-      s.value.type === 'Tuple' &&
-      s.value.elts.length === 2 &&
-      s.value.elts.every((e) => e.type === 'Subscript');
-    let value;
-    let source = null;
-    if (swapShape) {
-      const cells = [];
-      value = new PyTuple(
-        s.value.elts.map((e) => {
-          this.lastCell = null;
-          const v = this.evalExpr(e);
-          cells.push(this.lastCell);
-          return v;
-        }),
-      );
-      source = cells;
-    } else {
-      this.lastCell = null;
-      value = this.evalExpr(s.value);
-      if (s.value.type === 'Subscript') source = this.lastCell;
+    this.lastCell = null;
+    const value = this.evalExpr(s.value);
+    // d'où vient la valeur : une case de liste (temp = L[i]) ou une variable (L[j] = temp) ;
+    // l'animation la fait voyager de là jusqu'à sa destination
+    let origin = null;
+    if (s.value.type === 'Subscript' && this.lastCell) {
+      origin = { cell: this.lastCell, text: `${this.text(s.value.value)}[${this.lastCell.index}]` };
+    } else if (s.value.type === 'Name') {
+      origin = { name: s.value.id };
     }
-    const mark = this.events.length;
-    let written = null;
-    for (const t of s.targets) written = this.assignTarget(t, value, swapShape ? null : source);
-    if (swapShape && Array.isArray(written)) {
-      const [w0, w1] = written;
-      const [r0, r1] = source;
-      const isSwap =
-        w0 && w1 && r0 && r1 &&
-        w0.ref === w1.ref && r0.ref === w0.ref && r1.ref === w0.ref &&
-        r0.index === w1.index && r1.index === w0.index;
-      if (isSwap && this.silent === 0) {
-        this.events = this.events.filter((ev, k) => k < mark || ev.type !== 'write');
-        this.emit({ type: 'swap', ref: w0.ref, i: w0.index, j: w1.index, name: this.text(target.elts[0].value) });
-      }
-    }
+    this.assignTarget(s.targets[0], value, origin);
     this.step(s.line);
   }
 
@@ -694,16 +680,16 @@ class Interpreter {
 
   // ---------------------------------------------------------------- affectations
 
-  assignTarget(t, value, source = null) {
+  assignTarget(t, value, origin = null) {
     switch (t.type) {
       case 'Name':
-        this.assignName(t.id, value);
+        this.assignName(t.id, value, true, origin);
         return null;
       case 'Subscript': {
         const obj = this.evalExpr(t.value);
         if (t.slice.type === 'Slice') return this.setSlice(obj, t, value);
         const index = this.evalExpr(t.slice);
-        return this.setItem(obj, index, value, t, source);
+        return this.setItem(obj, index, value, t, origin);
       }
       case 'Tuple':
       case 'List': {
@@ -772,7 +758,7 @@ class Interpreter {
     throw new PyError('TypeError', `${describe(obj)} ne s'indexe pas avec des crochets`, node.line);
   }
 
-  setItem(obj, index, value, node, source) {
+  setItem(obj, index, value, node, origin) {
     if (obj instanceof PyList) {
       const i = this.checkIndex(obj, index, node);
       obj.items[i] = value;
@@ -784,7 +770,8 @@ class Interpreter {
         index: i,
         value: shortRepr(value),
         name: this.text(node.value),
-        from: source && source.ref === obj.id ? source.index : null,
+        from: origin?.cell?.ref === obj.id ? origin.cell.index : null,
+        fromVar: origin?.name ?? null,
       });
       return { ref: obj.id, index: i };
     }

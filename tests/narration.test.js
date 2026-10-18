@@ -30,7 +30,10 @@ test('maximum : visite, comparaison et décision sont racontées', () => {
 
 test('tri par sélection et par insertion : échange et décalage', () => {
   const flat = texts(code('tri-selection')).all.flat();
-  assert.ok(flat.some((n) => n.text === 'Échange de T[0] et T[3]'));
+  // l'échange en trois lignes : la valeur passe par temp
+  assert.ok(flat.some((n) => n.text === 'temp ← T[0] = 7'));
+  assert.ok(flat.some((n) => n.text === 'T[0] ← T[3] = 1'));
+  assert.ok(flat.some((n) => n.text === 'T[3] ← temp = 7'));
   const insertion = texts(code('tri-insertion')).all.flat();
   assert.ok(insertion.some((n) => n.text === 'T[1] ← T[0] = 7'));
 });

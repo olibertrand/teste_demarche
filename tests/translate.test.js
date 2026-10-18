@@ -155,17 +155,25 @@ test('tri par sélection décrit par un élève : la traduction attendue trie la
       { code: 'L = [4, 12, 7, 2, 33]', demarche: 1 },
       { code: 'for j in range(1, len(L)):', demarche: 2 },
       { code: '    if L[j] < L[0]:', demarche: 2 },
-      { code: '        L[0], L[j] = L[j], L[0]', demarche: 2 },
+      { code: '        temp = L[0]', demarche: 2 },
+      { code: '        L[0] = L[j]', demarche: 2 },
+      { code: '        L[j] = temp', demarche: 2 },
       { code: 'for j in range(2, len(L)):', demarche: 3 },
       { code: '    if L[j] < L[1]:', demarche: 3 },
-      { code: '        L[1], L[j] = L[j], L[1]', demarche: 3 },
+      { code: '        temp = L[1]', demarche: 3 },
+      { code: '        L[1] = L[j]', demarche: 3 },
+      { code: '        L[j] = temp', demarche: 3 },
       { code: 'for j in range(3, len(L)):', demarche: 4 },
       { code: '    if L[j] < L[2]:', demarche: 4 },
-      { code: '        L[2], L[j] = L[j], L[2]', demarche: 4 },
+      { code: '        temp = L[2]', demarche: 4 },
+      { code: '        L[2] = L[j]', demarche: 4 },
+      { code: '        L[j] = temp', demarche: 4 },
       { code: 'for i in range(3, len(L)):', demarche: 5 },
       { code: '    for j in range(i + 1, len(L)):', demarche: 5 },
       { code: '        if L[j] < L[i]:', demarche: 5 },
-      { code: '            L[i], L[j] = L[j], L[i]', demarche: 5 },
+      { code: '            temp = L[i]', demarche: 5 },
+      { code: '            L[i] = L[j]', demarche: 5 },
+      { code: '            L[j] = temp', demarche: 5 },
     ],
     hypotheses: [{ demarche: 3, texte: '« On recommence » : même méthode avec la 2e position, sur la suite de la liste.' }],
     incompris: [],
@@ -177,6 +185,7 @@ test('tri par sélection décrit par un élève : la traduction attendue trie la
   assert.ok(r.ok);
   const last = r.steps.at(-1);
   assert.equal(last.heap[last.frames[0].vars.find(([n]) => n === 'L')[1].ref].items.map((v) => v.r).join(' '), '2 4 7 12 33');
-  const swaps = r.steps.flatMap((s) => s.events.filter((e) => e.type === 'swap'));
-  assert.equal(swaps.length, 4);
+  // 4 échanges, chacun en trois lignes : la valeur part dans temp puis en revient
+  const fromTemp = r.steps.flatMap((s) => s.events.filter((e) => e.type === 'write' && e.fromVar === 'temp'));
+  assert.equal(fromTemp.length, 4);
 });

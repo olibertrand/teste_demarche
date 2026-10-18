@@ -14,7 +14,7 @@ const ZONE_PAIRS = [
 ];
 
 // Erreurs propres au simulateur (pas des erreurs Python) : on n'affiche pas leur nom technique.
-const SIMULATOR_ERRORS = new Set(['StepLimit', 'NotSupported', 'InternalError']);
+const SIMULATOR_ERRORS = new Set(['StepLimit', 'NotSupported', 'NotAllowed', 'InternalError']);
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -63,6 +63,7 @@ export class Stage {
   }
 
   render(k, { animate = true } = {}) {
+    for (const flyer of document.querySelectorAll('.flyer')) flyer.remove();
     const step = this.run.steps[k];
     const prev = k > 0 ? this.run.steps[k - 1] : null;
     this.renderPhrase(step);
@@ -211,12 +212,6 @@ export class Stage {
         case 'write':
           if (e.ref === ref) add(e.index, 'is-written');
           break;
-        case 'swap':
-          if (e.ref === ref) {
-            add(e.i, 'is-swapped');
-            add(e.j, 'is-swapped');
-          }
-          break;
         case 'mutate':
           if (e.ref !== ref) break;
           if (e.method === 'append' || e.method === 'insert') add(e.index, 'is-written');
@@ -300,7 +295,7 @@ export class Stage {
         if (compared.has(name) && owns(name)) classes.push('is-compared');
         return h(
           'div',
-          { class: classes.join(' '), title: `${name} = ${v.r} (${v.t})` },
+          { class: classes.join(' '), title: `${name} = ${v.r} (${v.t})`, 'data-name': name },
           h('span', { class: 'vname' }, name),
           h('span', { class: 'veq' }, '='),
           h('span', { class: 'vval' }, v.r),
@@ -372,11 +367,18 @@ export class Stage {
 
   animateMoves(step) {
     for (const e of step.events) {
-      if (e.type === 'swap' && e.i !== e.j) {
-        this.fly(e.ref, e.j, e.i, -1);
-        this.fly(e.ref, e.i, e.j, 1);
-      } else if (e.type === 'write' && e.from !== null && e.from !== e.index) {
+      if (e.type === 'write' && e.from !== null && e.from !== e.index) {
         this.fly(e.ref, e.from, e.index, -1);
+      } else if (e.type === 'write' && e.fromVar) {
+        // L[j] = temp : la valeur quitte la variable pour rejoindre la case
+        const chip = this.variableChip(e.fromVar);
+        const target = this.cell(e.ref, e.index)?.querySelector('.val');
+        if (chip && target) this.flyBetween(e.value, chip.getBoundingClientRect(), target);
+      } else if (e.type === 'assign' && e.fromCell) {
+        // temp = L[i] : la valeur quitte la case pour rejoindre la variable
+        const cell = this.cell(e.fromCell.ref, e.fromCell.index);
+        const target = this.variableChip(e.name)?.querySelector('.vval');
+        if (cell && target) this.flyBetween(e.value, cell.getBoundingClientRect(), target);
       } else if (e.type === 'mutate' && (e.method === 'append' || e.method === 'insert')) {
         this.cell(e.ref, e.index)
           ?.querySelector('.val')
@@ -386,6 +388,37 @@ export class Stage {
           });
       }
     }
+  }
+
+  /** La pastille d'une variable de la fonction en cours (premier groupe affiché). */
+  variableChip(name) {
+    const group = this.els.variables.querySelector('.var-group');
+    return group ? [...group.querySelectorAll('.var')].find((chip) => chip.dataset.name === name) : null;
+  }
+
+  /**
+   * Une étiquette portant la valeur vole d'un point de la scène à un autre (d'une case vers une
+   * variable, ou l'inverse) ; elle passe au-dessus de tout, même hors du cadre des listes.
+   */
+  flyBetween(text, fromRect, target) {
+    const to = target.getBoundingClientRect();
+    const flyer = h('div', { class: 'flyer', 'aria-hidden': 'true' }, text);
+    flyer.style.left = `${fromRect.left + fromRect.width / 2}px`;
+    flyer.style.top = `${fromRect.top + fromRect.height / 2}px`;
+    document.body.append(flyer);
+    const dx = to.left + to.width / 2 - (fromRect.left + fromRect.width / 2);
+    const dy = to.top + to.height / 2 - (fromRect.top + fromRect.height / 2);
+    target.style.visibility = 'hidden';
+    const move = flyer.animate(
+      [{ transform: 'translate(-50%, -50%)' }, { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))` }],
+      { duration: this.moveDuration * 1.3, easing: 'ease-in-out' },
+    );
+    const done = () => {
+      flyer.remove();
+      target.style.visibility = '';
+    };
+    move.onfinish = done;
+    move.oncancel = done;
   }
 
   cell(ref, index) {

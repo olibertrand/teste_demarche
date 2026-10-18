@@ -16,7 +16,6 @@
   --hl-read: #ffe14a; /* surligneur jaune */
   --hl-compare: #7fcfff; /* surligneur bleu */
   --hl-write: #8be29a; /* surligneur vert */
-  --hl-swap: #ffa3cd; /* surligneur rose */
   --hl-true: #8be29a;
   --hl-false: #ffaaa2;
   --ruled: rgba(35, 70, 196, 0.16); /* lignes du cahier */
@@ -58,7 +57,6 @@
     --hl-read: #f2d35a;
     --hl-compare: #6ec3ee;
     --hl-write: #7dd48a;
-    --hl-swap: #f29bc3;
     --hl-true: #7dd48a;
     --hl-false: #f3958c;
     --ruled: rgba(229, 236, 230, 0.12);
@@ -96,7 +94,6 @@
   --hl-read: #f2d35a;
   --hl-compare: #6ec3ee;
   --hl-write: #7dd48a;
-  --hl-swap: #f29bc3;
   --hl-true: #7dd48a;
   --hl-false: #f3958c;
   --ruled: rgba(229, 236, 230, 0.12);
@@ -701,10 +698,18 @@ body[data-stale] .stage-body {
   animation: glow-write 0.9s ease-out;
 }
 
-.cell.is-swapped {
-  background: var(--hl-swap);
-  border-color: var(--on-hl);
+/* valeur en voyage entre une case et une variable (temp = L[i], L[j] = temp) */
+.flyer {
+  position: fixed;
+  z-index: 50;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--hl-write);
   color: var(--on-hl);
+  font: 700 1.15rem/1.2 var(--font-code);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .array.is-changed .cell {

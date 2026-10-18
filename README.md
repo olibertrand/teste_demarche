@@ -67,8 +67,9 @@ pour les lignes sans commentaire). C'est aussi la forme du Python produit par la
 ### Ce que montre l'animation
 
 - chaque liste sous forme de cases numérotées ; la case lue s'allume (jaune), les cases
-  comparées sont entourées (bleu), les cases modifiées passent en vert, les échanges en rose
-  et les valeurs se déplacent ;
+  comparées sont entourées (bleu), les cases modifiées passent en vert et les valeurs se
+  déplacent : d'une case à l'autre (`L[i] = L[j]`), d'une case vers une variable (`temp = L[i]`)
+  et retour (`L[j] = temp`) ;
 - les variables utilisées comme indices (`i`, `j`, `imin`, `milieu`…) apparaissent comme des
   flèches sous les cases ; la variable d'une boucle `for x in L` suit l'élément visité ;
 - pour une recherche dichotomique (`debut` / `fin`, `gauche` / `droite`…), les cases hors de la
@@ -89,6 +90,9 @@ exemples « Démarches à corriger » s'appuient là-dessus.
 Un sous-ensemble de Python 3 exécuté dans le navigateur, qui couvre les algorithmes du programme :
 
 - entiers (sans limite de taille), flottants, booléens, chaînes, `None`, listes, tuples, dictionnaires ;
+- affectations d'une seule variable à la fois : `a, b = b, a` et `a = b = 0` sont refusés avec une
+  explication ; un échange s'écrit en trois lignes, avec une variable temporaire
+  (`temp = L[i]`, `L[i] = L[j]`, `L[j] = temp`) ;
 - `if` / `elif` / `else`, `while`, `for`, `break`, `continue`, `pass`, `assert`, `del`, `global` ;
 - fonctions (`def`, paramètres par défaut, arguments nommés, récursivité, `lambda`) ;
 - listes en compréhension, tranches `L[a:b]`, f-strings et `format` ;

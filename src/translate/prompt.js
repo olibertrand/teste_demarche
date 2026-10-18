@@ -3,7 +3,7 @@
 
 // À incrémenter dès que la consigne change : les traductions déjà gardées en mémoire
 // dans le navigateur sont alors ignorées.
-export const PROMPT_VERSION = 2;
+export const PROMPT_VERSION = 3;
 
 export const MAX_DEMARCHE_LINES = 80;
 
@@ -25,12 +25,12 @@ LIRE UNE DÉMARCHE D'ÉLÈVE
 - Une phrase peut donner un but puis la méthode (« on parcourt la liste pour placer son minimum en tête (chaque fois que…, on l'échange…) ») : traduis la méthode ; le but seul ne produit pas de code.
 - N'utilise une fonction toute faite (sorted, min, max, sum…) que si la démarche la demande explicitement.
 - Positions : « le 1er », « en 1re position », « en tête » désignent l'indice 0 ; « le 2e », l'indice 1 ; et ainsi de suite ; « le dernier », l'indice len(L) - 1.
-- Échanger deux éléments s'écrit en une seule ligne : L[i], L[j] = L[j], L[i].
+- Une affectation ne donne une valeur qu'à une seule variable : jamais a, b = b, a ni a = b = 0. Échanger deux éléments se fait donc en trois lignes, avec une variable temporaire (temp, sauf si la démarche lui donne un nom) : temp = L[i], puis L[i] = L[j], puis L[j] = temp.
 - « on recommence », « on fait de même », « on refait pareil » renvoient à une méthode déjà décrite : applique-la au cas que la phrase indique (« on recommence pour placer le 2e plus petit en 2e position » : même méthode, avec la 2e position à la place de la 1re). Ce n'est pas compléter la démarche : c'est ce qu'elle demande. Quand chaque étape place un élément à une position, l'étape suivante reprend la méthode sur la partie de la liste qui suit les positions déjà placées. Dis-le en hypothèse.
 - « et ainsi de suite », « on continue de même jusqu'à… », « jusqu'à ce que toute la liste soit triée » : une boucle qui applique la même méthode aux cas suivants, jusqu'au dernier. Garde la traduction des cas déjà écrits un par un, sans les fusionner dans la boucle.
 - Une phrase que tu ne peux vraiment pas traduire (ce n'est pas une action, ou rien dans la démarche ne dit comment faire) n'est pas inventée : mets-la dans « incompris » avec la raison. Un renvoi comme « on recommence » ou « et ainsi de suite » n'est jamais incompris quand la méthode a été décrite plus haut.
 
-PYTHON AUTORISÉ : affectations, if / elif / else, for, while, break, continue, def / return, listes (L[i], len, append, pop, insert, tranches), opérateurs + - * / // % **, comparaisons, and / or / not, print, range, min, max, sum, abs, int, float, str, round, sorted, et les modules math et random. Pas de classes, pas de try, pas de with, pas de commentaires dans le code.
+PYTHON AUTORISÉ : affectations d'une seule variable à la fois, if / elif / else, for, while, break, continue, def / return, listes (L[i], len, append, pop, insert, tranches), opérateurs + - * / // % **, comparaisons, and / or / not, print, range, min, max, sum, abs, int, float, str, round, sorted, et les modules math et random. Pas de classes, pas de try, pas de with, pas de commentaires dans le code.
 
 FORMAT DE LA RÉPONSE : uniquement un objet JSON de cette forme.
 {"lignes": [{"code": "<une ligne de Python, avec son indentation>", "demarche": <numéro de la ligne de la démarche qu'elle traduit>}],
@@ -56,7 +56,7 @@ Démarche :
 3| on fait de même avec le 2e et le 3e
 4| et ainsi de suite jusqu'à la fin de la liste
 Réponse :
-{"lignes": [{"code": "T = [5, 3, 8, 1]", "demarche": 1}, {"code": "if T[0] > T[1]:", "demarche": 2}, {"code": "    T[0], T[1] = T[1], T[0]", "demarche": 2}, {"code": "if T[1] > T[2]:", "demarche": 3}, {"code": "    T[1], T[2] = T[2], T[1]", "demarche": 3}, {"code": "for i in range(2, len(T) - 1):", "demarche": 4}, {"code": "    if T[i] > T[i + 1]:", "demarche": 4}, {"code": "        T[i], T[i + 1] = T[i + 1], T[i]", "demarche": 4}],
+{"lignes": [{"code": "T = [5, 3, 8, 1]", "demarche": 1}, {"code": "if T[0] > T[1]:", "demarche": 2}, {"code": "    temp = T[0]", "demarche": 2}, {"code": "    T[0] = T[1]", "demarche": 2}, {"code": "    T[1] = temp", "demarche": 2}, {"code": "if T[1] > T[2]:", "demarche": 3}, {"code": "    temp = T[1]", "demarche": 3}, {"code": "    T[1] = T[2]", "demarche": 3}, {"code": "    T[2] = temp", "demarche": 3}, {"code": "for i in range(2, len(T) - 1):", "demarche": 4}, {"code": "    if T[i] > T[i + 1]:", "demarche": 4}, {"code": "        temp = T[i]", "demarche": 4}, {"code": "        T[i] = T[i + 1]", "demarche": 4}, {"code": "        T[i + 1] = temp", "demarche": 4}],
  "hypotheses": [{"demarche": 1, "texte": "La ligne 1 annonce le but : seule la liste T est créée."}, {"demarche": 2, "texte": "« le 1er » et « le 2e » sont T[0] et T[1] : les positions commencent à 0."}, {"demarche": 2, "texte": "« pas dans l'ordre » : le premier est plus grand que le second."}, {"demarche": 4, "texte": "« et ainsi de suite » : la même comparaison pour les paires suivantes, jusqu'à la dernière."}],
  "incompris": []}
 (Les lignes 2 et 3 restent traduites une par une ; la ligne 4 traite les paires suivantes.)`;

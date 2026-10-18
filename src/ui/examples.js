@@ -120,7 +120,9 @@ print(dichotomie(L, 23))
         for j in range(i + 1, n):
             if T[j] < T[imin]:
                 imin = j
-        T[i], T[imin] = T[imin], T[i]   # on le place en position i
+        temp = T[i]                     # on garde T[i] de côté
+        T[i] = T[imin]                  # on met le minimum en position i
+        T[imin] = temp                  # et l'ancien T[i] à la place du minimum
 
 L = [7, 3, 9, 1, 5, 2]
 tri_selection(L)
