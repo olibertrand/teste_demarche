@@ -12,8 +12,8 @@ du Python.
 ## Utiliser l'application
 
 - **Sans rien installer** : ouvrir `dist/demarche.html` dans un navigateur (double-clic).
-  Le fichier est autonome : il fonctionne hors connexion (seules les polices viennent
-  d'Internet ; sans connexion, des polices du système les remplacent).
+  Le fichier est autonome, polices comprises : il fonctionne hors connexion et ne fait aucune
+  requête vers Internet.
 - Deux onglets : **Démarche** (en français, une instruction par ligne) et **Python**. Choisir un
   exemple dans la liste, ou écrire son propre texte, puis **Traduire et exécuter** ou **Exécuter**
   (ou Ctrl + Entrée).
@@ -113,6 +113,7 @@ src/python/   tokenizer.js, parser.js  → analyse du programme
 src/translate/ prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
 src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js
 src/style.css
+src/fonts/    polices stockées avec l'application (licence SIL OFL), voir LISEZMOI.md
 index.html    page de développement (modules JS, nécessite un petit serveur)
 dist/         demarche.html, fichier autonome produit par la construction
 tests/        tests (node:test)

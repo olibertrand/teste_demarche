@@ -2,6 +2,30 @@
    Mise en page : « la copie et le tableau ». À gauche le programme, comme une copie d'élève ;
    à droite la scène, sur papier quadrillé, où l'algorithme se joue. Encre bleue pour les phrases
    de la démarche, surligneurs pour les cases « allumées », stylo rouge pour les erreurs. */
+/* Polices stockées avec l'application (licence SIL OFL 1.1, voir src/fonts) : aucune requête
+   vers un service extérieur, même rendu hors connexion. La construction les intègre au fichier. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("fonts/atkinson-hyperlegible-next.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("fonts/atkinson-hyperlegible-mono.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* écriture manuscrite droite et lisible, pour les phrases de la démarche */
+@font-face {
+  font-family: "Patrick Hand";
+  src: url("fonts/patrick-hand.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --bg: #e7ecf2;
   --surface: #ffffff;
@@ -38,7 +62,7 @@
 
   --font-ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --font-code: "Atkinson Hyperlegible Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
-  --font-hand: "Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --font-hand: "Patrick Hand", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
   --radius: 12px;
 }
 
@@ -198,7 +222,7 @@ code {
 }
 
 .brand .hand {
-  font: 600 1.55em/1 var(--font-hand);
+  font: 400 1.5em/1 var(--font-hand);
   color: var(--hand);
   margin-left: 0.1em;
 }
@@ -384,7 +408,7 @@ code {
 }
 /* les commentaires sont les phrases de la démarche : écrits « à la main », à l'encre bleue */
 .tk-cm {
-  font: 600 1.22em/1 var(--font-hand);
+  font: 400 1.12em/1 var(--font-hand);
   color: var(--hand);
 }
 
@@ -520,7 +544,7 @@ body[data-stale] .stage-body {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--lines);
-  font: 600 calc(var(--size) * 2 / var(--lines)) / 1.15 var(--font-hand);
+  font: 400 calc(var(--size) * 2 / var(--lines)) / 1.15 var(--font-hand);
   color: var(--hand);
   text-wrap: balance;
 }
@@ -874,7 +898,7 @@ body[data-stale] .stage-body {
 }
 
 .narration li.note {
-  font: 600 1.3rem/1.2 var(--font-hand);
+  font: 400 1.25rem/1.2 var(--font-hand);
   color: var(--error);
 }
 
@@ -942,7 +966,7 @@ body[data-stale] .stage-body {
   border-radius: 0;
   outline: none;
   padding: 0 14px 0 calc(var(--margin-x) + 12px);
-  font: 600 1.45rem/var(--lh) var(--font-hand);
+  font: 400 1.4rem/var(--lh) var(--font-hand);
   color: var(--hand);
   background-color: var(--surface);
   background-image:
@@ -994,17 +1018,20 @@ textarea.notebook {
   box-shadow: none;
 }
 
-/* la phrase en cours est surlignée, comme au surligneur sur un cahier */
+/* la phrase en cours est surlignée, comme au surligneur sur un cahier ; le surlignage couvre
+   toute la hauteur des lettres, car le texte surligné est foncé, même en thème sombre */
 .notebook-view .ln.is-current .src,
 .notebook-view .ln.is-error .src {
   color: var(--on-hl);
-  background: linear-gradient(transparent 14%, var(--hl-read) 14%, var(--hl-read) 86%, transparent 86%);
+  background: var(--hl-read);
+  padding: 0 3px;
+  border-radius: 3px;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
 .notebook-view .ln.is-error .src {
-  background: linear-gradient(transparent 14%, var(--hl-false) 14%, var(--hl-false) 86%, transparent 86%);
+  background: var(--hl-false);
 }
 
 .translating {
@@ -1089,7 +1116,7 @@ textarea.notebook {
 }
 
 .notes q {
-  font: 600 1.2rem/1.2 var(--font-hand);
+  font: 400 1.15rem/1.2 var(--font-hand);
   color: var(--hand);
 }
 

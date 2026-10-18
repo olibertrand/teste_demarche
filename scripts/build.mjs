@@ -1,5 +1,5 @@
-// Construit dist/demarche.html : un seul fichier autonome (CSS et JavaScript intégrés),
-// qui s'ouvre d'un double-clic, sans serveur ni connexion (seules les polices viennent d'Internet).
+// Construit dist/demarche.html : un seul fichier autonome (CSS, JavaScript et polices intégrés),
+// qui s'ouvre d'un double-clic, sans serveur ni connexion.
 //
 //   npm run build                          → dist/demarche.html
 //   npm run build -- --fragment chemin     → produit aussi un fragment sans <html>/<head>/<body>
@@ -21,7 +21,12 @@ function between(start, end) {
 
 const head = between('<!-- HEAD:START -->', '<!-- HEAD:END -->');
 const app = between('<!-- APP:START -->', '<!-- APP:END -->');
-const css = read('src/style.css');
+// les polices de src/fonts sont intégrées à la feuille de style (data: URI)
+const css = read('src/style.css').replace(/url\("fonts\/([\w.-]+\.woff2)"\)/g, (_, file) => {
+  const data = readFileSync(join(root, 'src/fonts', file)).toString('base64');
+  return `url("data:font/woff2;base64,${data}")`;
+});
+if (/url\("fonts\//.test(css)) throw new Error('une police de src/fonts n’a pas pu être intégrée');
 const bundle = await build({
   entryPoints: [join(root, 'src/ui/app.js')],
   bundle: true,
