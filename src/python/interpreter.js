@@ -13,8 +13,6 @@ import {
 
 export const DEFAULT_LIMITS = { maxSteps: 10_000, maxDepth: 200, maxOps: 5_000_000 };
 
-const CONTINUE = Symbol('continue');
-
 class ReturnSignal {
   constructor(value, line) {
     this.value = value;
@@ -101,13 +99,19 @@ const MULTIPLE_ASSIGNMENT =
 const CHAINED_ASSIGNMENT =
   'une affectation ne donne une valeur qu’à une seule variable : « a = b = … » n’est pas autorisé ici. ' +
   'Écris une affectation par ligne';
-// Pas de break : une boucle s'arrête quand sa condition le dit.
+// Ni break, ni continue, ni else après une boucle : une boucle s'arrête quand sa condition le dit,
+// et chaque tour exécute tout son bloc.
 const BREAK_NOT_ALLOWED =
   '« break » n’est pas autorisé ici : une boucle s’arrête quand sa condition le dit. ' +
   'Pour s’arrêter dès qu’on a trouvé ce qu’on cherche, utilise une boucle while dont la condition dit quand continuer, ' +
   'par exemple : while i < len(L) and L[i] != v';
+const CONTINUE_NOT_ALLOWED =
+  '« continue » n’est pas autorisé ici : pour ne traiter que certains éléments, ' +
+  'place les instructions dans un if qui dit quand les exécuter';
+const LOOP_ELSE_NOT_ALLOWED =
+  '« else » après une boucle n’est pas autorisé ici : écris simplement les instructions après la boucle, sans else';
 
-function validate(body, inLoop = false, inFunction = false) {
+function validate(body, inFunction = false) {
   for (const s of body) {
     switch (s.type) {
       case 'Assign':
@@ -119,22 +123,21 @@ function validate(body, inLoop = false, inFunction = false) {
       case 'Break':
         throw new PyError('NotAllowed', BREAK_NOT_ALLOWED, s.line);
       case 'Continue':
-        if (!inLoop) throw new PyError('SyntaxError', '« continue » en dehors d’une boucle', s.line);
-        break;
+        throw new PyError('NotAllowed', CONTINUE_NOT_ALLOWED, s.line);
       case 'Return':
         if (!inFunction) throw new PyError('SyntaxError', '« return » en dehors d’une fonction', s.line);
         break;
       case 'If':
-        validate(s.body, inLoop, inFunction);
-        validate(s.orelse, inLoop, inFunction);
+        validate(s.body, inFunction);
+        validate(s.orelse, inFunction);
         break;
       case 'While':
       case 'For':
-        validate(s.body, true, inFunction);
-        validate(s.orelse, inLoop, inFunction);
+        validate(s.body, inFunction);
+        if (s.orelse.length) throw new PyError('NotAllowed', LOOP_ELSE_NOT_ALLOWED, s.elseLine);
         break;
       case 'FunctionDef':
-        validate(s.body, false, true);
+        validate(s.body, true);
         break;
     }
   }
@@ -499,10 +502,6 @@ class Interpreter {
         throw new ReturnSignal(s.value ? this.evalExpr(s.value) : null, s.line);
       case 'Pass':
         return this.step(s.line);
-      case 'Continue':
-        this.emit({ type: 'continue' });
-        this.step(s.line);
-        throw CONTINUE;
       case 'Import':
         for (const { name, asname } of s.names) this.importName(asname ?? name, loadModule(name));
         this.emit({ type: 'import', names: s.names.map((n) => n.name) });
@@ -596,13 +595,8 @@ class Interpreter {
       this.emit({ type: 'test', kind: 'while', src: this.text(s.test), result });
       this.step(s.line);
       if (!result) break;
-      try {
-        this.execBlock(s.body);
-      } catch (e) {
-        if (e !== CONTINUE) throw e;
-      }
+      this.execBlock(s.body);
     }
-    this.execBlock(s.orelse);
   }
 
   execFor(s) {
@@ -635,16 +629,11 @@ class Interpreter {
         ref: loop ? iterable.id : null,
       });
       this.step(s.line);
-      try {
-        this.execBlock(s.body);
-      } catch (x) {
-        if (x !== CONTINUE) throw x;
-      }
+      this.execBlock(s.body);
     }
     if (loop) frame.loops.splice(frame.loops.indexOf(loop), 1);
     this.emit({ type: 'loopEnd', var: varText, iter: iterText, kind: it.kind });
     this.step(s.line);
-    this.execBlock(s.orelse);
   }
 
   deleteTarget(t) {

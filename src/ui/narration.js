@@ -126,9 +126,6 @@ export function narrate(step, sourceLines) {
       case 'note':
         out.push({ text: e.text, tone: 'note' });
         break;
-      case 'continue':
-        out.push({ text: 'continue : on passe directement au tour suivant', tone: 'flow' });
-        break;
       case 'dictSet':
         out.push({ text: `${e.name}[${e.key}] ← ${e.value}` });
         break;

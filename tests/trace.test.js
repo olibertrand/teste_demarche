@@ -82,17 +82,30 @@ test('copie entre deux listes, append et insert : la valeur garde la trace de so
   ]);
 });
 
-test('break est refusé : une boucle s’arrête par sa condition', () => {
-  for (const code of ['for x in [1, 2]:\n    if x == 2:\n        break', 'while True:\n    break', 'break']) {
+test('ni break, ni continue, ni else après une boucle : chacun est refusé avec une explication', () => {
+  const refused = (code, line, message) => {
     const r = run(code);
     assert.equal(r.phase, 'syntax', code);
-    assert.equal(r.error.type, 'NotAllowed');
+    assert.equal(r.error.type, 'NotAllowed', code);
     assert.equal(r.error.title, 'Écriture non autorisée');
-    assert.match(r.error.message, /« break » n’est pas autorisé[\s\S]*while i < len\(L\) and L\[i\] != v/);
-  }
-  assert.equal(run('for x in [1, 2]:\n    if x == 2:\n        break').error.line, 3);
-  // continue reste permis
-  assert.equal(run('for x in [1, 2, 3]:\n    if x == 2:\n        continue\n    print(x)').output, '1\n3\n');
+    assert.equal(r.error.line, line, code);
+    assert.match(r.error.message, message, code);
+  };
+  const breakMessage = /« break » n’est pas autorisé[\s\S]*while i < len\(L\) and L\[i\] != v/;
+  refused('for x in [1, 2]:\n    if x == 2:\n        break', 3, breakMessage);
+  refused('while True:\n    break', 2, breakMessage);
+  refused('break', 1, breakMessage);
+  const continueMessage = /« continue » n’est pas autorisé[\s\S]*dans un if qui dit quand les exécuter/;
+  refused('for x in [1, 2, 3]:\n    if x == 2:\n        continue\n    print(x)', 3, continueMessage);
+  refused('continue', 1, continueMessage);
+  const elseMessage = /« else » après une boucle n’est pas autorisé[\s\S]*après la boucle, sans else/;
+  refused('for x in [1, 2]:\n    pass\nelse:\n    print("fini")', 3, elseMessage);
+  refused('n = 0\nwhile n < 3:\n    n = n + 1\n\nelse:\n    print(n)', 5, elseMessage);
+  // la première erreur du programme est signalée : un break dans la boucle passe avant son else
+  refused('for x in [1]:\n    break\nelse:\n    pass', 2, breakMessage);
+  // le else d'un if reste permis, return aussi (même dans une boucle)
+  assert.equal(run('def f(L):\n    for x in L:\n        if x > 1:\n            return x\n    return None\nprint(f([1, 5]))').output, '5\n');
+  assert.equal(run('x = 3\nif x > 1:\n    print("oui")\nelse:\n    print("non")').output, 'oui\n');
 });
 
 test('une affectation ne donne une valeur qu’à une seule variable', () => {

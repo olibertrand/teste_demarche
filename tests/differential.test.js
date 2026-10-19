@@ -150,9 +150,8 @@ print(carre(7))
 `,
   controle: `
 for i in range(10):
-    if i == 2:
-        continue
-    print(i, end=" ")
+    if i != 2:
+        print(i, end=" ")
 print()
 n = 0
 while n < 3:
@@ -160,16 +159,14 @@ while n < 3:
 print(n)
 for i in range(3):
     pass
-else:
-    print("fini", i)
+print("fini", i)
 x = 7
 print("pair" if x % 2 == 0 else "impair")
 print(not True, 1 and 2, 0 or "défaut", None is None, [] or [0], 0 and 1 / 0)
 k = 0
 while k < 3:
     k += 1
-else:
-    print("while terminé", k)
+print("while terminé", k)
 if x > 5: print("grand")
 for c in "abc": print(c, end="")
 print()
@@ -210,7 +207,6 @@ const ERRORS = {
   'indice flottant': 'print([1, 2][1.0])',
   'chaîne non modifiable': 's = "abc"\ns[0] = "z"',
   'module absent': 'import module_qui_n_existe_pas',
-  'continue hors boucle': 'continue',
   'return hors fonction': 'return 5',
   'désindentation incohérente': 'if True:\n        x = 1\n    y = 2',
   'argument manquant': 'def f(a, b):\n    return a\nf(1)',

@@ -353,12 +353,14 @@ class Parser {
     const header = { line: t.line, start: t.start, end: this.lastEnd };
     const body = this.parseBlock(t.line);
     let orelse = [];
+    let elseLine = null;
     if (this.isKw('else')) {
       const e = this.next();
+      elseLine = e.line;
       this.expectColon('else');
       orelse = this.parseBlock(e.line);
     }
-    return { type: 'While', ...header, test, body, orelse };
+    return { type: 'While', ...header, test, body, orelse, elseLine };
   }
 
   parseFor() {
@@ -370,12 +372,14 @@ class Parser {
     const header = { line: t.line, start: t.start, end: this.lastEnd };
     const body = this.parseBlock(t.line);
     let orelse = [];
+    let elseLine = null;
     if (this.isKw('else')) {
       const e = this.next();
+      elseLine = e.line;
       this.expectColon('else');
       orelse = this.parseBlock(e.line);
     }
-    return { type: 'For', ...header, target, iter, body, orelse };
+    return { type: 'For', ...header, target, iter, body, orelse, elseLine };
   }
 
   parseTargetList() {

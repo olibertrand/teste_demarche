@@ -112,7 +112,9 @@ test('une instruction refusée (break, a, b = b, a) : la traduction est redemand
   // une erreur de syntaxe n'est pas redemandée automatiquement
   assert.equal(assemble({ lignes: [{ code: 'for x in L', demarche: 1 }, { code: '    pass', demarche: 1 }] }, 'parcours L').feedback, undefined);
   assert.match(buildPrompt(text), /break est interdit/);
-  assert.doesNotMatch(buildPrompt(text), /while, break/);
+  assert.match(buildPrompt(text), /continue est interdit/);
+  assert.match(buildPrompt(text), /Pas de break, pas de continue, pas de else après une boucle/);
+  assert.doesNotMatch(buildPrompt(text), /while, (break|continue)/);
 });
 
 test('hypothèses et phrases incomprises : seules les entrées bien formées sont gardées', () => {

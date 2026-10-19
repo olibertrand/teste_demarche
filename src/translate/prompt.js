@@ -3,7 +3,7 @@
 
 // À incrémenter dès que la consigne change : les traductions déjà gardées en mémoire
 // dans le navigateur sont alors ignorées.
-export const PROMPT_VERSION = 5;
+export const PROMPT_VERSION = 6;
 
 export const MAX_DEMARCHE_LINES = 80;
 
@@ -30,9 +30,10 @@ LIRE UNE DÉMARCHE D'ÉLÈVE
 - « on recommence », « on fait de même », « on refait pareil » renvoient à une méthode déjà décrite : applique-la au cas que la phrase indique (« on recommence pour placer le 2e plus petit en 2e position » : même méthode, avec la 2e position à la place de la 1re). Ce n'est pas compléter la démarche : c'est ce qu'elle demande. Quand chaque étape place un élément à une position, l'étape suivante reprend la méthode sur la partie de la liste qui suit les positions déjà placées. Dis-le en hypothèse.
 - « et ainsi de suite », « on continue de même jusqu'à… », « jusqu'à ce que toute la liste soit triée » : une boucle qui applique la même méthode aux cas suivants, jusqu'au dernier. Garde la traduction des cas déjà écrits un par un, sans les fusionner dans la boucle.
 - « on s'arrête dès que… », « jusqu'à ce qu'on trouve… » : break est interdit. Une boucle s'arrête par sa condition : écris une boucle while qui dit quand continuer (while i < len(L) and L[i] != v:), avec un indice si la démarche parcourait la liste, et dis-le en hypothèse. Dans une fonction, « on renvoie … » se traduit par return.
+- « on passe à l'élément suivant », « on l'ignore » : continue est interdit ; place les instructions dans un if qui dit quand les exécuter.
 - Une phrase que tu ne peux vraiment pas traduire (ce n'est pas une action, ou rien dans la démarche ne dit comment faire) n'est pas inventée : mets-la dans « incompris » avec la raison. Un renvoi comme « on recommence » ou « et ainsi de suite » n'est jamais incompris quand la méthode a été décrite plus haut.
 
-PYTHON AUTORISÉ : affectations d'une seule variable à la fois, if / elif / else, for, while, continue, def / return, listes (L[i], len, append, pop, insert, tranches), opérateurs + - * / // % **, comparaisons, and / or / not, print, range, min, max, sum, abs, int, float, str, round, sorted, et les modules math et random. Pas de break, pas de classes, pas de try, pas de with, pas de commentaires dans le code.
+PYTHON AUTORISÉ : affectations d'une seule variable à la fois, if / elif / else, for, while, def / return, listes (L[i], len, append, pop, insert, tranches), opérateurs + - * / // % **, comparaisons, and / or / not, print, range, min, max, sum, abs, int, float, str, round, sorted, et les modules math et random. Pas de break, pas de continue, pas de else après une boucle, pas de classes, pas de try, pas de with, pas de commentaires dans le code.
 
 FORMAT DE LA RÉPONSE : uniquement un objet JSON de cette forme.
 {"lignes": [{"code": "<une ligne de Python, avec son indentation>", "demarche": <numéro de la ligne de la démarche qu'elle traduit>}],
