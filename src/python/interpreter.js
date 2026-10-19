@@ -450,6 +450,7 @@ class Interpreter {
     if (!event) return;
     const ev = { type: 'assign', name, value: shortRepr(value) };
     if (origin?.cell) Object.assign(ev, { fromCell: origin.cell, fromText: origin.text });
+    else if (origin?.name && origin.name !== name) ev.fromVar = origin.name;
     this.emit(ev);
   }
 
@@ -540,7 +541,7 @@ class Interpreter {
   execAssign(s) {
     this.lastCell = null;
     const value = this.evalExpr(s.value);
-    // d'où vient la valeur : une case de liste (temp = L[i]) ou une variable (L[j] = temp) ;
+    // d'où vient la valeur : une case de liste (temp = L[i]) ou une variable (L[j] = temp, m = x) ;
     // l'animation la fait voyager de là jusqu'à sa destination
     let origin = null;
     if (s.value.type === 'Subscript' && this.lastCell) {

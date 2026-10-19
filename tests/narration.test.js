@@ -22,7 +22,7 @@ test('maximum : visite, comparaison et décision sont racontées', () => {
   assert.ok(flat.some((n) => n.src === 'x > m' && n.values === '4 > 4' && n.bool === false));
   assert.ok(flat.some((n) => n.text === 'donc on exécute le bloc du if'));
   assert.ok(flat.some((n) => n.text === 'donc on saute le bloc du if'));
-  assert.ok(flat.some((n) => n.text === 'm ← 12'));
+  assert.ok(flat.some((n) => n.text === 'm ← x = 12'));
   assert.ok(flat.some((n) => n.text === 'Fin du parcours de L'));
   // l'affectation de x n'est pas répétée à côté de l'itération
   assert.ok(!flat.some((n) => n.text === 'x ← 12'));

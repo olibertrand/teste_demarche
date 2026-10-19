@@ -74,7 +74,7 @@ export function narrate(step, sourceLines) {
         break;
       case 'assign':
         if (iterVars.has(e.name)) break;
-        out.push({ text: e.fromText ? `${e.name} ← ${e.fromText} = ${e.value}` : `${e.name} ← ${e.value}` });
+        out.push({ text: e.fromText || e.fromVar ? `${e.name} ← ${e.fromText ?? e.fromVar} = ${e.value}` : `${e.name} ← ${e.value}` });
         break;
       case 'compare': {
         const values = `${e.left} ${e.op} ${e.right}`;

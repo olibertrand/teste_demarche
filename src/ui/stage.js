@@ -393,14 +393,20 @@ export class Stage {
         this.fly(e.ref, e.from, e.index, -1);
       } else if (e.type === 'write' && e.fromVar) {
         // L[j] = temp : la valeur quitte la variable pour rejoindre la case
-        const chip = this.variableChip(e.fromVar);
+        const source = this.variableValue(e.fromVar);
         const target = this.cell(e.ref, e.index)?.querySelector('.val');
-        if (chip && target) this.flyBetween(e.value, chip.getBoundingClientRect(), target);
+        if (source && target) this.flyBetween(e.value, source.getBoundingClientRect(), target);
       } else if (e.type === 'assign' && e.fromCell) {
         // temp = L[i] : la valeur quitte la case pour rejoindre la variable
         const cell = this.cell(e.fromCell.ref, e.fromCell.index);
-        const target = this.variableChip(e.name)?.querySelector('.vval');
+        const target = this.variableValue(e.name);
         if (cell && target) this.flyBetween(e.value, cell.getBoundingClientRect(), target);
+      } else if (e.type === 'assign' && e.fromVar) {
+        // m = x : la valeur saute d'une variable à l'autre, en arc pour qu'on la voie passer
+        // d'une pastille à sa voisine
+        const source = this.variableValue(e.fromVar);
+        const target = this.variableValue(e.name);
+        if (source && target) this.flyBetween(e.value, source.getBoundingClientRect(), target, { arc: 40 });
       } else if (e.type === 'mutate' && (e.method === 'append' || e.method === 'insert')) {
         this.cell(e.ref, e.index)
           ?.querySelector('.val')
@@ -412,17 +418,19 @@ export class Stage {
     }
   }
 
-  /** La pastille d'une variable de la fonction en cours (premier groupe affiché). */
-  variableChip(name) {
+  /** La valeur affichée dans la pastille d'une variable de la fonction en cours (premier groupe affiché). */
+  variableValue(name) {
     const group = this.els.variables.querySelector('.var-group');
-    return group ? [...group.querySelectorAll('.var')].find((chip) => chip.dataset.name === name) : null;
+    const chip = group ? [...group.querySelectorAll('.var')].find((c) => c.dataset.name === name) : null;
+    return chip?.querySelector('.vval') ?? null;
   }
 
   /**
    * Une étiquette portant la valeur vole d'un point de la scène à un autre (d'une case vers une
    * variable, ou l'inverse) ; elle passe au-dessus de tout, même hors du cadre des listes.
+   * @param {{arc?: number}} [options] hauteur en pixels d'un trajet en arc (ligne droite par défaut)
    */
-  flyBetween(text, fromRect, target) {
+  flyBetween(text, fromRect, target, { arc = 0 } = {}) {
     const to = target.getBoundingClientRect();
     const flyer = h('div', { class: 'flyer', 'aria-hidden': 'true' }, text);
     flyer.style.left = `${fromRect.left + fromRect.width / 2}px`;
@@ -431,8 +439,10 @@ export class Stage {
     const dx = to.left + to.width / 2 - (fromRect.left + fromRect.width / 2);
     const dy = to.top + to.height / 2 - (fromRect.top + fromRect.height / 2);
     target.style.visibility = 'hidden';
+    // points du trajet : une parabole, approchée en huit segments
+    const points = arc ? Array.from({ length: 9 }, (_, k) => k / 8) : [0, 1];
     const move = flyer.animate(
-      [{ transform: 'translate(-50%, -50%)' }, { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))` }],
+      points.map((t) => ({ transform: `translate(calc(-50% + ${dx * t}px), calc(-50% + ${dy * t - 4 * arc * t * (1 - t)}px))` })),
       { duration: this.moveDuration * 1.3, easing: 'ease-in-out' },
     );
     const done = () => {

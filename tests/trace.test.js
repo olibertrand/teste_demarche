@@ -50,6 +50,18 @@ test('tri par sélection : l’échange se fait en trois lignes, avec temp', () 
   assert.deepEqual([back.index, back.fromVar, back.value], [3, 'temp', '7']);
 });
 
+test('m = x : la valeur vient de la variable x (l’animation la fait voyager)', () => {
+  const r = run(example('maximum'));
+  const assigns = r.steps.flatMap((s) => s.events.filter((e) => e.type === 'assign' && e.name === 'm'));
+  assert.deepEqual(
+    assigns.map((e) => [e.value, e.fromVar ?? null]),
+    [['4', null], ['12', 'x'], ['33', 'x']],
+  );
+  // une variable recopiée dans elle-même ne voyage pas
+  const self = run('x = 1\nx = x\n').steps.flatMap((s) => s.events.filter((e) => e.type === 'assign'));
+  assert.ok(self.every((e) => !e.fromVar));
+});
+
 test('une affectation ne donne une valeur qu’à une seule variable', () => {
   for (const code of ['a, b = 1, 2', 'L = [1, 2]\nL[0], L[1] = L[1], L[0]', '[a, b] = [1, 2]', 'def f():\n    x, y = 0, 0\nf()']) {
     const r = run(code);
