@@ -38,6 +38,11 @@ test('tri par sélection et par insertion : échange et décalage', () => {
   assert.ok(insertion.some((n) => n.text === 'T[1] ← T[0] = 7'));
 });
 
+test('copie d’une liste à l’autre : la case d’origine est citée', () => {
+  const flat = texts('L = [5, 2]\nR = [0, 0]\nR[0] = L[1]\n').all.flat();
+  assert.ok(flat.some((n) => n.text === 'R[0] ← L[1] = 2'));
+});
+
 test('appel, retour et affichage', () => {
   const flat = texts(code('appartient')).all.flat();
   assert.ok(flat.some((n) => n.text === 'Appel de appartient(v = 8, L = [5, 3, 8, 1, 9])'));

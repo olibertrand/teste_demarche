@@ -396,6 +396,11 @@ export class Stage {
         const source = this.variableValue(e.fromVar);
         const target = this.cell(e.ref, e.index)?.querySelector('.val');
         if (source && target) this.flyBetween(e.value, source.getBoundingClientRect(), target);
+      } else if (e.type === 'write' && e.fromCell) {
+        // R[k] = L[i] : la valeur passe d'une case d'une liste à une case d'une autre
+        const source = this.cell(e.fromCell.ref, e.fromCell.index);
+        const target = this.cell(e.ref, e.index)?.querySelector('.val');
+        if (source && target) this.flyBetween(e.value, source.getBoundingClientRect(), target);
       } else if (e.type === 'assign' && e.fromCell) {
         // temp = L[i] : la valeur quitte la case pour rejoindre la variable
         const cell = this.cell(e.fromCell.ref, e.fromCell.index);
@@ -408,21 +413,37 @@ export class Stage {
         const target = this.variableValue(e.name);
         if (source && target) this.flyBetween(e.value, source.getBoundingClientRect(), target, { arc: 40 });
       } else if (e.type === 'mutate' && (e.method === 'append' || e.method === 'insert')) {
-        this.cell(e.ref, e.index)
-          ?.querySelector('.val')
-          ?.animate([{ transform: 'scale(0.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], {
+        // R.append(x), R.append(L[i]) : la valeur rejoint la nouvelle case ; une valeur calculée
+        // (R.append(x * 2)) fait simplement apparaître la case
+        const target = this.cell(e.ref, e.index)?.querySelector('.val');
+        const source = e.fromVar ? this.variableValue(e.fromVar) : e.fromCell ? this.sourceCell(e) : null;
+        if (target && source) this.flyBetween(e.value, source.getBoundingClientRect(), target);
+        else {
+          target?.animate([{ transform: 'scale(0.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], {
             duration: this.moveDuration,
             easing: 'cubic-bezier(.2,.8,.2,1.2)',
           });
+        }
       }
     }
   }
 
-  /** La valeur affichée dans la pastille d'une variable de la fonction en cours (premier groupe affiché). */
+  /**
+   * La valeur affichée dans la pastille d'une variable : celle de la fonction en cours d'abord
+   * (premier groupe affiché), sinon la variable globale.
+   */
   variableValue(name) {
-    const group = this.els.variables.querySelector('.var-group');
-    const chip = group ? [...group.querySelectorAll('.var')].find((c) => c.dataset.name === name) : null;
-    return chip?.querySelector('.vval') ?? null;
+    for (const group of this.els.variables.querySelectorAll('.var-group')) {
+      const chip = [...group.querySelectorAll('.var')].find((c) => c.dataset.name === name);
+      if (chip) return chip.querySelector('.vval');
+    }
+    return null;
+  }
+
+  /** La case d'où vient une valeur insérée : dans la même liste, l'insertion a décalé les suivantes. */
+  sourceCell(e) {
+    const { ref, index } = e.fromCell;
+    return this.cell(ref, ref === e.ref && e.method === 'insert' && index >= e.index ? index + 1 : index);
   }
 
   /**

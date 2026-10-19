@@ -62,6 +62,26 @@ test('m = x : la valeur vient de la variable x (l’animation la fait voyager)',
   assert.ok(self.every((e) => !e.fromVar));
 });
 
+test('copie entre deux listes, append et insert : la valeur garde la trace de son origine', () => {
+  const r = run('L = [5, 2, 8]\nR = [0]\nx = 4\nR[0] = L[1]\nR.append(x)\nR.append(L[2])\nR.insert(0, x)\nR.append(x * 2)\nL[0] = L[2]\n');
+  assert.ok(r.ok);
+  const all = r.steps.flatMap((s) => s.events);
+  const lists = Object.fromEntries(r.steps.at(-1).frames[0].vars.filter(([, v]) => v.t === 'list').map(([n, v]) => [n, v.ref]));
+  // R[0] = L[1] : d'une liste à l'autre
+  const copy = all.find((e) => e.type === 'write' && e.ref === lists.R);
+  assert.deepEqual([copy.index, copy.from, copy.fromCell, copy.fromText, copy.value], [0, null, { ref: lists.L, index: 1 }, 'L[1]', '2']);
+  // L[0] = L[2] : dans la même liste, comme avant
+  const inside = all.find((e) => e.type === 'write' && e.ref === lists.L);
+  assert.deepEqual([inside.from, inside.fromCell], [2, undefined]);
+  const added = all.filter((e) => e.type === 'mutate').map((e) => [e.method, e.index, e.value, e.fromVar ?? e.fromText ?? null]);
+  assert.deepEqual(added, [
+    ['append', 1, '4', 'x'],
+    ['append', 2, '8', 'L[2]'],
+    ['insert', 0, '4', 'x'],
+    ['append', 4, '8', null],
+  ]);
+});
+
 test('une affectation ne donne une valeur qu’à une seule variable', () => {
   for (const code of ['a, b = 1, 2', 'L = [1, 2]\nL[0], L[1] = L[1], L[0]', '[a, b] = [1, 2]', 'def f():\n    x, y = 0, 0\nf()']) {
     const r = run(code);

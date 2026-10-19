@@ -87,8 +87,9 @@ export function narrate(step, sourceLines) {
         out.push({ text: consequence(e), tone: 'flow' });
         break;
       case 'write': {
-        const source = e.from !== null ? `${e.name}[${e.from}] = ` : e.fromVar ? `${e.fromVar} = ` : '';
-        out.push({ text: `${e.name}[${e.index}] ← ${source}${e.value}` });
+        // d'où vient la valeur : une case de la même liste, d'une autre liste, ou une variable
+        const source = e.from !== null ? `${e.name}[${e.from}]` : (e.fromText ?? e.fromVar);
+        out.push({ text: `${e.name}[${e.index}] ← ${source ? `${source} = ` : ''}${e.value}` });
         break;
       }
       case 'mutate':

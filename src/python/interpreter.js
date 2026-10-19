@@ -765,14 +765,17 @@ class Interpreter {
       obj.items[i] = value;
       obj.touch();
       this.recordIndexName(obj, node.slice);
+      const sameList = origin?.cell?.ref === obj.id;
       this.emit({
         type: 'write',
         ref: obj.id,
         index: i,
         value: shortRepr(value),
         name: this.text(node.value),
-        from: origin?.cell?.ref === obj.id ? origin.cell.index : null,
+        from: sameList ? origin.cell.index : null,
         fromVar: origin?.name ?? null,
+        // R[k] = L[i] : la valeur vient d'une case d'une autre liste
+        ...(origin?.cell && !sameList ? { fromCell: origin.cell, fromText: origin.text } : {}),
       });
       return { ref: obj.id, index: i };
     }
@@ -936,21 +939,29 @@ class Interpreter {
 
   evalCall(node) {
     const func = this.evalExpr(node.func);
-    const args = node.args.map((a) => this.evalExpr(a));
+    // d'où vient chaque argument (une variable, une case de liste) : R.append(x) fait voyager la valeur
+    const origins = [];
+    const args = node.args.map((a) => {
+      this.lastCell = null;
+      const value = this.evalExpr(a);
+      const info = this.operandInfo(a);
+      origins.push(info?.cell ? { ...info, text: `${this.text(a.value)}[${info.cell.index}]` } : info);
+      return value;
+    });
     const kwargs = new Map();
     for (const k of node.keywords) kwargs.set(k.arg, this.evalExpr(k.value));
-    return this.callFunction(func, args, kwargs, node);
+    return this.callFunction(func, args, kwargs, node, origins);
   }
 
-  callFunction(func, args, kwargs, node) {
+  callFunction(func, args, kwargs, node, origins = []) {
     if (func instanceof PyFunction) return this.callUser(func, args, kwargs, node);
-    if (func instanceof PyBuiltin) return this.located(node, () => func.fn(args, kwargs, this.ctx(node)));
-    if (func instanceof PyBoundMethod) return this.located(node, () => func.fn(func.self, args, kwargs, this.ctx(node)));
+    if (func instanceof PyBuiltin) return this.located(node, () => func.fn(args, kwargs, this.ctx(node, origins)));
+    if (func instanceof PyBoundMethod) return this.located(node, () => func.fn(func.self, args, kwargs, this.ctx(node, origins)));
     const hint = func instanceof PyList ? ' (pour lire un élément, utilise des crochets : L[i])' : '';
     throw new PyError('TypeError', `${describe(func)} ne peut pas être appelé comme une fonction${hint}`, node.line);
   }
 
-  ctx(node) {
+  ctx(node, origins = []) {
     return {
       emit: (ev) => this.emit(ev),
       print: (text) => {
@@ -963,6 +974,7 @@ class Interpreter {
       seed: (s) => this.seedRandom(s),
       targetText: node.func?.type === 'Attribute' ? this.text(node.func.value) : null,
       argText: (k) => (node.args?.[k] ? this.text(node.args[k]) : null),
+      argOrigin: (k) => origins[k] ?? null,
     };
   }
 

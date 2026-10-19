@@ -76,8 +76,11 @@ pour les lignes sans commentaire). C'est aussi la forme du Python produit par la
 
 - chaque liste sous forme de cases numérotées ; la case lue s'allume (jaune), les cases
   comparées sont entourées (bleu), les cases modifiées passent en vert et les valeurs se
-  déplacent : d'une case à l'autre (`L[i] = L[j]`), d'une case vers une variable (`temp = L[i]`)
-  et retour (`L[j] = temp`), d'une variable à l'autre (`m = x`) ;
+  déplacent : d'une case à l'autre, dans la même liste (`L[i] = L[j]`) ou d'une liste à une autre
+  (`R[k] = L[i]`), d'une case vers une variable (`temp = L[i]`) et retour (`L[j] = temp`), d'une
+  variable à l'autre (`m = x`), et vers la case ajoutée par `R.append(x)`, `R.append(L[i])` ou
+  `R.insert(k, x)`. Une valeur calculée (`m = x + 1`, `R.append(2 * x)`) ne voyage pas : elle
+  apparaît à sa place ;
 - les variables utilisées comme indices (`i`, `j`, `imin`, `milieu`…) apparaissent comme des
   flèches sous les cases ; la variable d'une boucle `for x in L` suit l'élément visité ;
 - pour une recherche dichotomique (`debut` / `fin`, `gauche` / `droite`…), les cases hors de la

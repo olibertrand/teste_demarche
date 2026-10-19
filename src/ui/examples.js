@@ -148,6 +148,31 @@ print(L)
 `,
   },
   {
+    id: 'fusion',
+    group: 'Trier',
+    title: 'Fusion de deux listes triées',
+    code: `A = [2, 7, 12]
+B = [3, 4, 15, 20]
+R = []
+i = 0
+j = 0
+while i < len(A) and j < len(B):   # tant qu'aucune des deux listes n'est épuisée
+    if A[i] <= B[j]:               # on prend le plus petit des deux premiers restants
+        R.append(A[i])
+        i = i + 1
+    else:
+        R.append(B[j])
+        j = j + 1
+while i < len(A):                  # on recopie la fin de A
+    R.append(A[i])
+    i = i + 1
+while j < len(B):                  # puis la fin de B
+    R.append(B[j])
+    j = j + 1
+print(R)
+`,
+  },
+  {
     id: 'rendu-monnaie',
     group: 'Algorithme glouton',
     title: 'Rendu de monnaie',
