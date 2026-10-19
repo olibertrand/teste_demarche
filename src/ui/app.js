@@ -130,7 +130,8 @@ function start() {
     groups.get(ex.group).append(h('option', { value: ex.id }, ex.title));
   }
 
-  function chooseExample(id) {
+  /** @param {{atStartup?: boolean}} [options] à l'ouverture de la page, l'onglet Python garde son programme */
+  function chooseExample(id, { atStartup = false } = {}) {
     const demarche = DEMARCHE_EXAMPLES.find((e) => e.id === id);
     const program = demarche ? null : EXAMPLES.find((e) => e.id === id);
     if (!demarche && !program) return;
@@ -146,7 +147,7 @@ function start() {
       hideTranslateError();
       openTab('demarche');
       // une démarche déjà traduite s'affiche tout de suite ; sinon on attend « Traduire et exécuter »
-      if (rememberedAnswer(cleanText(demarche.text))) translateAndRun();
+      if (rememberedAnswer(cleanText(demarche.text))) translateAndRun({ toPython: !atStartup });
     } else {
       editor.value = program.code;
       store.set('code', program.code);
@@ -154,6 +155,15 @@ function start() {
       updateInputsBox();
       tab = 'python';
       executePython();
+    }
+  }
+
+  // le texte n'est plus celui de l'exemple : l'adresse ne doit plus le rouvrir au rechargement
+  function forgetExampleInAddress() {
+    try {
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    } catch {
+      // l'adresse ne peut pas être modifiée ici : sans conséquence
     }
   }
 
@@ -170,6 +180,9 @@ function start() {
   // ---------------------------------------------------------------- onglets et affichage
 
   function openTab(name) {
+    // les deux onglets montrent la même exécution (la traduction de la démarche) : même étape
+    const shared = spaces.demarche.result && spaces.demarche.result === spaces.python.result;
+    if (shared && name !== tab) spaces[name].index = spaces[tab].index;
     tab = name;
     store.set('onglet', name);
     showSpace();
@@ -274,6 +287,7 @@ function start() {
     if (ex && ex.code !== value) {
       spaces.python.exampleId = null;
       select.value = '';
+      forgetExampleInAddress();
     }
     updateInputsBox();
     $('syntax-error').hidden = true;
@@ -317,6 +331,7 @@ function start() {
     if (ex && ex.text !== value) {
       spaces.demarche.exampleId = null;
       select.value = '';
+      forgetExampleInAddress();
     }
     hideTranslateError();
     markStale(spaces.demarche);
@@ -367,7 +382,11 @@ function start() {
     updateControls();
   }
 
-  async function translateAndRun({ refresh = false } = {}) {
+  /**
+   * @param {{refresh?: boolean, toPython?: boolean}} [options] toPython : l'onglet Python reçoit la
+   *   traduction (pas à l'ouverture de la page, où il garde ce que l'élève y avait laissé)
+   */
+  async function translateAndRun({ refresh = false, toPython = true } = {}) {
     if (translating) return;
     const text = cleanText(demarcheInput.value);
     hideTranslateError();
@@ -418,6 +437,7 @@ function start() {
     const sp = spaces.demarche;
     const result = run(translation.python, { inputs: inputLines() });
     Object.assign(sp, { result, source: translation.python, index: 0, mode: 'run', stale: false, translation, text });
+    if (toPython || editor.value === translation.python) translationToPython();
     renderTranslation(sp);
     if (tab === 'demarche') {
       showSpace();
@@ -453,16 +473,22 @@ function start() {
     setMode('edit');
     translateAndRun({ refresh: true });
   });
-  $('to-python').addEventListener('click', () => {
-    const t = spaces.demarche.translation;
-    if (!t) return;
-    editor.value = t.python;
-    store.set('code', t.python);
-    spaces.python.exampleId = null;
+  /** L'onglet Python reçoit la traduction de la démarche, avec la même exécution, à la même étape. */
+  function translationToPython() {
+    const sp = spaces.demarche;
+    if (spaces.python.exampleId) forgetExampleInAddress();
+    editor.value = sp.translation.python;
+    store.set('code', sp.translation.python);
     updateInputsBox();
-    tab = 'python';
-    store.set('onglet', tab);
-    executePython();
+    $('syntax-error').hidden = true;
+    Object.assign(spaces.python, { result: sp.result, source: sp.source, index: sp.index, mode: 'run', stale: false, exampleId: null });
+    codeView.render(sp.source);
+  }
+
+  $('to-python').addEventListener('click', () => {
+    if (!spaces.demarche.translation) return;
+    translationToPython();
+    openTab('python');
     focusNext();
   });
   $('demarche-view').addEventListener('dblclick', (e) => {
@@ -541,10 +567,10 @@ function start() {
   tab = savedTab === 'python' || savedTab === 'demarche' ? savedTab : inClaude ? 'demarche' : 'python';
   executePython();
   const fromHash = decodeURIComponent(location.hash.slice(1));
-  if ([...EXAMPLES, ...DEMARCHE_EXAMPLES].some((e) => e.id === fromHash)) chooseExample(fromHash);
+  if ([...EXAMPLES, ...DEMARCHE_EXAMPLES].some((e) => e.id === fromHash)) chooseExample(fromHash, { atStartup: true });
   else {
     showSpace();
-    if (tab === 'demarche' && rememberedAnswer(cleanText(demarcheInput.value))) translateAndRun();
+    if (tab === 'demarche' && rememberedAnswer(cleanText(demarcheInput.value))) translateAndRun({ toPython: false });
   }
 
   getSample().then((sample) => {

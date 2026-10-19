@@ -50,7 +50,11 @@ l'animation qui montre l'erreur.
   ouvert hors ligne, l'onglet Démarche l'explique et seul l'onglet Python fonctionne.
 - Une démarche déjà traduite est gardée dans le navigateur : la même démarche donne toujours la
   même traduction, sans nouvel appel. **Retraduire** en demande une nouvelle.
-- **Ouvrir ce code dans l'onglet Python** permet de reprendre la traduction et de la modifier.
+- Après chaque traduction, l'onglet **Python** contient le code traduit, déjà exécuté : on peut y
+  suivre la même animation (les deux onglets restent à la même étape) ou modifier le code. Le
+  programme qui s'y trouvait est remplacé ; à l'ouverture de la page, en revanche, l'onglet Python
+  garde ce qu'on y avait laissé. **Ouvrir ce code dans l'onglet Python** y remet la traduction si
+  on l'a modifiée entre-temps.
 - La réponse de Claude est vérifiée avant d'être exécutée : forme attendue, puis analyse du Python
   produit par l'interpréteur de l'application. Une traduction qui écrit dans la variable d'une
   boucle `for x in L` comme si c'était une case de la liste (`x = temp` pour finir un échange : la
