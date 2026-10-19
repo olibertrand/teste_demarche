@@ -13,7 +13,6 @@ import {
 
 export const DEFAULT_LIMITS = { maxSteps: 10_000, maxDepth: 200, maxOps: 5_000_000 };
 
-const BREAK = Symbol('break');
 const CONTINUE = Symbol('continue');
 
 class ReturnSignal {
@@ -83,7 +82,7 @@ export function run(src, options = {}) {
   return new Interpreter(ast, options).run();
 }
 
-/** Vérifie qu'un programme peut être exécuté (syntaxe, break hors boucle…) ; renvoie l'erreur ou null. */
+/** Vérifie qu'un programme peut être exécuté (syntaxe, instructions refusées…) ; renvoie l'erreur ou null. */
 export function check(src) {
   try {
     validate(parse(src).body);
@@ -102,6 +101,11 @@ const MULTIPLE_ASSIGNMENT =
 const CHAINED_ASSIGNMENT =
   'une affectation ne donne une valeur qu’à une seule variable : « a = b = … » n’est pas autorisé ici. ' +
   'Écris une affectation par ligne';
+// Pas de break : une boucle s'arrête quand sa condition le dit.
+const BREAK_NOT_ALLOWED =
+  '« break » n’est pas autorisé ici : une boucle s’arrête quand sa condition le dit. ' +
+  'Pour s’arrêter dès qu’on a trouvé ce qu’on cherche, utilise une boucle while dont la condition dit quand continuer, ' +
+  'par exemple : while i < len(L) and L[i] != v';
 
 function validate(body, inLoop = false, inFunction = false) {
   for (const s of body) {
@@ -113,8 +117,9 @@ function validate(body, inLoop = false, inFunction = false) {
         }
         break;
       case 'Break':
+        throw new PyError('NotAllowed', BREAK_NOT_ALLOWED, s.line);
       case 'Continue':
-        if (!inLoop) throw new PyError('SyntaxError', `« ${s.type.toLowerCase()} » en dehors d’une boucle`, s.line);
+        if (!inLoop) throw new PyError('SyntaxError', '« continue » en dehors d’une boucle', s.line);
         break;
       case 'Return':
         if (!inFunction) throw new PyError('SyntaxError', '« return » en dehors d’une fonction', s.line);
@@ -494,10 +499,6 @@ class Interpreter {
         throw new ReturnSignal(s.value ? this.evalExpr(s.value) : null, s.line);
       case 'Pass':
         return this.step(s.line);
-      case 'Break':
-        this.emit({ type: 'break' });
-        this.step(s.line);
-        throw BREAK;
       case 'Continue':
         this.emit({ type: 'continue' });
         this.step(s.line);
@@ -598,7 +599,6 @@ class Interpreter {
       try {
         this.execBlock(s.body);
       } catch (e) {
-        if (e === BREAK) return;
         if (e !== CONTINUE) throw e;
       }
     }
@@ -619,7 +619,6 @@ class Interpreter {
     const frame = this.frame;
     const loop = it.kind === 'list' ? { list: iterable, index: -1, var: varText, label: iterText } : null;
     if (loop) frame.loops.push(loop);
-    let broke = false;
     for (let e = it.next(); e; e = it.next()) {
       if (loop) {
         loop.index = e.index;
@@ -639,19 +638,13 @@ class Interpreter {
       try {
         this.execBlock(s.body);
       } catch (x) {
-        if (x === BREAK) {
-          broke = true;
-          break;
-        }
         if (x !== CONTINUE) throw x;
       }
     }
     if (loop) frame.loops.splice(frame.loops.indexOf(loop), 1);
-    if (!broke) {
-      this.emit({ type: 'loopEnd', var: varText, iter: iterText, kind: it.kind });
-      this.step(s.line);
-      this.execBlock(s.orelse);
-    }
+    this.emit({ type: 'loopEnd', var: varText, iter: iterText, kind: it.kind });
+    this.step(s.line);
+    this.execBlock(s.orelse);
   }
 
   deleteTarget(t) {

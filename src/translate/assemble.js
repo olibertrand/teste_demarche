@@ -90,6 +90,10 @@ export function assemble(answer, text) {
     return fail(`Le Python produit n'est pas exécutable (ligne ${error.line ?? '?'} : ${error.message}).`, {
       python,
       line: error.line,
+      // une instruction que ce Python refuse (break, a, b = b, a…) : on la redemande en l'expliquant
+      ...(error.type === 'NotAllowed' && error.line
+        ? { feedback: `Ta ligne « ${plain[error.line - 1]} » est refusée par l'application : ${error.message}.` }
+        : {}),
     });
   }
   const write = loopVariableWrite(parse(python).body, python, text);

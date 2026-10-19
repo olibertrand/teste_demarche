@@ -82,6 +82,19 @@ test('copie entre deux listes, append et insert : la valeur garde la trace de so
   ]);
 });
 
+test('break est refusé : une boucle s’arrête par sa condition', () => {
+  for (const code of ['for x in [1, 2]:\n    if x == 2:\n        break', 'while True:\n    break', 'break']) {
+    const r = run(code);
+    assert.equal(r.phase, 'syntax', code);
+    assert.equal(r.error.type, 'NotAllowed');
+    assert.equal(r.error.title, 'Écriture non autorisée');
+    assert.match(r.error.message, /« break » n’est pas autorisé[\s\S]*while i < len\(L\) and L\[i\] != v/);
+  }
+  assert.equal(run('for x in [1, 2]:\n    if x == 2:\n        break').error.line, 3);
+  // continue reste permis
+  assert.equal(run('for x in [1, 2, 3]:\n    if x == 2:\n        continue\n    print(x)').output, '1\n3\n');
+});
+
 test('une affectation ne donne une valeur qu’à une seule variable', () => {
   for (const code of ['a, b = 1, 2', 'L = [1, 2]\nL[0], L[1] = L[1], L[0]', '[a, b] = [1, 2]', 'def f():\n    x, y = 0, 0\nf()']) {
     const r = run(code);

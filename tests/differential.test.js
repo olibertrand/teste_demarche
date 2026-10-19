@@ -152,15 +152,11 @@ print(carre(7))
 for i in range(10):
     if i == 2:
         continue
-    if i == 5:
-        break
     print(i, end=" ")
 print()
 n = 0
-while True:
+while n < 3:
     n += 1
-    if n >= 3:
-        break
 print(n)
 for i in range(3):
     pass
@@ -214,7 +210,7 @@ const ERRORS = {
   'indice flottant': 'print([1, 2][1.0])',
   'chaîne non modifiable': 's = "abc"\ns[0] = "z"',
   'module absent': 'import module_qui_n_existe_pas',
-  'break hors boucle': 'break',
+  'continue hors boucle': 'continue',
   'return hors fonction': 'return 5',
   'désindentation incohérente': 'if True:\n        x = 1\n    y = 2',
   'argument manquant': 'def f(a, b):\n    return a\nf(1)',

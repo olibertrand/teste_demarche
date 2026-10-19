@@ -60,7 +60,9 @@ l'animation qui montre l'erreur.
   boucle `for x in L` comme si c'était une case de la liste (`x = temp` pour finir un échange : la
   liste ne changerait pas) est redemandée une fois, en expliquant le défaut à Claude. Si la
   démarche donne elle-même une valeur à cette variable (« x devient 0 »), c'est l'erreur de
-  l'élève : elle est gardée, et l'animation montre que la liste ne change pas.
+  l'élève : elle est gardée, et l'animation montre que la liste ne change pas. Une traduction
+  qui utilise une instruction refusée (`break`, `a, b = b, a`) est elle aussi redemandée une fois,
+  avec l'explication.
 
 ### Les commentaires sont les phrases de la démarche
 
@@ -108,7 +110,9 @@ Un sous-ensemble de Python 3 exécuté dans le navigateur, qui couvre les algori
 - affectations d'une seule variable à la fois : `a, b = b, a` et `a = b = 0` sont refusés avec une
   explication ; un échange s'écrit en trois lignes, avec une variable temporaire
   (`temp = L[i]`, `L[i] = L[j]`, `L[j] = temp`) ;
-- `if` / `elif` / `else`, `while`, `for`, `break`, `continue`, `pass`, `assert`, `del`, `global` ;
+- `if` / `elif` / `else`, `while`, `for`, `continue`, `pass`, `assert`, `del`, `global` ;
+- pas de `break` : il est refusé avec une explication, car une boucle s'arrête quand sa condition
+  le dit (`while i < len(L) and L[i] != v`) ;
 - fonctions (`def`, paramètres par défaut, arguments nommés, récursivité, `lambda`) ;
 - listes en compréhension, tranches `L[a:b]`, f-strings et `format` ;
 - fonctions usuelles (`len`, `range`, `print`, `input`, `min`, `max`, `sum`, `sorted`, `round`…),

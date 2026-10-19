@@ -91,6 +91,30 @@ test('un Python non exécutable est refusé avec la ligne en cause', () => {
   assert.equal(breakOutside.ok, false);
 });
 
+test('une instruction refusée (break, a, b = b, a) : la traduction est redemandée avec l’explication', () => {
+  const text = 'L = [5, 3, 8]\non parcourt la liste et on s’arrête dès qu’on trouve 3';
+  const withBreak = assemble(
+    {
+      lignes: [
+        { code: 'L = [5, 3, 8]', demarche: 1 },
+        { code: 'for x in L:', demarche: 2 },
+        { code: '    if x == 3:', demarche: 2 },
+        { code: '        break', demarche: 2 },
+      ],
+    },
+    text,
+  );
+  assert.equal(withBreak.ok, false);
+  assert.equal(withBreak.line, 4);
+  assert.match(withBreak.feedback, /^Ta ligne « break » est refusée par l'application : « break » n’est pas autorisé/);
+  const swap = assemble({ lignes: [{ code: 'a = 1', demarche: 1 }, { code: 'b = 2', demarche: 1 }, { code: 'a, b = b, a', demarche: 2 }] }, 'a et b\non échange a et b');
+  assert.match(swap.feedback, /« a, b = b, a »[\s\S]*temp = a, puis a = b, puis b = temp/);
+  // une erreur de syntaxe n'est pas redemandée automatiquement
+  assert.equal(assemble({ lignes: [{ code: 'for x in L', demarche: 1 }, { code: '    pass', demarche: 1 }] }, 'parcours L').feedback, undefined);
+  assert.match(buildPrompt(text), /break est interdit/);
+  assert.doesNotMatch(buildPrompt(text), /while, break/);
+});
+
 test('hypothèses et phrases incomprises : seules les entrées bien formées sont gardées', () => {
   const t = assemble(
     {
