@@ -130,7 +130,7 @@ test('une erreur de la démarche est gardée : l’animation la montrera', () =>
 test('les exemples de la consigne sont des réponses que le contrôle accepte', () => {
   const prompt = buildPrompt('x = 1');
   const examples = [...prompt.matchAll(/Démarche :\n([\s\S]*?)\nRéponse :\n([\s\S]*?)\n\(/g)];
-  assert.equal(examples.length, 2);
+  assert.equal(examples.length, 3);
   for (const [, numbered, json] of examples) {
     const text = numbered
       .split('\n')
@@ -139,12 +139,70 @@ test('les exemples de la consigne sont des réponses que le contrôle accepte', 
     const t = assemble(JSON.parse(json), text);
     assert.ok(t.ok, t.message);
   }
-  // exemple 2 : une passe du tri à bulles, avec des échanges reconnus par l'animation
-  const [, numbered, json] = examples[1];
-  const t = assemble(JSON.parse(json), numbered.replace(/^\d+\| /gm, ''));
-  const r = run(t.python);
-  assert.ok(r.ok);
-  assert.equal(r.steps.at(-1).heap[r.steps.at(-1).frames[0].vars[0][1].ref].items.map((v) => v.r).join(' '), '3 5 1 8');
+  const finalList = ([, numbered, json]) => {
+    const r = run(assemble(JSON.parse(json), numbered.replace(/^\d+\| /gm, '')).python);
+    assert.ok(r.ok);
+    const last = r.steps.at(-1);
+    return last.heap[last.frames[0].vars[0][1].ref].items.map((v) => v.r).join(' ');
+  };
+  // exemple 2 : une passe du tri à bulles ; exemple 3 : le plus grand échangé avec le dernier
+  assert.equal(finalList(examples[1]), '3 5 1 8');
+  assert.equal(finalList(examples[2]), '6 7 2 9');
+});
+
+// la traduction obtenue de Claude pour le tri par sélection (consigne 3) : l'échange se terminait
+// par « x = temp », et le 4 disparaissait de la liste
+const SELECTION = `démarche pour trier la liste L = [4,12,7,2,33]
+on parcourt la liste pour placer son minimum en tete (chaque fois qu'on rencontre un nombre plus petit que le 1er de la liste, on l'échange avec le 1er de la liste.)`;
+const swapThroughX = (demarche = 2) => ({
+  lignes: [
+    { code: 'L = [4, 12, 7, 2, 33]', demarche: 1 },
+    { code: 'for x in L:', demarche },
+    { code: '    if x < L[0]:', demarche },
+    { code: '        temp = L[0]', demarche },
+    { code: '        L[0] = x', demarche },
+    { code: '        x = temp', demarche },
+  ],
+});
+
+test('une traduction qui écrit dans la variable de la boucle au lieu de la liste est refusée', () => {
+  const t = assemble(swapThroughX(), SELECTION);
+  assert.equal(t.ok, false);
+  assert.equal(t.line, 6);
+  assert.match(t.message, /modifie x, la variable de la boucle « for x in L » \(ligne 6\)/);
+  // l'explication donnée à Claude pour redemander la traduction
+  assert.match(t.feedback, /« x = temp »/);
+  assert.match(t.feedback, /for j in range\(len\(L\)\)\) et écris dans L\[j\]/);
+  assert.match(buildPrompt(SELECTION, { feedback: t.feedback }), /ATTENTION : une traduction précédente[\s\S]*« x = temp »[\s\S]*Réponds uniquement/);
+  assert.doesNotMatch(buildPrompt(SELECTION), /ATTENTION/);
+  // même si l'élève appelle x le nombre rencontré : il parle d'échanger des éléments de la liste
+  const named = SELECTION.replace('un nombre plus petit', 'un nombre x plus petit');
+  assert.equal(assemble(swapThroughX(), named).ok, false);
+});
+
+test('la démarche qui donne elle-même une valeur à la variable de la boucle est traduite telle quelle', () => {
+  const text = 'L = [3, -1, 4]\npour chaque x de L, si x < 0, x devient 0';
+  const t = assemble(
+    {
+      lignes: [
+        { code: 'L = [3, -1, 4]', demarche: 1 },
+        { code: 'for x in L:', demarche: 2 },
+        { code: '    if x < 0:', demarche: 2 },
+        { code: '        x = 0', demarche: 2 },
+      ],
+    },
+    text,
+  );
+  assert.ok(t.ok, t.message);
+  // c'est l'erreur de l'élève : l'animation montre que la liste ne change pas
+  const last = run(t.python).steps.at(-1);
+  assert.equal(last.heap[last.frames[0].vars[0][1].ref].items.map((v) => v.r).join(' '), '3 -1 4');
+  // une boucle sur les indices n'est pas concernée
+  const indices = assemble(
+    { lignes: [{ code: 'for i in range(3):', demarche: 1 }, { code: '    i = i + 1', demarche: 1 }] },
+    'pour i de 0 à 2, on augmente i de 1',
+  );
+  assert.ok(indices.ok, indices.message);
 });
 
 test('tri par sélection décrit par un élève : la traduction attendue trie la liste', () => {

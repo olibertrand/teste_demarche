@@ -382,6 +382,7 @@ function start() {
     // une traduction inutilisable ne doit pas être resservie par la mémoire de claude.ai
     const fresh = refresh || failedText === text;
     let answer = fresh ? null : rememberedAnswer(text);
+    let translation = answer && assemble(answer, text);
     if (!answer) {
       const sample = await getSample();
       if (!sample) {
@@ -392,6 +393,12 @@ function start() {
       setTranslating(true);
       try {
         answer = await askClaude(sample, text, { signal: translating.signal, refresh: fresh });
+        translation = assemble(answer, text);
+        // défaut de traduction connu : on la redemande une fois, en expliquant le défaut à Claude
+        if (translation.feedback) {
+          answer = await askClaude(sample, text, { signal: translating.signal, refresh: true, feedback: translation.feedback });
+          translation = assemble(answer, text);
+        }
       } catch (error) {
         if (PERMANENT_ERRORS.has(error?.code)) markUnavailable(errorMessage(error));
         else showTranslateError(errorMessage(error), { retry: error?.code !== 'cancelled' });
@@ -401,7 +408,6 @@ function start() {
         setTranslating(false);
       }
     }
-    const translation = assemble(answer, text);
     if (!translation.ok) {
       failedText = text;
       showTranslateError(`${translation.message} Tu peux demander une nouvelle traduction, ou reformuler la démarche.`, { retry: true });

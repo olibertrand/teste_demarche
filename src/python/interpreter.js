@@ -136,7 +136,7 @@ function validate(body, inLoop = false, inFunction = false) {
 }
 
 /** Noms recevant une valeur dans un bloc (sans entrer dans les fonctions), avec leurs lignes. */
-function assignedNames(body, into = new Map(), globals = null) {
+export function assignedNames(body, into = new Map(), globals = null) {
   const add = (name, line) => {
     if (!into.has(name)) into.set(name, []);
     into.get(name).push(line);

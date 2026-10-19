@@ -52,7 +52,11 @@ l'animation qui montre l'erreur.
   même traduction, sans nouvel appel. **Retraduire** en demande une nouvelle.
 - **Ouvrir ce code dans l'onglet Python** permet de reprendre la traduction et de la modifier.
 - La réponse de Claude est vérifiée avant d'être exécutée : forme attendue, puis analyse du Python
-  produit par l'interpréteur de l'application.
+  produit par l'interpréteur de l'application. Une traduction qui écrit dans la variable d'une
+  boucle `for x in L` comme si c'était une case de la liste (`x = temp` pour finir un échange : la
+  liste ne changerait pas) est redemandée une fois, en expliquant le défaut à Claude. Si la
+  démarche donne elle-même une valeur à cette variable (« x devient 0 »), c'est l'erreur de
+  l'élève : elle est gardée, et l'animation montre que la liste ne change pas.
 
 ### Les commentaires sont les phrases de la démarche
 
