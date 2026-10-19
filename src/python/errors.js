@@ -18,6 +18,7 @@ export const ERROR_TITLES = {
   EOFError: 'Entrée manquante',
   InternalError: 'Erreur interne',
   StepLimit: 'Trop d’étapes',
+  NotAllowed: 'Écriture non autorisée',
   NotSupported: 'Pas encore pris en charge',
 };
 

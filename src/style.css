@@ -2,6 +2,81 @@
    Mise en page : « la copie et le tableau ». À gauche le programme, comme une copie d'élève ;
    à droite la scène, sur papier quadrillé, où l'algorithme se joue. Encre bleue pour les phrases
    de la démarche, surligneurs pour les cases « allumées », stylo rouge pour les erreurs. */
+/* Polices stockées avec l'application (licence SIL OFL 1.1, voir src/fonts) : aucune requête
+   vers un service extérieur, même rendu hors connexion. La construction les intègre au fichier. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("fonts/atkinson-hyperlegible-next.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("fonts/atkinson-hyperlegible-mono.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* écriture manuscrite droite et lisible, pour les phrases de la démarche */
+@font-face {
+  font-family: "Patrick Hand";
+  src: url("fonts/patrick-hand.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* autres écritures, proposées provisoirement dans le menu « Écriture » (src/ui/handwriting.js) ;
+   size-adjust les ramène à la taille de Patrick Hand (même hauteur des minuscules, un peu moins
+   pour Klee One, large, et Playwrite, aux grandes majuscules) : on compare à taille égale */
+@font-face {
+  font-family: "Playpen Sans";
+  src: url("fonts/playpen-sans.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 85%;
+}
+
+@font-face {
+  font-family: "Delius";
+  src: url("fonts/delius.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 90%;
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  src: url("fonts/comic-neue.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 94%;
+}
+
+@font-face {
+  font-family: "Klee One";
+  src: url("fonts/klee-one.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 92%;
+}
+
+@font-face {
+  font-family: "Gochi Hand";
+  src: url("fonts/gochi-hand.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 94%;
+}
+
+@font-face {
+  font-family: "Playwrite FR Moderne";
+  src: url("fonts/playwrite-fr-moderne.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 84%;
+}
+
 :root {
   --bg: #e7ecf2;
   --surface: #ffffff;
@@ -16,7 +91,6 @@
   --hl-read: #ffe14a; /* surligneur jaune */
   --hl-compare: #7fcfff; /* surligneur bleu */
   --hl-write: #8be29a; /* surligneur vert */
-  --hl-swap: #ffa3cd; /* surligneur rose */
   --hl-true: #8be29a;
   --hl-false: #ffaaa2;
   --ruled: rgba(35, 70, 196, 0.16); /* lignes du cahier */
@@ -39,7 +113,8 @@
 
   --font-ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --font-code: "Atkinson Hyperlegible Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
-  --font-hand: "Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --hand-family: "Patrick Hand"; /* remplacée par l'écriture choisie dans le menu « Écriture » */
+  --font-hand: var(--hand-family), "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
   --radius: 12px;
 }
 
@@ -58,7 +133,6 @@
     --hl-read: #f2d35a;
     --hl-compare: #6ec3ee;
     --hl-write: #7dd48a;
-    --hl-swap: #f29bc3;
     --hl-true: #7dd48a;
     --hl-false: #f3958c;
     --ruled: rgba(229, 236, 230, 0.12);
@@ -96,7 +170,6 @@
   --hl-read: #f2d35a;
   --hl-compare: #6ec3ee;
   --hl-write: #7dd48a;
-  --hl-swap: #f29bc3;
   --hl-true: #7dd48a;
   --hl-false: #f3958c;
   --ruled: rgba(229, 236, 230, 0.12);
@@ -201,12 +274,21 @@ code {
 }
 
 .brand .hand {
-  font: 600 1.55em/1 var(--font-hand);
+  font: 400 1.5em/1 var(--font-hand);
   color: var(--hand);
   margin-left: 0.1em;
 }
 
+.pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .picker {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -387,7 +469,7 @@ code {
 }
 /* les commentaires sont les phrases de la démarche : écrits « à la main », à l'encre bleue */
 .tk-cm {
-  font: 600 1.22em/1 var(--font-hand);
+  font: 400 1.12em/1 var(--font-hand);
   color: var(--hand);
 }
 
@@ -513,15 +595,26 @@ body[data-stale] .stage-body {
 }
 
 .phrase {
+  --size: clamp(1.45rem, 1.1rem + 1.2vw, 2rem); /* taille d'une phrase courte */
+  --lines: 2;
   margin: 0;
-  height: 2.3em; /* toujours deux lignes : la scène ne bouge pas d'une étape à l'autre */
+  /* hauteur fixe (deux lignes de la grande taille) : la scène ne bouge pas d'une étape à l'autre ;
+     une phrase plus longue s'écrit plus petit, sur trois ou quatre lignes, dans la même hauteur
+     (Stage.fitPhrase). Les marges laissent la place des accents et des jambages (g, j, p, q). */
+  padding-block: calc(var(--size) * 0.2) calc(var(--size) * 0.35);
+  height: calc(var(--size) * 2.85);
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font: 600 clamp(1.45rem, 1.1rem + 1.2vw, 2rem)/1.15 var(--font-hand);
+  font: 400 calc(var(--size) * 2 / var(--lines)) / 1.15 var(--font-hand);
   color: var(--hand);
   text-wrap: balance;
+}
+
+.phrase[data-lines="3"] {
+  --lines: 3;
+}
+
+.phrase[data-lines="4"] {
+  --lines: 4;
 }
 
 .phrase::before {
@@ -689,10 +782,18 @@ body[data-stale] .stage-body {
   animation: glow-write 0.9s ease-out;
 }
 
-.cell.is-swapped {
-  background: var(--hl-swap);
-  border-color: var(--on-hl);
+/* valeur en voyage entre une case et une variable (temp = L[i], L[j] = temp) */
+.flyer {
+  position: fixed;
+  z-index: 50;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--hl-write);
   color: var(--on-hl);
+  font: 700 1.15rem/1.2 var(--font-code);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .array.is-changed .cell {
@@ -857,7 +958,7 @@ body[data-stale] .stage-body {
 }
 
 .narration li.note {
-  font: 600 1.3rem/1.2 var(--font-hand);
+  font: 400 1.25rem/1.2 var(--font-hand);
   color: var(--error);
 }
 
@@ -925,7 +1026,7 @@ body[data-stale] .stage-body {
   border-radius: 0;
   outline: none;
   padding: 0 14px 0 calc(var(--margin-x) + 12px);
-  font: 600 1.45rem/var(--lh) var(--font-hand);
+  font: 400 1.4rem/var(--lh) var(--font-hand);
   color: var(--hand);
   background-color: var(--surface);
   background-image:
@@ -977,17 +1078,20 @@ textarea.notebook {
   box-shadow: none;
 }
 
-/* la phrase en cours est surlignée, comme au surligneur sur un cahier */
+/* la phrase en cours est surlignée, comme au surligneur sur un cahier ; le surlignage couvre
+   toute la hauteur des lettres, car le texte surligné est foncé, même en thème sombre */
 .notebook-view .ln.is-current .src,
 .notebook-view .ln.is-error .src {
   color: var(--on-hl);
-  background: linear-gradient(transparent 14%, var(--hl-read) 14%, var(--hl-read) 86%, transparent 86%);
+  background: var(--hl-read);
+  padding: 0 3px;
+  border-radius: 3px;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
 .notebook-view .ln.is-error .src {
-  background: linear-gradient(transparent 14%, var(--hl-false) 14%, var(--hl-false) 86%, transparent 86%);
+  background: var(--hl-false);
 }
 
 .translating {
@@ -1072,7 +1176,7 @@ textarea.notebook {
 }
 
 .notes q {
-  font: 600 1.2rem/1.2 var(--font-hand);
+  font: 400 1.15rem/1.2 var(--font-hand);
   color: var(--hand);
 }
 

@@ -12,8 +12,8 @@ du Python.
 ## Utiliser l'application
 
 - **Sans rien installer** : ouvrir `dist/demarche.html` dans un navigateur (double-clic).
-  Le fichier est autonome : il fonctionne hors connexion (seules les polices viennent
-  d'Internet ; sans connexion, des polices du système les remplacent).
+  Le fichier est autonome, polices comprises : il fonctionne hors connexion et ne fait aucune
+  requête vers Internet.
 - Deux onglets : **Démarche** (en français, une instruction par ligne) et **Python**. Choisir un
   exemple dans la liste, ou écrire son propre texte, puis **Traduire et exécuter** ou **Exécuter**
   (ou Ctrl + Entrée).
@@ -21,6 +21,10 @@ du Python.
   précédente** (ou ←) revient en arrière. Il n'y a pas de lecture automatique : c'est l'élève qui
   avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
+- Le menu **Écriture** (provisoire) change l'écriture « à la main » des phrases de la démarche,
+  pour comparer plusieurs polices en situation : Patrick Hand, Playpen Sans, Delius, Comic Neue,
+  Klee One, Gochi Hand, Playwrite FR (cursive scolaire) ou des lettres d'imprimerie. Le choix est
+  gardé dans le navigateur.
 
 ### La démarche en français
 
@@ -46,9 +50,19 @@ l'animation qui montre l'erreur.
   ouvert hors ligne, l'onglet Démarche l'explique et seul l'onglet Python fonctionne.
 - Une démarche déjà traduite est gardée dans le navigateur : la même démarche donne toujours la
   même traduction, sans nouvel appel. **Retraduire** en demande une nouvelle.
-- **Ouvrir ce code dans l'onglet Python** permet de reprendre la traduction et de la modifier.
+- Après chaque traduction, l'onglet **Python** contient le code traduit, déjà exécuté : on peut y
+  suivre la même animation (les deux onglets restent à la même étape) ou modifier le code. Le
+  programme qui s'y trouvait est remplacé ; à l'ouverture de la page, en revanche, l'onglet Python
+  garde ce qu'on y avait laissé. **Ouvrir ce code dans l'onglet Python** y remet la traduction si
+  on l'a modifiée entre-temps.
 - La réponse de Claude est vérifiée avant d'être exécutée : forme attendue, puis analyse du Python
-  produit par l'interpréteur de l'application.
+  produit par l'interpréteur de l'application. Une traduction qui écrit dans la variable d'une
+  boucle `for x in L` comme si c'était une case de la liste (`x = temp` pour finir un échange : la
+  liste ne changerait pas) est redemandée une fois, en expliquant le défaut à Claude. Si la
+  démarche donne elle-même une valeur à cette variable (« x devient 0 »), c'est l'erreur de
+  l'élève : elle est gardée, et l'animation montre que la liste ne change pas. Une traduction
+  qui utilise une instruction refusée (`break`, `continue`, `a, b = b, a`…) est elle aussi redemandée une fois,
+  avec l'explication.
 
 ### Les commentaires sont les phrases de la démarche
 
@@ -67,8 +81,12 @@ pour les lignes sans commentaire). C'est aussi la forme du Python produit par la
 ### Ce que montre l'animation
 
 - chaque liste sous forme de cases numérotées ; la case lue s'allume (jaune), les cases
-  comparées sont entourées (bleu), les cases modifiées passent en vert, les échanges en rose
-  et les valeurs se déplacent ;
+  comparées sont entourées (bleu), les cases modifiées passent en vert et les valeurs se
+  déplacent : d'une case à l'autre, dans la même liste (`L[i] = L[j]`) ou d'une liste à une autre
+  (`R[k] = L[i]`), d'une case vers une variable (`temp = L[i]`) et retour (`L[j] = temp`), d'une
+  variable à l'autre (`m = x`), et vers la case ajoutée par `R.append(x)`, `R.append(L[i])` ou
+  `R.insert(k, x)`. Une valeur calculée (`m = x + 1`, `R.append(2 * x)`) ne voyage pas : elle
+  apparaît à sa place ;
 - les variables utilisées comme indices (`i`, `j`, `imin`, `milieu`…) apparaissent comme des
   flèches sous les cases ; la variable d'une boucle `for x in L` suit l'élément visité ;
 - pour une recherche dichotomique (`debut` / `fin`, `gauche` / `droite`…), les cases hors de la
@@ -89,7 +107,13 @@ exemples « Démarches à corriger » s'appuient là-dessus.
 Un sous-ensemble de Python 3 exécuté dans le navigateur, qui couvre les algorithmes du programme :
 
 - entiers (sans limite de taille), flottants, booléens, chaînes, `None`, listes, tuples, dictionnaires ;
-- `if` / `elif` / `else`, `while`, `for`, `break`, `continue`, `pass`, `assert`, `del`, `global` ;
+- affectations d'une seule variable à la fois : `a, b = b, a` et `a = b = 0` sont refusés avec une
+  explication ; un échange s'écrit en trois lignes, avec une variable temporaire
+  (`temp = L[i]`, `L[i] = L[j]`, `L[j] = temp`) ;
+- `if` / `elif` / `else`, `while`, `for`, `pass`, `assert`, `del`, `global` ;
+- ni `break`, ni `continue`, ni `else` après une boucle : ils sont refusés avec une explication.
+  Une boucle s'arrête quand sa condition le dit (`while i < len(L) and L[i] != v`), et un `if`
+  dit quels éléments traiter. `return` reste permis, même à l'intérieur d'une boucle ;
 - fonctions (`def`, paramètres par défaut, arguments nommés, récursivité, `lambda`) ;
 - listes en compréhension, tranches `L[a:b]`, f-strings et `format` ;
 - fonctions usuelles (`len`, `range`, `print`, `input`, `min`, `max`, `sum`, `sorted`, `round`…),
@@ -107,8 +131,10 @@ src/python/   tokenizer.js, parser.js  → analyse du programme
               interpreter.js           → exécution et enregistrement de la trace
               values.js, builtins.js   → valeurs Python, fonctions et modules
 src/translate/ prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
-src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js
+src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js,
+              handwriting.js (écritures du menu « Écriture »)
 src/style.css
+src/fonts/    polices stockées avec l'application (licence SIL OFL), voir LISEZMOI.md
 index.html    page de développement (modules JS, nécessite un petit serveur)
 dist/         demarche.html, fichier autonome produit par la construction
 tests/        tests (node:test)

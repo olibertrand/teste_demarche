@@ -38,19 +38,88 @@ test('parcours : le curseur de boucle suit l’élément visité puis disparaît
   assert.equal(last.frames[0].loops.length, 0);
 });
 
-test('tri par sélection : les échanges sont reconnus comme tels', () => {
+test('tri par sélection : l’échange se fait en trois lignes, avec temp', () => {
   const r = run(example('tri-selection'));
   assert.ok(r.ok);
   assert.equal(r.output, '[1, 2, 3, 5, 7, 9]\n');
-  const swaps = events(r, 'swap');
-  assert.equal(swaps.length, 5);
-  assert.deepEqual([swaps[0].i, swaps[0].j], [0, 3]);
-  // dernier tour : le minimum est déjà à sa place, la case est « échangée » avec elle-même
-  assert.deepEqual([swaps[4].i, swaps[4].j], [4, 4]);
-  assert.equal(swaps[0].name, 'T');
-  // l'échange remplace les deux écritures
-  const swapStep = r.steps.find((s) => s.events.some((e) => e.type === 'swap'));
-  assert.ok(!swapStep.events.some((e) => e.type === 'write'));
+  // premier échange : T[0] (7) et T[3] (1)
+  const k = r.steps.findIndex((s) => s.events.some((e) => e.type === 'assign' && e.name === 'temp'));
+  const [keep, move, back] = r.steps.slice(k, k + 3).map((s) => s.events.find((e) => e.type === 'assign' || e.type === 'write'));
+  assert.deepEqual([keep.name, keep.value, keep.fromText, keep.fromCell.index], ['temp', '7', 'T[0]', 0]);
+  assert.deepEqual([move.index, move.from, move.value], [0, 3, '1']);
+  assert.deepEqual([back.index, back.fromVar, back.value], [3, 'temp', '7']);
+});
+
+test('m = x : la valeur vient de la variable x (l’animation la fait voyager)', () => {
+  const r = run(example('maximum'));
+  const assigns = r.steps.flatMap((s) => s.events.filter((e) => e.type === 'assign' && e.name === 'm'));
+  assert.deepEqual(
+    assigns.map((e) => [e.value, e.fromVar ?? null]),
+    [['4', null], ['12', 'x'], ['33', 'x']],
+  );
+  // une variable recopiée dans elle-même ne voyage pas
+  const self = run('x = 1\nx = x\n').steps.flatMap((s) => s.events.filter((e) => e.type === 'assign'));
+  assert.ok(self.every((e) => !e.fromVar));
+});
+
+test('copie entre deux listes, append et insert : la valeur garde la trace de son origine', () => {
+  const r = run('L = [5, 2, 8]\nR = [0]\nx = 4\nR[0] = L[1]\nR.append(x)\nR.append(L[2])\nR.insert(0, x)\nR.append(x * 2)\nL[0] = L[2]\n');
+  assert.ok(r.ok);
+  const all = r.steps.flatMap((s) => s.events);
+  const lists = Object.fromEntries(r.steps.at(-1).frames[0].vars.filter(([, v]) => v.t === 'list').map(([n, v]) => [n, v.ref]));
+  // R[0] = L[1] : d'une liste à l'autre
+  const copy = all.find((e) => e.type === 'write' && e.ref === lists.R);
+  assert.deepEqual([copy.index, copy.from, copy.fromCell, copy.fromText, copy.value], [0, null, { ref: lists.L, index: 1 }, 'L[1]', '2']);
+  // L[0] = L[2] : dans la même liste, comme avant
+  const inside = all.find((e) => e.type === 'write' && e.ref === lists.L);
+  assert.deepEqual([inside.from, inside.fromCell], [2, undefined]);
+  const added = all.filter((e) => e.type === 'mutate').map((e) => [e.method, e.index, e.value, e.fromVar ?? e.fromText ?? null]);
+  assert.deepEqual(added, [
+    ['append', 1, '4', 'x'],
+    ['append', 2, '8', 'L[2]'],
+    ['insert', 0, '4', 'x'],
+    ['append', 4, '8', null],
+  ]);
+});
+
+test('ni break, ni continue, ni else après une boucle : chacun est refusé avec une explication', () => {
+  const refused = (code, line, message) => {
+    const r = run(code);
+    assert.equal(r.phase, 'syntax', code);
+    assert.equal(r.error.type, 'NotAllowed', code);
+    assert.equal(r.error.title, 'Écriture non autorisée');
+    assert.equal(r.error.line, line, code);
+    assert.match(r.error.message, message, code);
+  };
+  const breakMessage = /« break » n’est pas autorisé[\s\S]*while i < len\(L\) and L\[i\] != v/;
+  refused('for x in [1, 2]:\n    if x == 2:\n        break', 3, breakMessage);
+  refused('while True:\n    break', 2, breakMessage);
+  refused('break', 1, breakMessage);
+  const continueMessage = /« continue » n’est pas autorisé[\s\S]*dans un if qui dit quand les exécuter/;
+  refused('for x in [1, 2, 3]:\n    if x == 2:\n        continue\n    print(x)', 3, continueMessage);
+  refused('continue', 1, continueMessage);
+  const elseMessage = /« else » après une boucle n’est pas autorisé[\s\S]*après la boucle, sans else/;
+  refused('for x in [1, 2]:\n    pass\nelse:\n    print("fini")', 3, elseMessage);
+  refused('n = 0\nwhile n < 3:\n    n = n + 1\n\nelse:\n    print(n)', 5, elseMessage);
+  // la première erreur du programme est signalée : un break dans la boucle passe avant son else
+  refused('for x in [1]:\n    break\nelse:\n    pass', 2, breakMessage);
+  // le else d'un if reste permis, return aussi (même dans une boucle)
+  assert.equal(run('def f(L):\n    for x in L:\n        if x > 1:\n            return x\n    return None\nprint(f([1, 5]))').output, '5\n');
+  assert.equal(run('x = 3\nif x > 1:\n    print("oui")\nelse:\n    print("non")').output, 'oui\n');
+});
+
+test('une affectation ne donne une valeur qu’à une seule variable', () => {
+  for (const code of ['a, b = 1, 2', 'L = [1, 2]\nL[0], L[1] = L[1], L[0]', '[a, b] = [1, 2]', 'def f():\n    x, y = 0, 0\nf()']) {
+    const r = run(code);
+    assert.equal(r.phase, 'syntax', code);
+    assert.equal(r.error.type, 'NotAllowed');
+    assert.match(r.error.message, /temp = a, puis a = b, puis b = temp/);
+  }
+  const chained = run('a = b = 0');
+  assert.equal(chained.error.type, 'NotAllowed');
+  assert.match(chained.error.message, /une affectation par ligne/);
+  // le parcours avec deux variables reste possible
+  assert.ok(run('for i, x in enumerate([5, 6]):\n    print(i, x)').ok);
 });
 
 test('tri par insertion : les décalages indiquent la case d’origine', () => {

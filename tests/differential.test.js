@@ -64,12 +64,19 @@ T[0][1] = 5
 print(T, len(T), T[0][1])
 print(sorted([3, 1, 2], reverse=True), list(range(5)), list(range(10, 0, -3)), list(reversed([1, 2, 3])))
 print([x * x for x in range(6) if x % 2 == 0], list(enumerate("ab")), list(zip([1, 2], "ab")), [(i, j) for i in range(2) for j in range(2)])
-a, b = 1, 2
-a, b = b, a
+a = 1
+b = 2
+temp = a
+a = b
+b = temp
 print(a, b)
 L = [1, 2, 3]
-L[0], L[2] = L[2], L[0]
+temp = L[0]
+L[0] = L[2]
+L[2] = temp
 print(L)
+for i, x in enumerate([7, 8]):
+    print(i, x)
 del L[1]
 print(L)
 L += [4]
@@ -114,9 +121,12 @@ def fact(n):
     return n * fact(n - 1)
 print(fact(10), fact(25))
 def fibo(n):
-    a, b = 0, 1
+    a = 0
+    b = 1
     for _ in range(n):
-        a, b = b, a + b
+        c = a + b
+        a = b
+        b = c
     return a
 print([fibo(k) for k in range(10)])
 def externe():
@@ -140,30 +150,23 @@ print(carre(7))
 `,
   controle: `
 for i in range(10):
-    if i == 2:
-        continue
-    if i == 5:
-        break
-    print(i, end=" ")
+    if i != 2:
+        print(i, end=" ")
 print()
 n = 0
-while True:
+while n < 3:
     n += 1
-    if n >= 3:
-        break
 print(n)
 for i in range(3):
     pass
-else:
-    print("fini", i)
+print("fini", i)
 x = 7
 print("pair" if x % 2 == 0 else "impair")
 print(not True, 1 and 2, 0 or "défaut", None is None, [] or [0], 0 and 1 / 0)
 k = 0
 while k < 3:
     k += 1
-else:
-    print("while terminé", k)
+print("while terminé", k)
 if x > 5: print("grand")
 for c in "abc": print(c, end="")
 print()
@@ -199,12 +202,11 @@ const ERRORS = {
   'première ligne indentée': '  x = 1',
   'chaîne non terminée': 'print("abc)',
   'parenthèse non fermée': 'x = (1, 2\nprint(x)',
-  'trop de valeurs': 'a, b = [1, 2, 3]',
+  'trop de valeurs': 'for a, b in [[1, 2, 3]]:\n    pass',
   'len d’un entier': 'len(5)',
   'indice flottant': 'print([1, 2][1.0])',
   'chaîne non modifiable': 's = "abc"\ns[0] = "z"',
   'module absent': 'import module_qui_n_existe_pas',
-  'break hors boucle': 'break',
   'return hors fonction': 'return 5',
   'désindentation incohérente': 'if True:\n        x = 1\n    y = 2',
   'argument manquant': 'def f(a, b):\n    return a\nf(1)',
@@ -219,7 +221,7 @@ const ERRORS = {
   'print sans parenthèses': 'print "bonjour"',
   'else if': 'x = 1\nif x > 0:\n    pass\nelse if x < 0:\n    pass',
   'mot réservé': 'def = 3',
-  'répartition impossible': 'a, b = 5',
+  'répartition impossible': 'for a, b in [5]:\n    pass',
   'float invalide': 'float("3,5")',
   'sortie partielle': 'print("avant")\nprint(1 // 0)',
 };

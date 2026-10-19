@@ -13,9 +13,6 @@ import {
 
 export const DEFAULT_LIMITS = { maxSteps: 10_000, maxDepth: 200, maxOps: 5_000_000 };
 
-const BREAK = Symbol('break');
-const CONTINUE = Symbol('continue');
-
 class ReturnSignal {
   constructor(value, line) {
     this.value = value;
@@ -83,7 +80,7 @@ export function run(src, options = {}) {
   return new Interpreter(ast, options).run();
 }
 
-/** Vérifie qu'un programme peut être exécuté (syntaxe, break hors boucle…) ; renvoie l'erreur ou null. */
+/** Vérifie qu'un programme peut être exécuté (syntaxe, instructions refusées…) ; renvoie l'erreur ou null. */
 export function check(src) {
   try {
     validate(parse(src).body);
@@ -94,34 +91,60 @@ export function check(src) {
   }
 }
 
-function validate(body, inLoop = false, inFunction = false) {
+// Dans ce Python, une affectation ne donne une valeur qu'à une seule variable :
+// un échange s'écrit en trois lignes, avec une variable temporaire.
+const MULTIPLE_ASSIGNMENT =
+  'une affectation ne donne une valeur qu’à une seule variable : « a, b = … » n’est pas autorisé ici. ' +
+  'Pour échanger deux valeurs, utilise une variable temporaire : temp = a, puis a = b, puis b = temp';
+const CHAINED_ASSIGNMENT =
+  'une affectation ne donne une valeur qu’à une seule variable : « a = b = … » n’est pas autorisé ici. ' +
+  'Écris une affectation par ligne';
+// Ni break, ni continue, ni else après une boucle : une boucle s'arrête quand sa condition le dit,
+// et chaque tour exécute tout son bloc.
+const BREAK_NOT_ALLOWED =
+  '« break » n’est pas autorisé ici : une boucle s’arrête quand sa condition le dit. ' +
+  'Pour s’arrêter dès qu’on a trouvé ce qu’on cherche, utilise une boucle while dont la condition dit quand continuer, ' +
+  'par exemple : while i < len(L) and L[i] != v';
+const CONTINUE_NOT_ALLOWED =
+  '« continue » n’est pas autorisé ici : pour ne traiter que certains éléments, ' +
+  'place les instructions dans un if qui dit quand les exécuter';
+const LOOP_ELSE_NOT_ALLOWED =
+  '« else » après une boucle n’est pas autorisé ici : écris simplement les instructions après la boucle, sans else';
+
+function validate(body, inFunction = false) {
   for (const s of body) {
     switch (s.type) {
-      case 'Break':
-      case 'Continue':
-        if (!inLoop) throw new PyError('SyntaxError', `« ${s.type.toLowerCase()} » en dehors d’une boucle`, s.line);
+      case 'Assign':
+        if (s.targets.length > 1) throw new PyError('NotAllowed', CHAINED_ASSIGNMENT, s.line);
+        if (s.targets[0].type === 'Tuple' || s.targets[0].type === 'List') {
+          throw new PyError('NotAllowed', MULTIPLE_ASSIGNMENT, s.line);
+        }
         break;
+      case 'Break':
+        throw new PyError('NotAllowed', BREAK_NOT_ALLOWED, s.line);
+      case 'Continue':
+        throw new PyError('NotAllowed', CONTINUE_NOT_ALLOWED, s.line);
       case 'Return':
         if (!inFunction) throw new PyError('SyntaxError', '« return » en dehors d’une fonction', s.line);
         break;
       case 'If':
-        validate(s.body, inLoop, inFunction);
-        validate(s.orelse, inLoop, inFunction);
+        validate(s.body, inFunction);
+        validate(s.orelse, inFunction);
         break;
       case 'While':
       case 'For':
-        validate(s.body, true, inFunction);
-        validate(s.orelse, inLoop, inFunction);
+        validate(s.body, inFunction);
+        if (s.orelse.length) throw new PyError('NotAllowed', LOOP_ELSE_NOT_ALLOWED, s.elseLine);
         break;
       case 'FunctionDef':
-        validate(s.body, false, true);
+        validate(s.body, true);
         break;
     }
   }
 }
 
 /** Noms recevant une valeur dans un bloc (sans entrer dans les fonctions), avec leurs lignes. */
-function assignedNames(body, into = new Map(), globals = null) {
+export function assignedNames(body, into = new Map(), globals = null) {
   const add = (name, line) => {
     if (!into.has(name)) into.set(name, []);
     into.get(name).push(line);
@@ -424,7 +447,7 @@ class Interpreter {
     return best;
   }
 
-  assignName(name, value, event = true) {
+  assignName(name, value, event = true, origin = null) {
     const f = this.frame;
     if (f.isModule || f.globalNames.has(name)) {
       this.globals.set(name, value);
@@ -432,7 +455,11 @@ class Interpreter {
     } else {
       f.vars.set(name, value);
     }
-    if (event) this.emit({ type: 'assign', name, value: shortRepr(value) });
+    if (!event) return;
+    const ev = { type: 'assign', name, value: shortRepr(value) };
+    if (origin?.cell) Object.assign(ev, { fromCell: origin.cell, fromText: origin.text });
+    else if (origin?.name && origin.name !== name) ev.fromVar = origin.name;
+    this.emit(ev);
   }
 
   // ---------------------------------------------------------------- instructions
@@ -475,14 +502,6 @@ class Interpreter {
         throw new ReturnSignal(s.value ? this.evalExpr(s.value) : null, s.line);
       case 'Pass':
         return this.step(s.line);
-      case 'Break':
-        this.emit({ type: 'break' });
-        this.step(s.line);
-        throw BREAK;
-      case 'Continue':
-        this.emit({ type: 'continue' });
-        this.step(s.line);
-        throw CONTINUE;
       case 'Import':
         for (const { name, asname } of s.names) this.importName(asname ?? name, loadModule(name));
         this.emit({ type: 'import', names: s.names.map((n) => n.name) });
@@ -520,49 +539,17 @@ class Interpreter {
   }
 
   execAssign(s) {
-    // T[i], T[j] = T[j], T[i] : on reconnaît l'échange pour l'animer comme tel
-    const target = s.targets[0];
-    const swapShape =
-      s.targets.length === 1 &&
-      target.type === 'Tuple' &&
-      target.elts.length === 2 &&
-      target.elts.every((e) => e.type === 'Subscript') &&
-      s.value.type === 'Tuple' &&
-      s.value.elts.length === 2 &&
-      s.value.elts.every((e) => e.type === 'Subscript');
-    let value;
-    let source = null;
-    if (swapShape) {
-      const cells = [];
-      value = new PyTuple(
-        s.value.elts.map((e) => {
-          this.lastCell = null;
-          const v = this.evalExpr(e);
-          cells.push(this.lastCell);
-          return v;
-        }),
-      );
-      source = cells;
-    } else {
-      this.lastCell = null;
-      value = this.evalExpr(s.value);
-      if (s.value.type === 'Subscript') source = this.lastCell;
+    this.lastCell = null;
+    const value = this.evalExpr(s.value);
+    // d'où vient la valeur : une case de liste (temp = L[i]) ou une variable (L[j] = temp, m = x) ;
+    // l'animation la fait voyager de là jusqu'à sa destination
+    let origin = null;
+    if (s.value.type === 'Subscript' && this.lastCell) {
+      origin = { cell: this.lastCell, text: `${this.text(s.value.value)}[${this.lastCell.index}]` };
+    } else if (s.value.type === 'Name') {
+      origin = { name: s.value.id };
     }
-    const mark = this.events.length;
-    let written = null;
-    for (const t of s.targets) written = this.assignTarget(t, value, swapShape ? null : source);
-    if (swapShape && Array.isArray(written)) {
-      const [w0, w1] = written;
-      const [r0, r1] = source;
-      const isSwap =
-        w0 && w1 && r0 && r1 &&
-        w0.ref === w1.ref && r0.ref === w0.ref && r1.ref === w0.ref &&
-        r0.index === w1.index && r1.index === w0.index;
-      if (isSwap && this.silent === 0) {
-        this.events = this.events.filter((ev, k) => k < mark || ev.type !== 'write');
-        this.emit({ type: 'swap', ref: w0.ref, i: w0.index, j: w1.index, name: this.text(target.elts[0].value) });
-      }
-    }
+    this.assignTarget(s.targets[0], value, origin);
     this.step(s.line);
   }
 
@@ -608,14 +595,8 @@ class Interpreter {
       this.emit({ type: 'test', kind: 'while', src: this.text(s.test), result });
       this.step(s.line);
       if (!result) break;
-      try {
-        this.execBlock(s.body);
-      } catch (e) {
-        if (e === BREAK) return;
-        if (e !== CONTINUE) throw e;
-      }
+      this.execBlock(s.body);
     }
-    this.execBlock(s.orelse);
   }
 
   execFor(s) {
@@ -632,7 +613,6 @@ class Interpreter {
     const frame = this.frame;
     const loop = it.kind === 'list' ? { list: iterable, index: -1, var: varText, label: iterText } : null;
     if (loop) frame.loops.push(loop);
-    let broke = false;
     for (let e = it.next(); e; e = it.next()) {
       if (loop) {
         loop.index = e.index;
@@ -649,22 +629,11 @@ class Interpreter {
         ref: loop ? iterable.id : null,
       });
       this.step(s.line);
-      try {
-        this.execBlock(s.body);
-      } catch (x) {
-        if (x === BREAK) {
-          broke = true;
-          break;
-        }
-        if (x !== CONTINUE) throw x;
-      }
+      this.execBlock(s.body);
     }
     if (loop) frame.loops.splice(frame.loops.indexOf(loop), 1);
-    if (!broke) {
-      this.emit({ type: 'loopEnd', var: varText, iter: iterText, kind: it.kind });
-      this.step(s.line);
-      this.execBlock(s.orelse);
-    }
+    this.emit({ type: 'loopEnd', var: varText, iter: iterText, kind: it.kind });
+    this.step(s.line);
   }
 
   deleteTarget(t) {
@@ -694,16 +663,16 @@ class Interpreter {
 
   // ---------------------------------------------------------------- affectations
 
-  assignTarget(t, value, source = null) {
+  assignTarget(t, value, origin = null) {
     switch (t.type) {
       case 'Name':
-        this.assignName(t.id, value);
+        this.assignName(t.id, value, true, origin);
         return null;
       case 'Subscript': {
         const obj = this.evalExpr(t.value);
         if (t.slice.type === 'Slice') return this.setSlice(obj, t, value);
         const index = this.evalExpr(t.slice);
-        return this.setItem(obj, index, value, t, source);
+        return this.setItem(obj, index, value, t, origin);
       }
       case 'Tuple':
       case 'List': {
@@ -772,19 +741,23 @@ class Interpreter {
     throw new PyError('TypeError', `${describe(obj)} ne s'indexe pas avec des crochets`, node.line);
   }
 
-  setItem(obj, index, value, node, source) {
+  setItem(obj, index, value, node, origin) {
     if (obj instanceof PyList) {
       const i = this.checkIndex(obj, index, node);
       obj.items[i] = value;
       obj.touch();
       this.recordIndexName(obj, node.slice);
+      const sameList = origin?.cell?.ref === obj.id;
       this.emit({
         type: 'write',
         ref: obj.id,
         index: i,
         value: shortRepr(value),
         name: this.text(node.value),
-        from: source && source.ref === obj.id ? source.index : null,
+        from: sameList ? origin.cell.index : null,
+        fromVar: origin?.name ?? null,
+        // R[k] = L[i] : la valeur vient d'une case d'une autre liste
+        ...(origin?.cell && !sameList ? { fromCell: origin.cell, fromText: origin.text } : {}),
       });
       return { ref: obj.id, index: i };
     }
@@ -948,21 +921,29 @@ class Interpreter {
 
   evalCall(node) {
     const func = this.evalExpr(node.func);
-    const args = node.args.map((a) => this.evalExpr(a));
+    // d'où vient chaque argument (une variable, une case de liste) : R.append(x) fait voyager la valeur
+    const origins = [];
+    const args = node.args.map((a) => {
+      this.lastCell = null;
+      const value = this.evalExpr(a);
+      const info = this.operandInfo(a);
+      origins.push(info?.cell ? { ...info, text: `${this.text(a.value)}[${info.cell.index}]` } : info);
+      return value;
+    });
     const kwargs = new Map();
     for (const k of node.keywords) kwargs.set(k.arg, this.evalExpr(k.value));
-    return this.callFunction(func, args, kwargs, node);
+    return this.callFunction(func, args, kwargs, node, origins);
   }
 
-  callFunction(func, args, kwargs, node) {
+  callFunction(func, args, kwargs, node, origins = []) {
     if (func instanceof PyFunction) return this.callUser(func, args, kwargs, node);
-    if (func instanceof PyBuiltin) return this.located(node, () => func.fn(args, kwargs, this.ctx(node)));
-    if (func instanceof PyBoundMethod) return this.located(node, () => func.fn(func.self, args, kwargs, this.ctx(node)));
+    if (func instanceof PyBuiltin) return this.located(node, () => func.fn(args, kwargs, this.ctx(node, origins)));
+    if (func instanceof PyBoundMethod) return this.located(node, () => func.fn(func.self, args, kwargs, this.ctx(node, origins)));
     const hint = func instanceof PyList ? ' (pour lire un élément, utilise des crochets : L[i])' : '';
     throw new PyError('TypeError', `${describe(func)} ne peut pas être appelé comme une fonction${hint}`, node.line);
   }
 
-  ctx(node) {
+  ctx(node, origins = []) {
     return {
       emit: (ev) => this.emit(ev),
       print: (text) => {
@@ -975,6 +956,7 @@ class Interpreter {
       seed: (s) => this.seedRandom(s),
       targetText: node.func?.type === 'Attribute' ? this.text(node.func.value) : null,
       argText: (k) => (node.args?.[k] ? this.text(node.args[k]) : null),
+      argOrigin: (k) => origins[k] ?? null,
     };
   }
 

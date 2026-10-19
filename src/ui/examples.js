@@ -120,7 +120,9 @@ print(dichotomie(L, 23))
         for j in range(i + 1, n):
             if T[j] < T[imin]:
                 imin = j
-        T[i], T[imin] = T[imin], T[i]   # on le place en position i
+        temp = T[i]                     # on garde T[i] de côté
+        T[i] = T[imin]                  # on met le minimum en position i
+        T[imin] = temp                  # et l'ancien T[i] à la place du minimum
 
 L = [7, 3, 9, 1, 5, 2]
 tri_selection(L)
@@ -143,6 +145,31 @@ print(L)
 L = [7, 3, 9, 1, 5, 2]
 tri_insertion(L)
 print(L)
+`,
+  },
+  {
+    id: 'fusion',
+    group: 'Trier',
+    title: 'Fusion de deux listes triées',
+    code: `A = [2, 7, 12]
+B = [3, 4, 15, 20]
+R = []
+i = 0
+j = 0
+while i < len(A) and j < len(B):   # tant qu'aucune des deux listes n'est épuisée
+    if A[i] <= B[j]:               # on prend le plus petit des deux premiers restants
+        R.append(A[i])
+        i = i + 1
+    else:
+        R.append(B[j])
+        j = j + 1
+while i < len(A):                  # on recopie la fin de A
+    R.append(A[i])
+    i = i + 1
+while j < len(B):                  # puis la fin de B
+    R.append(B[j])
+    j = j + 1
+print(R)
 `,
   },
   {
@@ -252,6 +279,16 @@ v = 8
 i = 0
 tant que l’élément d’indice i n’est pas v, on passe à l’indice suivant
 on affiche i
+`,
+  },
+  {
+    id: 'demarche-tri-selection',
+    title: 'Tri par sélection : premières idées',
+    text: `démarche pour trier la liste L = [4,12,7,2,33]
+on parcourt la liste pour placer son minimum en tete (chaque fois qu'on rencontre eun nombre plus petit que le 1er de la liste, n l'échange avec le 1er de la liste.
+On recommence pour placer le 2e plus petit en 2e position
+On recommence pour placer le 3e plus petit en 3e position
+On continue de même jusqu'à ce que toute la liste soit triée
 `,
   },
   {

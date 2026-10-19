@@ -73,7 +73,8 @@ export function narrate(step, sourceLines) {
         });
         break;
       case 'assign':
-        if (!iterVars.has(e.name)) out.push({ text: `${e.name} ← ${e.value}` });
+        if (iterVars.has(e.name)) break;
+        out.push({ text: e.fromText || e.fromVar ? `${e.name} ← ${e.fromText ?? e.fromVar} = ${e.value}` : `${e.name} ← ${e.value}` });
         break;
       case 'compare': {
         const values = `${e.left} ${e.op} ${e.right}`;
@@ -85,22 +86,12 @@ export function narrate(step, sourceLines) {
         if (!compared.has(bare(e.src))) out.push({ src: e.src, values: null, bool: e.result });
         out.push({ text: consequence(e), tone: 'flow' });
         break;
-      case 'write':
-        out.push({
-          text:
-            e.from !== null
-              ? `${e.name}[${e.index}] ← ${e.name}[${e.from}] = ${e.value}`
-              : `${e.name}[${e.index}] ← ${e.value}`,
-        });
+      case 'write': {
+        // d'où vient la valeur : une case de la même liste, d'une autre liste, ou une variable
+        const source = e.from !== null ? `${e.name}[${e.from}]` : (e.fromText ?? e.fromVar);
+        out.push({ text: `${e.name}[${e.index}] ← ${source ? `${source} = ` : ''}${e.value}` });
         break;
-      case 'swap':
-        out.push({
-          text:
-            e.i === e.j
-              ? `${e.name}[${e.i}] est échangé avec lui-même : il reste à sa place`
-              : `Échange de ${e.name}[${e.i}] et ${e.name}[${e.j}]`,
-        });
-        break;
+      }
       case 'mutate':
         out.push({ text: mutateText(e) });
         break;
@@ -134,12 +125,6 @@ export function narrate(step, sourceLines) {
         break;
       case 'note':
         out.push({ text: e.text, tone: 'note' });
-        break;
-      case 'break':
-        out.push({ text: 'break : on sort immédiatement de la boucle', tone: 'flow' });
-        break;
-      case 'continue':
-        out.push({ text: 'continue : on passe directement au tour suivant', tone: 'flow' });
         break;
       case 'dictSet':
         out.push({ text: `${e.name}[${e.key}] ← ${e.value}` });

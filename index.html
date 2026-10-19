@@ -7,9 +7,6 @@
 <title>Démarche pas à pas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Animer pas à pas un algorithme écrit en Python : les cases d'une liste s'allument, les variables évoluent, chaque étape est expliquée.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Caveat:wght@500;600&display=swap">
 <!-- HEAD:END -->
 <link rel="stylesheet" href="src/style.css">
 </head>
@@ -18,7 +15,10 @@
 <div class="app">
   <header class="topbar">
     <h1 class="brand">Démarche <span class="hand">pas à pas</span></h1>
-    <label class="picker" for="example"><span class="label">Exemple</span><select id="example"></select></label>
+    <div class="pickers">
+      <label class="picker" for="hand-font" title="Choix provisoire, pour comparer les écritures des phrases de la démarche"><span class="label">Écriture</span><select id="hand-font"></select></label>
+      <label class="picker" for="example"><span class="label">Exemple</span><select id="example"></select></label>
+    </div>
   </header>
 
   <main class="workspace">

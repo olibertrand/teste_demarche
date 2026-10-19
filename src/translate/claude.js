@@ -19,10 +19,11 @@ export function getSample() {
 
 /**
  * Demande la traduction à Claude. La même démarche donne la même réponse pendant 24 h
- * (mémoire de claude.ai), sauf si `refresh` est vrai.
+ * (mémoire de claude.ai), sauf si `refresh` est vrai. `feedback` signale le défaut d'une
+ * traduction précédente, refusée par l'application.
  */
-export function askClaude(sample, text, { signal, refresh = false } = {}) {
-  return sample.json(buildPrompt(text), { modelTier: 'default', signal, cache: { gcTime: DAY, refresh } });
+export function askClaude(sample, text, { signal, refresh = false, feedback = null } = {}) {
+  return sample.json(buildPrompt(text, { feedback }), { modelTier: 'default', signal, cache: { gcTime: DAY, refresh } });
 }
 
 // Erreurs après lesquelles il est inutile de réessayer pendant cette visite.

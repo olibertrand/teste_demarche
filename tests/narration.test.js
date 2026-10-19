@@ -22,7 +22,7 @@ test('maximum : visite, comparaison et décision sont racontées', () => {
   assert.ok(flat.some((n) => n.src === 'x > m' && n.values === '4 > 4' && n.bool === false));
   assert.ok(flat.some((n) => n.text === 'donc on exécute le bloc du if'));
   assert.ok(flat.some((n) => n.text === 'donc on saute le bloc du if'));
-  assert.ok(flat.some((n) => n.text === 'm ← 12'));
+  assert.ok(flat.some((n) => n.text === 'm ← x = 12'));
   assert.ok(flat.some((n) => n.text === 'Fin du parcours de L'));
   // l'affectation de x n'est pas répétée à côté de l'itération
   assert.ok(!flat.some((n) => n.text === 'x ← 12'));
@@ -30,9 +30,17 @@ test('maximum : visite, comparaison et décision sont racontées', () => {
 
 test('tri par sélection et par insertion : échange et décalage', () => {
   const flat = texts(code('tri-selection')).all.flat();
-  assert.ok(flat.some((n) => n.text === 'Échange de T[0] et T[3]'));
+  // l'échange en trois lignes : la valeur passe par temp
+  assert.ok(flat.some((n) => n.text === 'temp ← T[0] = 7'));
+  assert.ok(flat.some((n) => n.text === 'T[0] ← T[3] = 1'));
+  assert.ok(flat.some((n) => n.text === 'T[3] ← temp = 7'));
   const insertion = texts(code('tri-insertion')).all.flat();
   assert.ok(insertion.some((n) => n.text === 'T[1] ← T[0] = 7'));
+});
+
+test('copie d’une liste à l’autre : la case d’origine est citée', () => {
+  const flat = texts('L = [5, 2]\nR = [0, 0]\nR[0] = L[1]\n').all.flat();
+  assert.ok(flat.some((n) => n.text === 'R[0] ← L[1] = 2'));
 });
 
 test('appel, retour et affichage', () => {

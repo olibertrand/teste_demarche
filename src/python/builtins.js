@@ -479,12 +479,20 @@ function emitMutation(ctx, self, method, extra = {}) {
   ctx.emit({ type: 'mutate', method, ref: self.id, target: ctx.targetText, ...extra });
 }
 
+// d'où vient la valeur ajoutée (une variable, une case de liste) : l'animation la fait voyager
+function sourceOf(ctx, k) {
+  const origin = ctx.argOrigin?.(k);
+  if (origin?.cell) return { fromCell: origin.cell, fromText: origin.text };
+  if (origin?.name) return { fromVar: origin.name };
+  return {};
+}
+
 const LIST_METHODS = {
   append(self, args, kwargs, ctx) {
     checkArgs('append', args, 1);
     self.items.push(args[0]);
     self.touch();
-    emitMutation(ctx, self, 'append', { index: self.items.length - 1, value: shortRepr(args[0]) });
+    emitMutation(ctx, self, 'append', { index: self.items.length - 1, value: shortRepr(args[0]), ...sourceOf(ctx, 0) });
     return null;
   },
   extend(self, args, kwargs, ctx) {
@@ -503,7 +511,7 @@ const LIST_METHODS = {
     i = Math.min(i, len);
     self.items.splice(i, 0, args[1]);
     self.touch();
-    emitMutation(ctx, self, 'insert', { index: i, value: shortRepr(args[1]) });
+    emitMutation(ctx, self, 'insert', { index: i, value: shortRepr(args[1]), ...sourceOf(ctx, 1) });
     return null;
   },
   pop(self, args, kwargs, ctx) {
