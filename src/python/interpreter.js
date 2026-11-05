@@ -901,7 +901,12 @@ class Interpreter {
       this.lastCell = null;
       const right = this.evalExpr(rightNode);
       const rightInfo = this.operandInfo(rightNode);
-      const result = this.located(node, () => compareValues(op, left, right));
+      let result;
+      try {
+        result = this.located(node, () => compareValues(op, left, right));
+      } catch (e) {
+        throw this.builtinNameHint(e, [leftNode, left], [rightNode, right]);
+      }
       this.emit({
         type: 'compare',
         src: `${this.text(leftNode)} ${op} ${this.text(rightNode)}`,
@@ -917,6 +922,19 @@ class Interpreter {
       leftInfo = rightInfo;
     }
     return true;
+  }
+
+  // « max » comparé avant d'avoir reçu une valeur : c'est encore la fonction max de Python
+  builtinNameHint(e, ...operands) {
+    if (!(e instanceof PyError) || e.pyType !== 'TypeError') return e;
+    for (const [node, value] of operands) {
+      if (node.type === 'Name' && value instanceof PyBuiltin && this.assignLines.has(node.id)) {
+        e.message =
+          `« ${node.id} » n’a pas encore reçu de valeur : à cet endroit, ${node.id} désigne encore la fonction ${node.id} de Python. ` +
+          `Donne une valeur de départ à ${node.id} avant de l’utiliser (ou choisis un autre nom de variable)`;
+      }
+    }
+    return e;
   }
 
   evalCall(node) {

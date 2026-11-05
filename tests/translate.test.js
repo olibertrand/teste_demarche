@@ -4,7 +4,6 @@ import { test } from 'node:test';
 import { run } from '../src/python/interpreter.js';
 import { assemble } from '../src/translate/assemble.js';
 import { buildPrompt, demarcheLines } from '../src/translate/prompt.js';
-import { DEMARCHE_EXAMPLES as EXAMPLES_DEMARCHE } from '../src/ui/examples.js';
 
 const MAXIMUM = `L = [4,12,7,2,33]
 m = L[0]
@@ -232,7 +231,13 @@ test('la démarche qui donne elle-même une valeur à la variable de la boucle e
 });
 
 test('tri par sélection décrit par un élève : la traduction attendue trie la liste', () => {
-  const text = EXAMPLES_DEMARCHE.find((e) => e.id === 'demarche-tri-selection').text;
+  // démarche d'élève que seul Claude sait traduire (« on recommence », « on continue de même »)
+  const text = `démarche pour trier la liste L = [4,12,7,2,33]
+on parcourt la liste pour placer son minimum en tete (chaque fois qu'on rencontre eun nombre plus petit que le 1er de la liste, n l'échange avec le 1er de la liste.
+On recommence pour placer le 2e plus petit en 2e position
+On recommence pour placer le 3e plus petit en 3e position
+On continue de même jusqu'à ce que toute la liste soit triée
+`;
   // traduction de référence, telle que la consigne la décrit (renvois « On recommence », « On continue de même »)
   const answer = {
     lignes: [

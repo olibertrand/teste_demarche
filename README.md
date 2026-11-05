@@ -5,9 +5,9 @@ d'une liste s'allument quand elles sont lues, les variables changent sous nos ye
 condition est écrite avec ses valeurs et son booléen surligné (« x > m ⟶ 12 > 4 : True »), et la
 phrase de la démarche correspondant à la ligne exécutée s'affiche au-dessus de l'animation.
 
-Pensée pour la NSI (1re et Terminale). L'élève peut écrire sa **démarche en français** : elle est
-traduite en Python par Claude, sans être corrigée, puis animée. On peut aussi écrire directement
-du Python.
+Pensée pour la NSI (1re et Terminale). L'élève peut écrire sa **démarche en français**, en
+pseudo-code : elle est traduite en Python dans le navigateur, sans IA, sans connexion et sans
+compte, sans être corrigée, puis animée. On peut aussi écrire directement du Python.
 
 ## Utiliser l'application
 
@@ -26,41 +26,51 @@ du Python.
 
 ### La démarche en français
 
-L'onglet **Démarche** reçoit le texte de l'élève, une instruction par ligne, éventuellement mêlé
+L'onglet **Démarche** reçoit le texte de l'élève, un pseudo-code en français, éventuellement mêlé
 de Python :
 
 ```
-L = [4,12,7,2,33]
-m = L[0]
-parcours la liste L
-chaque fois que la valeur x rencontrée est supérieure à m, cela devient la nouvelle valeur de m
+L = [4, 12, 7, 2, 33]
+m <- L[0]
+pour chaque élément x de la liste L :
+    si x > m alors m prend la valeur x
+affiche m
 ```
 
-**Traduire et exécuter** demande à Claude une traduction littérale en Python, puis l'animation
-démarre. La phrase de l'élève en cours d'exécution est surlignée dans son texte et affichée sur la
-scène ; la traduction en Python est visible à côté, avec les **hypothèses** de traduction
-(« « cela » désigne la valeur x »). La consigne donnée à Claude (`src/translate/prompt.js`) lui
-interdit de corriger ou de compléter : une valeur de départ oubliée reste oubliée, et c'est
-l'animation qui montre l'erreur.
+**Traduire et exécuter** traduit la démarche en Python (`src/translate/pseudo.js`), puis
+l'animation démarre. La phrase en cours d'exécution est surlignée dans le texte de l'élève et
+affichée sur la scène ; la traduction en Python est visible à côté, avec les **hypothèses** de
+traduction (« « cela » : j'ai compris x »).
 
-- La traduction utilise **le compte Claude de la personne qui ouvre la page**, dans la version en
-  ligne publiée sur claude.ai : elle accepte au premier usage. Dans le fichier `dist/demarche.html`
-  ouvert hors ligne, l'onglet Démarche l'explique et seul l'onglet Python fonctionne.
-- Une démarche déjà traduite est gardée dans le navigateur : la même démarche donne toujours la
-  même traduction, sans nouvel appel. **Retraduire** en demande une nouvelle.
+- **Conventions** : pour donner une valeur, `<-`, `←`, `=` ou « prend la valeur » (aussi « reçoit »,
+  « devient », « est la nouvelle valeur de ») ; ce qui se répète ou dépend d'un « si » se décale vers
+  la droite (l'indentation fait les blocs, comme en Python) ; « de 0 à 4 » compte 0 et 4 ;
+  plusieurs instructions peuvent se suivre sur une ligne, séparées par des points.
+- **Tournures comprises** : parcours des valeurs ou des indices (« pour chaque élément x de la
+  liste L », « parcours la liste L avec la variable x », « pour chaque indice i de L », « pour i
+  allant de 0 à 4 »), « tant que », « si … alors … », « sinon », « à chaque fois que… » ;
+  conditions en symboles ou en mots (« est supérieur à », « vaut », « est pair », « on trouve 5 ») ;
+  « afficher », « ajouter 1 au compteur », « ajouter x à la fin de L », « échanger L[i] et L[j] »
+  (en trois lignes, avec temp), « renvoyer » ; « le premier élément de L », « la longueur de L »,
+  « l'élément d'indice i de L ». Majuscules et accents sont indifférents.
+- **Des questions quand il manque quelque chose** : le nom d'une liste, la variable d'un parcours,
+  les valeurs pour essayer, ou une phrase à répéter qui n'est pas décalée. L'élève clique une
+  réponse proposée ou écrit la sienne ; **sa réponse complète sa démarche** (« parcours la liste L »
+  devient « parcours la liste L avec la variable x »), qui devient explicite.
+- **Rien n'est corrigé** : une valeur de départ oubliée reste oubliée, et c'est l'animation qui
+  montre l'erreur. Une démarche qui « renvoie » un résultat devient une fonction, appelée avec les
+  valeurs données.
+- **Ce qui n'est pas compris est signalé**, avec la phrase en cause sélectionnée dans le texte :
+  « on recommence… », « et ainsi de suite », ou échanger l'élément rencontré pendant un parcours
+  des valeurs (il faut sa position : parcourir les indices). Dans la version en ligne sur
+  claude.ai, **Demander à Claude** propose alors une traduction par Claude, avec le compte de la
+  personne qui ouvre la page (consigne : `src/translate/prompt.js`, contrôle de la réponse :
+  `src/translate/assemble.js`) ; **Retraduire** en demande une nouvelle.
 - Après chaque traduction, l'onglet **Python** contient le code traduit, déjà exécuté : on peut y
   suivre la même animation (les deux onglets restent à la même étape) ou modifier le code. Le
   programme qui s'y trouvait est remplacé ; à l'ouverture de la page, en revanche, l'onglet Python
   garde ce qu'on y avait laissé. **Ouvrir ce code dans l'onglet Python** y remet la traduction si
   on l'a modifiée entre-temps.
-- La réponse de Claude est vérifiée avant d'être exécutée : forme attendue, puis analyse du Python
-  produit par l'interpréteur de l'application. Une traduction qui écrit dans la variable d'une
-  boucle `for x in L` comme si c'était une case de la liste (`x = temp` pour finir un échange : la
-  liste ne changerait pas) est redemandée une fois, en expliquant le défaut à Claude. Si la
-  démarche donne elle-même une valeur à cette variable (« x devient 0 »), c'est l'erreur de
-  l'élève : elle est gardée, et l'animation montre que la liste ne change pas. Une traduction
-  qui utilise une instruction refusée (`break`, `continue`, `a, b = b, a`…) est elle aussi redemandée une fois,
-  avec l'explication.
 
 ### Les commentaires sont les phrases de la démarche
 
@@ -128,7 +138,8 @@ ensembles (`set`), modules autres que ceux cités. Le programme le signale clair
 src/python/   tokenizer.js, parser.js  → analyse du programme
               interpreter.js           → exécution et enregistrement de la trace
               values.js, builtins.js   → valeurs Python, fonctions et modules
-src/translate/ prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
+src/translate/ pseudo.js (traduction du pseudo-code, questions), et pour le secours par Claude :
+              prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
 src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js,
               handwriting.js (écritures du menu « Écriture »)
 src/style.css
@@ -156,11 +167,12 @@ Python 3 et avec l'interpréteur, et vérifient que les affichages et les types 
 ## Feuille de route
 
 1. **Moteur et animations** : tableaux, parcours, recherches, tris, glouton. Fait.
-2. **Traduction de la démarche** : Claude traduit la démarche rédigée par l'élève en Python
-   restreint commenté (une ligne de démarche ↔ une ou plusieurs lignes de code), sans la corriger,
-   en signalant ses hypothèses. Première version faite, à éprouver avec de vraies démarches
-   d'élèves ; pour des élèves sans compte Claude, il faudra un petit serveur avec une clé d'API.
-3. **Autonomie** : selon les besoins (données, coût, réseau), un petit modèle spécialisé hébergé
-   localement ou dans le navigateur.
+2. **Traduction de la démarche par Claude** : dans la version en ligne, avec un compte Claude.
+   Fait ; c'est maintenant le secours pour les phrases que les règles ne comprennent pas.
+3. **Traduction sans IA, pour les élèves** : un pseudo-code français au vocabulaire restreint,
+   traduit par des règles dans le navigateur, avec des questions quand il manque quelque chose.
+   Première version faite, à éprouver avec de vraies démarches d'élèves ; à venir : des phrases
+   modèles à insérer, et plus de tournures. Les démarches recueillies pourraient servir plus tard
+   à entraîner un petit modèle.
 
 D'autres vues viendront pour la Terminale : piles et files, arbres, graphes, pile des appels récursifs.
