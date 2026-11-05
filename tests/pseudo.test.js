@@ -113,6 +113,78 @@ test('puissance : 2**n, 2^n, « 2 puissance n », « au carré », n²', () => {
   assert.equal(run(python(translatePseudo('n = 10\naffiche 2**n, n²'))).output, '1024 100\n');
 });
 
+test('« multiplier x par 2 », « diviser p par 2 », « double x » : la variable change de valeur', () => {
+  const cases = {
+    'multiplier x par 2': 'x = x * 2',
+    'multiplie x par n + 1': 'x = x * (n + 1)',
+    'on multiplie la valeur de x par 10': 'x = x * 10',
+    'x est multiplié par 2': 'x = x * 2',
+    'diviser p par 2': 'p = p / 2',
+    'divise p par n': 'p = p / n',
+    'p est divisé par 2': 'p = p / 2',
+    'diviser p par 2 en division entière': 'p = p // 2',
+    'divise p par 2 (division euclidienne)': 'p = p // 2',
+    'il faut doubler x': 'x = x * 2',
+    'x est doublé': 'x = x * 2',
+    'triple le compteur': 'compteur = compteur * 3',
+    'élève x au carré': 'x = x ** 2',
+    'élever x à la puissance n': 'x = x ** n',
+    'remplace x par x + 1': 'x = x + 1',
+    'remplace la valeur de x par 0': 'x = 0',
+    'mets x à 0': 'x = 0',
+    'mets le compteur à 0': 'compteur = 0',
+    'diviser p par deux': 'p = p / 2',
+    'ajoute un à x': 'x = x + 1',
+  };
+  for (const [line, code] of Object.entries(cases)) {
+    const t = translatePseudo(`x = 3\np = 8\nn = 2\ncompteur = 1\n${line}`);
+    assert.ok(t.ok, `${line} : ${t.message}`);
+    assert.equal(python(t).split('\n')[4], code, line);
+  }
+  // « diviser » donne un nombre décimal : la traduction le dit, et dit comment obtenir la division entière
+  const decimal = translatePseudo('p = 7\ndiviser p par 2\naffiche p');
+  assert.match(decimal.hypotheses[0].text, /division décimale.*« diviser p par 2 en division entière »/);
+  assert.equal(run(decimal.python).output, '3.5\n');
+  const integer = translatePseudo('p = 7\ndiviser p par 2 en division entière\naffiche p');
+  assert.deepEqual(integer.hypotheses, []);
+  assert.equal(run(integer.python).output, '3\n');
+  // une case de liste aussi : « double L[i] » change la liste
+  const cells = translatePseudo('L = [3, 1, 4]\npour chaque indice i de L, double L[i]\naffiche L');
+  assert.equal(run(cells.python).output, '[6, 2, 8]\n');
+  assert.equal(python(translatePseudo('compteur = 3\nle compteur est triplé')).split('\n')[1], 'compteur = compteur * 3');
+  assert.match(translatePseudo('x = 3\nmultiplie 2 par x').message, /seule une variable ou une case de liste/);
+  assert.equal(python(translatePseudo('L = [3]\nmets 5 à la fin de L')), 'L = [3]\nL.append(5)\n');
+});
+
+test('« le double de x », « le quotient de a par b », « le reste de a par b »… ; a peut être une variable', () => {
+  const cases = {
+    'y <- le double de x': 'y = 2 * x',
+    'y <- le double de x + 1': 'y = 2 * x + 1',
+    'y <- le triple de x': 'y = 3 * x',
+    'y <- la moitié de x': 'y = x / 2',
+    'y <- le carré de x': 'y = x ** 2',
+    'q prend la valeur du quotient de a par b': 'q = a // b',
+    'q <- le quotient entier de a + 1 par 2': 'q = (a + 1) // 2',
+    'r <- le reste de a par b': 'r = a % b',
+    'r <- le reste de la division euclidienne de a par 2': 'r = a % 2',
+    'p <- le produit de a et b': 'p = a * b',
+    'si le reste de a par 2 vaut 0, affiche a': 'if a % 2 == 0:',
+  };
+  for (const [line, code] of Object.entries(cases)) {
+    const t = translatePseudo(`a <- 17\nb <- 5\nx = 3\n${line}`);
+    assert.ok(t.ok, `${line} : ${t.message}`);
+    assert.equal(python(t).split('\n')[3], code, line);
+  }
+  assert.match(translatePseudo('x = 7\ny <- la moitié de x').hypotheses[0].text, /division décimale.*« le quotient de x par 2 »/);
+  const euclid = translatePseudo('a <- 17\nb <- 5\nq <- le quotient de a par b\nr <- le reste de a par b\naffiche q, r');
+  assert.equal(run(euclid.python).output, '3 2\n');
+  // « a » sans accent peut nommer une variable ; « à » jamais
+  const name = { input: 'name', edit: { at: 0, insert: '{} ' } };
+  assert.equal(applyAnswer('x', name, 'a').text, 'a x');
+  assert.match(applyAnswer('x', name, 'à').error, /un seul mot/);
+  assert.equal(python(translatePseudo('pour a de 1 à 3 :\n    affiche a')), 'for a in range(1, 4):\n    print(a)\n');
+});
+
 test('les blocs suivent l’indentation ; dans une ligne, « si » s’arrête à la fin de sa phrase', () => {
   const t = translatePseudo('L = [5, 2, 8]\nc = 0\npour chaque élément x de L :\n    si x > 4 :\n        affiche x\n    sinon :\n        augmente c de 1\naffiche c');
   assert.equal(
