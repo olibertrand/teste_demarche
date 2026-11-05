@@ -43,8 +43,11 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
 Ces réglages sont gardés dans le navigateur : on les retrouve en rouvrant la page (le fichier
 principal comme la version en ligne). **Enregistrer une version pour les élèves** produit le
 fichier `demarche-eleves.html`, autonome, qui garde ces choix : c'est lui qu'on donne aux élèves (ENT, clé
-USB). Pour changer le choix plus tard, on rouvre ce fichier et on l'enregistre de nouveau. Cette
-version ne peut être préparée que depuis le fichier autonome, pas depuis la version en ligne.
+USB). Le lien du mode professeur n'y apparaît pas. Pour changer le choix plus tard, on refait le
+choix dans le fichier principal, qui s'en souvient, et on enregistre une nouvelle version ; ou on
+ouvre la version des élèves en ajoutant `#professeur` à la fin de l'adresse
+(`…/demarche-eleves.html#professeur`), et on l'enregistre de nouveau. Cette version ne peut être
+préparée que depuis le fichier autonome, pas depuis la version en ligne.
 
 ### La démarche en français
 
