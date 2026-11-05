@@ -1249,11 +1249,36 @@ textarea.notebook {
   color: var(--ink-soft);
 }
 
+.teacher-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .teacher-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   cursor: pointer;
+}
+
+.teacher-move {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.teacher-move .btn {
+  justify-content: center;
+  min-width: 2.2em;
+  padding: 2px 6px;
+}
+
+.teacher-move .btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .teacher-actions {

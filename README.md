@@ -33,9 +33,10 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
 ### Pour le professeur : les exemples proposés aux élèves
 
 **Mode professeur : choisir les exemples**, en bas de la page, liste tous les exemples : on coche
-ceux que les élèves verront dans le menu. Les tris, la recherche dichotomique et le rendu de
-monnaie sont cachés au départ. **Enregistrer une version pour les élèves** produit le fichier
-`demarche-eleves.html`, autonome, qui garde ce choix : c'est lui qu'on donne aux élèves (ENT, clé
+ceux que les élèves verront dans le menu, et les flèches ↑ ↓ changent leur ordre dans leur groupe
+(**Ordre d'origine** le remet). Les tris, la recherche dichotomique et le rendu de monnaie sont
+cachés au départ. **Enregistrer une version pour les élèves** produit le fichier
+`demarche-eleves.html`, autonome, qui garde ce choix et cet ordre : c'est lui qu'on donne aux élèves (ENT, clé
 USB). Pour changer le choix plus tard, on rouvre ce fichier et on l'enregistre de nouveau. Cette
 version ne peut être préparée que depuis le fichier autonome, pas depuis la version en ligne.
 
