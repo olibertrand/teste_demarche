@@ -148,6 +148,11 @@ function start() {
     Array.isArray(config.hidden) ? config.hidden : [...DEMARCHE_EXAMPLES, ...EXAMPLES].filter((e) => e.hidden).map((e) => e.id),
   );
   let exampleOrder = Array.isArray(config.order) ? config.order : [];
+  // ce qui s'affiche à l'ouverture : un exemple, ou '' pour un cahier (ou un éditeur) vide
+  const opening = {
+    demarche: typeof config.opening?.demarche === 'string' ? config.opening.demarche : DEFAULT_DEMARCHE,
+    python: typeof config.opening?.python === 'string' ? config.opening.python : DEFAULT_EXAMPLE,
+  };
   const custom = h('option', { value: '' }, TEXTS.python.custom);
 
   /** Les exemples par groupe, dans l'ordre choisi par le professeur (un exemple nouveau vient à la fin de son groupe). */
@@ -366,9 +371,15 @@ function start() {
   function executePython() {
     const sp = spaces.python;
     const source = editor.value;
-    const result = run(source, { inputs: inputLines() });
     const box = $('syntax-error');
     box.hidden = true;
+    // un éditeur vide (choisi à l'ouverture, ou effacé) : rien à animer
+    if (!source.trim()) {
+      Object.assign(sp, { result: null, source: '', index: 0, mode: 'edit', stale: false });
+      if (tab === 'python') showSpace();
+      return;
+    }
+    const result = run(source, { inputs: inputLines() });
     if (result.phase === 'syntax') {
       sp.mode = 'edit';
       if (sp.result) sp.stale = true;
@@ -793,6 +804,7 @@ function start() {
       const button = buttons[delta < 0 ? 0 : 1];
       (button.disabled ? buttons[delta < 0 ? 1 : 0] : button).focus();
     };
+    renderOpening();
     $('teacher-list').replaceChildren(
       ...exampleGroups().map(([label, list]) =>
         h(
@@ -813,6 +825,7 @@ function start() {
                     if (e.target.checked) hiddenExamples.delete(ex.id);
                     else hiddenExamples.add(ex.id);
                     fillExamples();
+                    renderOpening();
                   },
                 }),
                 ex.title,
@@ -829,6 +842,32 @@ function start() {
       ),
     );
   }
+
+  // « À l'ouverture » : un des exemples montrés (ou celui déjà choisi, même caché), ou rien
+  function renderOpening() {
+    const groups = exampleGroups();
+    const fill = (selectEl, kind, empty, lists) => {
+      const current = opening[kind];
+      selectEl.replaceChildren(
+        h('option', { value: '' }, empty),
+        ...lists
+          .map(([label, list]) => [label, list.filter((ex) => !hiddenExamples.has(ex.id) || ex.id === current)])
+          .filter(([, list]) => list.length)
+          .map(([label, list]) =>
+            h('optgroup', { label }, list.map((ex) => h('option', { value: ex.id }, hiddenExamples.has(ex.id) ? `${ex.title} (caché du menu)` : ex.title))),
+          ),
+      );
+      selectEl.value = current;
+    };
+    fill($('teacher-open-demarche'), 'demarche', 'Cahier vide : l’élève écrit sa démarche', groups.slice(0, 1));
+    fill($('teacher-open-python'), 'python', 'Éditeur vide : l’élève écrit son programme', groups.slice(1));
+  }
+  $('teacher-open-demarche').addEventListener('change', (e) => {
+    opening.demarche = e.target.value;
+  });
+  $('teacher-open-python').addEventListener('change', (e) => {
+    opening.python = e.target.value;
+  });
 
   $('teacher-open').addEventListener('click', () => {
     renderTeacherList();
@@ -850,7 +889,7 @@ function start() {
     fillExamples();
   });
   $('teacher-save').addEventListener('click', async () => {
-    const json = JSON.stringify({ hidden: [...hiddenExamples], order: exampleOrder }).replace(/</g, '\\u003c');
+    const json = JSON.stringify({ hidden: [...hiddenExamples], order: exampleOrder, opening }).replace(/</g, '\\u003c');
     const page = SELF_COPY.replace(/(<script type="application\/json" id="config">)[\s\S]*?(<\/script>)/, (_, open, close) => open + json + close);
     const status = $('teacher-status');
     status.classList.remove('is-error');
@@ -871,12 +910,14 @@ function start() {
   } catch {
     // stockage indisponible : rien à effacer
   }
+  // le choix du professeur pour l'ouverture ; un exemple retiré depuis : celui par défaut
+  const openingText = (id, list, fallback, field) => (id === '' ? '' : (list.find((e) => e.id === id) ?? list.find((e) => e.id === fallback))[field]);
   const savedCode = store.get('code');
-  editor.value = savedCode?.trim() ? savedCode : EXAMPLES.find((e) => e.id === DEFAULT_EXAMPLE).code;
+  editor.value = savedCode?.trim() ? savedCode : openingText(opening.python, EXAMPLES, DEFAULT_EXAMPLE, 'code');
   spaces.python.exampleId = EXAMPLES.find((e) => e.code === editor.value)?.id ?? null;
   updateInputsBox();
   const savedDemarche = store.get('demarche');
-  demarcheInput.value = savedDemarche?.trim() ? savedDemarche : DEMARCHE_EXAMPLES.find((e) => e.id === DEFAULT_DEMARCHE).text;
+  demarcheInput.value = savedDemarche?.trim() ? savedDemarche : openingText(opening.demarche, DEMARCHE_EXAMPLES, DEFAULT_DEMARCHE, 'text');
   spaces.demarche.exampleId = DEMARCHE_EXAMPLES.find((e) => e.text === demarcheInput.value)?.id ?? null;
 
   const savedTab = store.get('onglet');

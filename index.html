@@ -159,7 +159,11 @@
   <dialog id="teacher" class="teacher" aria-labelledby="teacher-title">
     <form method="dialog" class="teacher-body">
       <h2 id="teacher-title" class="teacher-title">Exemples proposés aux élèves</h2>
-      <p class="teacher-help">Coche les exemples à montrer dans le menu « Exemple » ; les flèches ↑ ↓ changent leur ordre.</p>
+      <p class="teacher-help">Choisis ce qui s’affiche à l’ouverture de la page, puis coche les exemples à montrer dans le menu « Exemple » ; les flèches ↑ ↓ changent leur ordre.</p>
+      <div class="teacher-opening">
+        <label class="picker" for="teacher-open-demarche"><span class="label">Démarche à l’ouverture</span><select id="teacher-open-demarche"></select></label>
+        <label class="picker" for="teacher-open-python"><span class="label">Programme Python à l’ouverture</span><select id="teacher-open-python"></select></label>
+      </div>
       <div id="teacher-list" class="teacher-list"></div>
       <p id="teacher-save-help" class="teacher-help">Pour garder ce choix, enregistre une version pour les élèves : c’est ce fichier qu’il faut leur donner. Rouvre-le plus tard pour changer les exemples.</p>
       <p id="teacher-online-help" class="teacher-help" hidden>Ce choix vaut pour cette page ouverte. Pour préparer une version pour les élèves, ouvre le fichier autonome <code>demarche.html</code> et choisis-y les exemples.</p>
