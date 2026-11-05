@@ -111,6 +111,9 @@ const STOP = new Set([
   'son', 'sa', 'ses', 'se', "s'", 'ne', "n'", 'pas', 'fois', 'avec', 'sans', 'sur', 'sous', 'puis', 'ensuite',
   'chaque', 'tout', 'toute', 'tous', 'toutes', 'plus', 'moins', 'vaut', 'faire', 'fait',
 ]);
+/** Un nom de variable possible : « a » sans accent en est un (a, b, c…), « à » jamais. */
+const isVariableName = (name) =>
+  NAME_RE.test(name) && (!STOP.has(fold(name)) || name === 'a' || name === 'A') && !KEYWORDS.has(name);
 const BUILTINS = new Set(['len', 'range', 'print', 'max', 'min', 'sum', 'abs', 'round', 'int', 'float', 'str', 'sorted', 'list', 'input']);
 
 const OPS = ['<-', '←', '==', '!=', '<=', '>=', '≤', '≥', '≠', '//', '**', '<', '>', '=', '+', '-', '*', '/', '%', '^', '²', '³', '(', ')', '[', ']', ',', ':'];
@@ -183,6 +186,15 @@ const COMPARISONS = [
   ['est', '=='],
 ];
 const SYMBOLS = { '==': '==', '!=': '!=', '≠': '!=', '<': '<', '<=': '<=', '≤': '<=', '>': '>', '>=': '>=', '≥': '>=' };
+const NUMBER_WORDS = new Map(Object.entries({
+  zero: '0', deux: '2', trois: '3', quatre: '4', cinq: '5', six: '6', sept: '7', huit: '8', neuf: '9', dix: '10', cent: '100', mille: '1000',
+}));
+// « le quotient de a par b », « le reste de la division euclidienne de a par b », « le produit de a et b »
+const OPERATION_NOUNS = [
+  ['//', ['quotient de la division euclidienne', 'quotient de la division entiere', 'quotient entier', 'quotient']],
+  ['%', ['reste de la division euclidienne', 'reste de la division entiere', 'reste de la division', 'reste']],
+  ['*', ['produit']],
+];
 const ORDINALS = [
   [['premier', '1er', 'premiere', '1ere'], 0],
   [['deuxieme', 'second', 'seconde', '2e', '2eme'], 1],
@@ -378,6 +390,14 @@ class Expr {
       this.t.numbers.push(tok.v);
       return tok.v;
     }
+    // « deux », « dix » ; « un » seul (« ajoute un au compteur »), pas l'article de « un nombre »
+    const one = (tok.f === 'un' || tok.f === 'une') && (!this.peek(1) || this.peek(1).k === 'op');
+    if (tok.k === 'word' && (NUMBER_WORDS.has(tok.f) || one)) {
+      this.i++;
+      const n = one ? '1' : NUMBER_WORDS.get(tok.f);
+      this.t.numbers.push(n);
+      return n;
+    }
     if (tok.k === 'str') {
       this.i++;
       return JSON.stringify(tok.v);
@@ -402,7 +422,35 @@ class Expr {
 
   // ---------------------------------------------------------------- groupes de mots
 
+  // « le double de x », « la moitié de x », « le carré de x », « le quotient de a par b », « le reste de a par b »
+  arithmeticPhrase() {
+    const save = this.i;
+    this.words('du') || this.words('le') || this.words('la') || this.words("l'");
+    const of = (noun) => this.words(`${noun} de`) || this.words(`${noun} d'`);
+    if (of('double')) return `2 * ${wrap(this.unary())}`;
+    if (of('triple')) return `3 * ${wrap(this.unary())}`;
+    if (of('moitie')) {
+      const x = wrap(this.unary());
+      this.t.note(this.p.line, `« la moitié de ${x} » : j’ai écrit ${x} / 2, une division décimale (la moitié de 7 donne 3.5). Pour un résultat entier, écris « le quotient de ${x} par 2 ».`);
+      return `${x} / 2`;
+    }
+    if (of('carre')) return `${wrap(this.unary())} ** 2`;
+    if (of('cube')) return `${wrap(this.unary())} ** 3`;
+    for (const [op, nouns] of OPERATION_NOUNS) {
+      const noun = nouns.find(of);
+      if (noun) {
+        const a = this.sum();
+        if (!(this.words('par') || this.words('et'))) this.fail(`« par » attendu, comme dans « le ${noun.split(' ')[0]} de a par b »`);
+        return `${wrap(a)} ${op} ${wrap(this.unary())}`;
+      }
+    }
+    this.i = save;
+    return null;
+  }
+
   nounPhrase() {
+    const arithmetic = this.arithmeticPhrase();
+    if (arithmetic) return arithmetic;
     if (this.words('la longueur de') || this.words('la longueur d\'') || this.words('la taille de') ||
       this.words('la taille d\'') || this.words('longueur de') || this.words('taille de') ||
       this.words("le nombre d' elements de") || this.words("le nombre d' elements d'")) {
@@ -466,7 +514,7 @@ class Expr {
   }
 
   isName(tok) {
-    return tok?.k === 'word' && NAME_RE.test(tok.v) && !STOP.has(tok.f) && !KEYWORDS.has(tok.v);
+    return tok?.k === 'word' && isVariableName(tok.v);
   }
 
   name() {
@@ -543,9 +591,13 @@ const AFTER_LOOP =
 const NOT_FOUND = /^(?:on\s+n'a\s+pas\s+trouve|on\s+ne\s+l'a\s+pas\s+trouve|on\s+n'a\s+rien\s+trouve|[a-z_][a-z0-9_]*\s+n'a\s+pas\s+ete\s+trouve)\b/;
 const TITLE = /^(?:demarche|algorithme|programme|but|objectif|methode|probleme)\b/;
 
+// « divise p par 2 en division entière », « … (division euclidienne) »
+const INTEGER_DIVISION = '(?<int>,? (?:en |avec (?:la |une )?)?division (?:entiere|euclidienne)| \\(division (?:entiere|euclidienne)\\))?';
+
 const V = {
   ajouter: 'ajoute|ajouter|ajoutes|rajoute|rajouter|rajoutes|additionne|additionner',
   retirer: 'enleve|enlever|enleves|retire|retirer|retires|soustrais|soustraire',
+  mettre: 'met|mets|mettre|place|places|placer|range|ranges|ranger',
 };
 
 const STATEMENTS = [
@@ -556,8 +608,18 @@ const STATEMENTS = [
   ['assign', rule(`(?<v>${TARGET}) (?:devient|devenir) (?<e>.+)`)],
   ['assign', rule(`(?:met|mets|mettre|place|places|placer|range|ranges|ranger|stocke|stockes|stocker|enregistre|enregistrer) (?<e>.+?) dans (?:la variable |la case )?(?<v>${TARGET})`)],
   ['assign', rule(`(?:initialise|initialises|initialiser) (?:la variable )?(?<v>${TARGET}) (?:a|avec) (?<e>.+)`)],
-  ['append', rule(`(?:${V.ajouter}) (?<e>.+?) a la fin (?:de |d'|du )(?:(?:la liste|le tableau) )?(?<v>${NAME})`)],
+  ['append', rule(`(?:${V.ajouter}|${V.mettre}) (?<e>.+?) a la fin (?:de |d'|du )(?:(?:la liste|le tableau) )?(?<v>${NAME})`)],
   ['add', rule(`(?:${V.ajouter}) (?<e>.+?) (?:a |au |aux |dans |a la |a l')(?:(?:liste|variable|somme|valeur de) )?(?<v>${NAME})`)],
+  ['assign', rule('(?:remplace|remplacer|remplaces) (?<v>.+?) par (?<e>.+)')],
+  ['assign', rule('(?:met|mets|mettre|fixe|fixer|fixes) (?<v>.+?) a (?<e>.+)')],
+  // « multiplie x par 2 », « divise L[i] par 2 », « le compteur est doublé », « élève x au carré »
+  ['multiply', rule("(?:multiplie|multiplier|multiplies) (?<v>.+?) par (?<e>.+)")],
+  ['multiply', rule("(?<v>.+?) (?:est|sera) (?:multiplie|multipliee) par (?<e>.+)")],
+  ['divide', rule(`(?:divise|diviser|divises) (?<v>.+?) par (?<e>.+?)${INTEGER_DIVISION}`)],
+  ['divide', rule(`(?<v>.+?) (?:est|sera) (?:divise|divisee) par (?<e>.+?)${INTEGER_DIVISION}`)],
+  ['double', rule('(?:doubler|doubles|double|(?<three>tripler|triples|triple)) (?<v>.+)')],
+  ['double', rule('(?<v>.+?) (?:est|sera) (?:doublee|double|(?<three>triplee|triple))')],
+  ['power', rule('(?:eleve|elever|eleves) (?<v>.+?) (?:au (?<sq>carre|cube)|a la puissance (?<e>.+))')],
   ['increment', rule(`(?:augmente|augmenter|augmentes|incremente|incrementer|incrementes) (?:(?:le|la|la variable) |l')?(?<v>${NAME})(?: de (?<e>.+))?`)],
   ['increment', rule(`(?<v>${NAME}) (?:augmente|est augmente|est augmentee) de (?<e>.+)`)],
   ['decrement', rule(`(?:diminue|diminuer|diminues|decremente|decrementer|decrementes) (?:(?:le|la|la variable) |l')?(?<v>${NAME})(?: de (?<e>.+))?`)],
@@ -735,6 +797,16 @@ class Translator {
     return code;
   }
 
+  /** Ce que changent « multiplie x par 2 », « double L[i] » : une variable ou une case de liste, lue puis remplacée. */
+  updated(p) {
+    const code = this.expr(p);
+    if (!/^[\p{L}_][\p{L}\p{N}_]*(?:\[.+\])?$/u.test(code)) {
+      throw new Untranslatable('seule une variable ou une case de liste peut changer de valeur', p);
+    }
+    if (/^[\p{L}_][\p{L}\p{N}_]*$/u.test(code)) this.store(code);
+    return code;
+  }
+
   /** L'élément que visite le parcours en cours (x dans for x in L, L[i] dans for i in range(len(L))). */
   element(p) {
     const loop = this.loops.findLast((l) => l.kind === 'values' || l.kind === 'indices');
@@ -860,7 +932,7 @@ class Translator {
 
   loopName(p) {
     const name = p.text.replace(/:$/, '').trim();
-    if (!NAME_RE.test(name) || STOP.has(fold(name)) || KEYWORDS.has(name)) {
+    if (!isVariableName(name)) {
       throw new Untranslatable(`« ${name} » ne peut pas être un nom de variable`, p);
     }
     return name;
@@ -987,6 +1059,28 @@ class Translator {
             this.store(name);
             this.emit(depth, `${name} = ${name} + ${value}`, line);
           }
+          return;
+        }
+        case 'multiply':
+        case 'divide': {
+          const target = this.updated(g('v'));
+          const value = this.expr(g('e'));
+          const op = kind === 'multiply' ? '*' : m.groups.int ? '//' : '/';
+          if (op === '/') {
+            this.note(line, `« ${p.text} » : j’ai compris la division décimale (7 / 2 donne 3.5). Pour la division entière (7 // 2 donne 3), écris « ${p.text} en division entière ».`);
+          }
+          this.emit(depth, `${target} = ${target} ${op} ${wrap(value)}`, line);
+          return;
+        }
+        case 'double': {
+          const target = this.updated(g('v'));
+          this.emit(depth, `${target} = ${target} * ${m.groups.three ? 3 : 2}`, line);
+          return;
+        }
+        case 'power': {
+          const target = this.updated(g('v'));
+          const exponent = m.groups.sq ? (m.groups.sq === 'carre' ? '2' : '3') : wrap(this.expr(g('e')));
+          this.emit(depth, `${target} = ${target} ** ${exponent}`, line);
           return;
         }
         case 'increment':
@@ -1218,7 +1312,7 @@ export function applyAnswer(text, question, answer, choice = null) {
   let value = String(answer ?? '').trim();
   if (!choice) {
     if (question.input === 'name') {
-      if (!NAME_RE.test(value) || STOP.has(fold(value)) || KEYWORDS.has(value)) {
+      if (!isVariableName(value)) {
         return { error: 'Un nom de variable s’écrit d’un seul mot : des lettres, des chiffres ou _, sans commencer par un chiffre.' };
       }
       if (question.avoid?.includes(value)) return { error: `${value} est déjà le nom de la liste : choisis un autre nom.` };

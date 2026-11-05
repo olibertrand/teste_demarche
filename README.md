@@ -75,7 +75,11 @@ traduction (« « cela » : j'ai compris x »).
   « afficher », « ajouter 1 au compteur », « ajouter x à la fin de L », « échanger L[i] et L[j] »
   (en trois lignes, avec temp), « renvoyer » ; « le premier élément de L », « la longueur de L »,
   « l'élément d'indice i de L » ; la puissance (`2**n`, `2^n`, « 2 puissance n », « n au carré »,
-  `n²`). Majuscules et accents sont indifférents.
+  `n²`) ; « multiplier x par 2 », « diviser p par 2 » (division décimale, ou « en division
+  entière »), « doubler x », « élever x au carré », « x est divisé par 2 », aussi pour une case
+  (« double L[i] ») ; « le double de x », « la moitié de x », « le quotient de a par b », « le reste
+  de a par b » ; les nombres en lettres (« ajoute un au compteur », « diviser p par deux »).
+  Majuscules et accents sont indifférents.
 - **Des questions quand il manque quelque chose** : le nom d'une liste, la variable d'un parcours,
   les valeurs pour essayer, ou une phrase à répéter qui n'est pas décalée. L'élève clique une
   réponse proposée ou écrit la sienne ; **sa réponse complète sa démarche** (« parcours la liste L »
