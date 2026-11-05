@@ -18,17 +18,8 @@
   font-display: swap;
 }
 
-/* écriture manuscrite droite et lisible, pour les phrases de la démarche */
-@font-face {
-  font-family: "Patrick Hand";
-  src: url("fonts/patrick-hand.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-}
-
-/* autres écritures, proposées provisoirement dans le menu « Écriture » (src/ui/handwriting.js) ;
-   size-adjust les ramène à la taille de Patrick Hand (même hauteur des minuscules, un peu moins
-   pour Klee One, large, et Playwrite, aux grandes majuscules) : on compare à taille égale */
+/* écritures « à la main » des phrases de la démarche, au choix dans le menu « Écriture »
+   (src/ui/handwriting.js) ; size-adjust leur donne la même hauteur de minuscules */
 @font-face {
   font-family: "Playpen Sans";
   src: url("fonts/playpen-sans.woff2") format("woff2");
@@ -51,30 +42,6 @@
   font-weight: 400;
   font-display: swap;
   size-adjust: 94%;
-}
-
-@font-face {
-  font-family: "Klee One";
-  src: url("fonts/klee-one.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  size-adjust: 92%;
-}
-
-@font-face {
-  font-family: "Gochi Hand";
-  src: url("fonts/gochi-hand.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  size-adjust: 94%;
-}
-
-@font-face {
-  font-family: "Playwrite FR Moderne";
-  src: url("fonts/playwrite-fr-moderne.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  size-adjust: 84%;
 }
 
 :root {
@@ -113,7 +80,7 @@
 
   --font-ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --font-code: "Atkinson Hyperlegible Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
-  --hand-family: "Patrick Hand"; /* remplacée par l'écriture choisie dans le menu « Écriture » */
+  --hand-family: "Playpen Sans"; /* remplacée par l'écriture choisie dans le menu « Écriture » */
   --font-hand: var(--hand-family), "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
   --radius: 12px;
 }
@@ -601,8 +568,8 @@ body[data-stale] .stage-body {
   /* hauteur fixe (deux lignes de la grande taille) : la scène ne bouge pas d'une étape à l'autre ;
      une phrase plus longue s'écrit plus petit, sur trois ou quatre lignes, dans la même hauteur
      (Stage.fitPhrase). Les marges laissent la place des accents et des jambages (g, j, p, q). */
-  padding-block: calc(var(--size) * 0.2) calc(var(--size) * 0.35);
-  height: calc(var(--size) * 2.85);
+  padding-block: calc(var(--size) * 0.04) calc(var(--size) * 0.08);
+  height: calc(var(--size) * 2.42);
   overflow: hidden;
   font: 400 calc(var(--size) * 2 / var(--lines)) / 1.15 var(--font-hand);
   color: var(--hand);

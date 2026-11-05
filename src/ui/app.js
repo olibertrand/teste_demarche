@@ -538,7 +538,7 @@ function start() {
     else player.prev();
   });
 
-  // ---------------------------------------------------------------- écriture (choix provisoire)
+  // ---------------------------------------------------------------- écriture des phrases
 
   const handFont = $('hand-font');
   handFont.append(...HAND_FONTS.map((f) => h('option', { value: f.id, style: `font-family: "${f.family}"` }, f.label)));
