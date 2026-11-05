@@ -141,14 +141,39 @@ function start() {
 
   // ---------------------------------------------------------------- exemples
 
-  // les exemples cachés aux élèves et leur ordre : le choix du professeur enregistré dans la page ;
-  // sinon, ceux marqués hidden sont cachés, dans l'ordre de examples.js
-  const config = readConfig();
+  // Réglages du professeur : exemples cachés, leur ordre, ce qui s'affiche à l'ouverture. Une version
+  // pour les élèves garde les siens dans la page ; sinon, ceux choisis la dernière fois dans ce
+  // navigateur ; sinon, ceux marqués hidden sont cachés, dans l'ordre de examples.js.
+  const embedded = readConfig();
+  const inFile = Object.keys(embedded).length > 0;
+  const config = inFile ? embedded : readSettings();
   const hiddenExamples = new Set(
     Array.isArray(config.hidden) ? config.hidden : [...DEMARCHE_EXAMPLES, ...EXAMPLES].filter((e) => e.hidden).map((e) => e.id),
   );
   let exampleOrder = Array.isArray(config.order) ? config.order : [];
+  // ce qui s'affiche à l'ouverture : un exemple, ou '' pour un cahier (ou un éditeur) vide
+  const opening = {
+    demarche: typeof config.opening?.demarche === 'string' ? config.opening.demarche : DEFAULT_DEMARCHE,
+    python: typeof config.opening?.python === 'string' ? config.opening.python : DEFAULT_EXAMPLE,
+  };
   const custom = h('option', { value: '' }, TEXTS.python.custom);
+
+  function readSettings() {
+    try {
+      const saved = JSON.parse(prefs.get('reglages') ?? '{}');
+      return saved && typeof saved === 'object' ? saved : {};
+    } catch {
+      return {};
+    }
+  }
+
+  const settings = () => ({ hidden: [...hiddenExamples], order: exampleOrder, opening });
+
+  // le professeur retrouve ses réglages en rouvrant la page ; une version pour les élèves garde
+  // les siens : pour les changer, on l'enregistre de nouveau
+  function saveSettings() {
+    if (!inFile) prefs.set('reglages', JSON.stringify(settings()));
+  }
 
   /** Les exemples par groupe, dans l'ordre choisi par le professeur (un exemple nouveau vient à la fin de son groupe). */
   function exampleGroups() {
@@ -366,9 +391,15 @@ function start() {
   function executePython() {
     const sp = spaces.python;
     const source = editor.value;
-    const result = run(source, { inputs: inputLines() });
     const box = $('syntax-error');
     box.hidden = true;
+    // un éditeur vide (choisi à l'ouverture, ou effacé) : rien à animer
+    if (!source.trim()) {
+      Object.assign(sp, { result: null, source: '', index: 0, mode: 'edit', stale: false });
+      if (tab === 'python') showSpace();
+      return;
+    }
+    const result = run(source, { inputs: inputLines() });
     if (result.phase === 'syntax') {
       sp.mode = 'edit';
       if (sp.result) sp.stale = true;
@@ -782,17 +813,19 @@ function start() {
 
   // ---------------------------------------------------------------- mode professeur
 
-  // les exemples montrés aux élèves ; le choix est gardé dans la version enregistrée pour eux
+  // les exemples montrés aux élèves ; le choix est gardé dans ce navigateur, et dans la version enregistrée pour eux
   function renderTeacherList() {
     // les flèches déplacent l'exemple dans son groupe ; le clavier reste sur la flèche utilisée
     const move = (ex, delta) => {
       moveExample(ex.id, delta);
+      saveSettings();
       renderTeacherList();
       fillExamples();
       const buttons = $('teacher-list').querySelectorAll(`[data-id="${ex.id}"] button`);
       const button = buttons[delta < 0 ? 0 : 1];
       (button.disabled ? buttons[delta < 0 ? 1 : 0] : button).focus();
     };
+    renderOpening();
     $('teacher-list').replaceChildren(
       ...exampleGroups().map(([label, list]) =>
         h(
@@ -813,6 +846,8 @@ function start() {
                     if (e.target.checked) hiddenExamples.delete(ex.id);
                     else hiddenExamples.add(ex.id);
                     fillExamples();
+                    renderOpening();
+                    saveSettings();
                   },
                 }),
                 ex.title,
@@ -830,27 +865,60 @@ function start() {
     );
   }
 
+  // « À l'ouverture » : un des exemples montrés (ou celui déjà choisi, même caché), ou rien
+  function renderOpening() {
+    const groups = exampleGroups();
+    const fill = (selectEl, kind, empty, lists) => {
+      const current = opening[kind];
+      selectEl.replaceChildren(
+        h('option', { value: '' }, empty),
+        ...lists
+          .map(([label, list]) => [label, list.filter((ex) => !hiddenExamples.has(ex.id) || ex.id === current)])
+          .filter(([, list]) => list.length)
+          .map(([label, list]) =>
+            h('optgroup', { label }, list.map((ex) => h('option', { value: ex.id }, hiddenExamples.has(ex.id) ? `${ex.title} (caché du menu)` : ex.title))),
+          ),
+      );
+      selectEl.value = current;
+    };
+    fill($('teacher-open-demarche'), 'demarche', 'Cahier vide : l’élève écrit sa démarche', groups.slice(0, 1));
+    fill($('teacher-open-python'), 'python', 'Éditeur vide : l’élève écrit son programme', groups.slice(1));
+  }
+  $('teacher-open-demarche').addEventListener('change', (e) => {
+    opening.demarche = e.target.value;
+    saveSettings();
+  });
+  $('teacher-open-python').addEventListener('change', (e) => {
+    opening.python = e.target.value;
+    saveSettings();
+  });
+
   $('teacher-open').addEventListener('click', () => {
     renderTeacherList();
     // seul le fichier autonome sait s'enregistrer lui-même
     $('teacher-save').hidden = !SELF_COPY;
-    $('teacher-save-help').hidden = !SELF_COPY;
-    $('teacher-online-help').hidden = Boolean(SELF_COPY);
+    $('teacher-save-help').textContent = inFile
+      ? 'Cette version pour les élèves garde le choix enregistré avec elle. Pour le changer, modifie-le ici, puis enregistre de nouveau la version pour les élèves.'
+      : SELF_COPY
+        ? 'Ton choix est gardé dans ce navigateur. Pour le donner aux élèves, enregistre une version pour eux : c’est ce fichier qu’il faut leur donner.'
+        : 'Ton choix est gardé dans ce navigateur. Pour préparer une version pour les élèves, ouvre le fichier autonome demarche.html et refais-y ce choix.';
     $('teacher-status').textContent = '';
     $('teacher').showModal();
   });
   $('teacher-all').addEventListener('click', () => {
     hiddenExamples.clear();
+    saveSettings();
     renderTeacherList();
     fillExamples();
   });
   $('teacher-order').addEventListener('click', () => {
     exampleOrder = [];
+    saveSettings();
     renderTeacherList();
     fillExamples();
   });
   $('teacher-save').addEventListener('click', async () => {
-    const json = JSON.stringify({ hidden: [...hiddenExamples], order: exampleOrder }).replace(/</g, '\\u003c');
+    const json = JSON.stringify(settings()).replace(/</g, '\\u003c');
     const page = SELF_COPY.replace(/(<script type="application\/json" id="config">)[\s\S]*?(<\/script>)/, (_, open, close) => open + json + close);
     const status = $('teacher-status');
     status.classList.remove('is-error');
@@ -871,12 +939,14 @@ function start() {
   } catch {
     // stockage indisponible : rien à effacer
   }
+  // le choix du professeur pour l'ouverture ; un exemple retiré depuis : celui par défaut
+  const openingText = (id, list, fallback, field) => (id === '' ? '' : (list.find((e) => e.id === id) ?? list.find((e) => e.id === fallback))[field]);
   const savedCode = store.get('code');
-  editor.value = savedCode?.trim() ? savedCode : EXAMPLES.find((e) => e.id === DEFAULT_EXAMPLE).code;
+  editor.value = savedCode?.trim() ? savedCode : openingText(opening.python, EXAMPLES, DEFAULT_EXAMPLE, 'code');
   spaces.python.exampleId = EXAMPLES.find((e) => e.code === editor.value)?.id ?? null;
   updateInputsBox();
   const savedDemarche = store.get('demarche');
-  demarcheInput.value = savedDemarche?.trim() ? savedDemarche : DEMARCHE_EXAMPLES.find((e) => e.id === DEFAULT_DEMARCHE).text;
+  demarcheInput.value = savedDemarche?.trim() ? savedDemarche : openingText(opening.demarche, DEMARCHE_EXAMPLES, DEFAULT_DEMARCHE, 'text');
   spaces.demarche.exampleId = DEMARCHE_EXAMPLES.find((e) => e.text === demarcheInput.value)?.id ?? null;
 
   const savedTab = store.get('onglet');

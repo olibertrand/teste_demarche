@@ -32,11 +32,17 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
 
 ### Pour le professeur : les exemples proposés aux élèves
 
-**Mode professeur : choisir les exemples**, en bas de la page, liste tous les exemples : on coche
-ceux que les élèves verront dans le menu, et les flèches ↑ ↓ changent leur ordre dans leur groupe
-(**Ordre d'origine** le remet). Les tris, la recherche dichotomique et le rendu de monnaie sont
-cachés au départ. **Enregistrer une version pour les élèves** produit le fichier
-`demarche-eleves.html`, autonome, qui garde ce choix et cet ordre : c'est lui qu'on donne aux élèves (ENT, clé
+**Mode professeur : choisir les exemples**, en bas de la page, règle ce que voient les élèves :
+- ce qui s'affiche à l'ouverture de la page, dans chaque onglet : un exemple (« Maximum » au
+  départ), ou un cahier vide (un éditeur vide pour Python), pour que l'élève parte de sa propre
+  démarche ;
+- les exemples du menu : on coche ceux qu'ils verront, et les flèches ↑ ↓ changent leur ordre dans
+  leur groupe (**Ordre d'origine** le remet). Les tris, la recherche dichotomique et le rendu de
+  monnaie sont cachés au départ.
+
+Ces réglages sont gardés dans le navigateur : on les retrouve en rouvrant la page (le fichier
+principal comme la version en ligne). **Enregistrer une version pour les élèves** produit le
+fichier `demarche-eleves.html`, autonome, qui garde ces choix : c'est lui qu'on donne aux élèves (ENT, clé
 USB). Pour changer le choix plus tard, on rouvre ce fichier et on l'enregistre de nouveau. Cette
 version ne peut être préparée que depuis le fichier autonome, pas depuis la version en ligne.
 
