@@ -24,6 +24,10 @@ const SELF_COPY =
     ? `<!doctype html>\n${document.documentElement.outerHTML}`
     : null;
 
+// la version pour les élèves n'affiche pas le lien du mode professeur : le professeur l'ouvre avec
+// #professeur à la fin de l'adresse
+const TEACHER_HASH = 'professeur';
+
 /** Réglages enregistrés dans la page par le professeur (<script id="config">). */
 function readConfig() {
   try {
@@ -266,7 +270,8 @@ function start() {
   });
   addEventListener('hashchange', () => {
     const id = decodeURIComponent(location.hash.slice(1));
-    if (id && id !== select.value) chooseExample(id);
+    if (id === TEACHER_HASH) openTeacher();
+    else if (id && id !== select.value) chooseExample(id);
   });
 
   // ---------------------------------------------------------------- onglets et affichage
@@ -893,18 +898,22 @@ function start() {
     saveSettings();
   });
 
-  $('teacher-open').addEventListener('click', () => {
+  // pas de lien vers le mode professeur dans la version pour les élèves, sauf ouverte avec #professeur
+  $('teacher-open').hidden = inFile && location.hash !== `#${TEACHER_HASH}`;
+  function openTeacher() {
+    $('teacher-open').hidden = false;
     renderTeacherList();
     // seul le fichier autonome sait s'enregistrer lui-même
     $('teacher-save').hidden = !SELF_COPY;
     $('teacher-save-help').textContent = inFile
-      ? 'Cette version pour les élèves garde le choix enregistré avec elle. Pour le changer, modifie-le ici, puis enregistre de nouveau la version pour les élèves.'
+      ? `Cette version pour les élèves garde le choix enregistré avec elle. Pour le changer, modifie-le ici, puis enregistre de nouveau la version pour les élèves. Le lien du mode professeur n’apparaît pas dans cette version : pour revenir ici, ajoute #${TEACHER_HASH} à la fin de l’adresse.`
       : SELF_COPY
-        ? 'Ton choix est gardé dans ce navigateur. Pour le donner aux élèves, enregistre une version pour eux : c’est ce fichier qu’il faut leur donner.'
+        ? `Ton choix est gardé dans ce navigateur. Pour le donner aux élèves, enregistre une version pour eux : c’est ce fichier qu’il faut leur donner. Le lien du mode professeur n’y apparaît pas : pour l’ouvrir, ajoute #${TEACHER_HASH} à la fin de l’adresse.`
         : 'Ton choix est gardé dans ce navigateur. Pour préparer une version pour les élèves, ouvre le fichier autonome demarche.html et refais-y ce choix.';
     $('teacher-status').textContent = '';
-    $('teacher').showModal();
-  });
+    if (!$('teacher').open) $('teacher').showModal();
+  }
+  $('teacher-open').addEventListener('click', openTeacher);
   $('teacher-all').addEventListener('click', () => {
     hiddenExamples.clear();
     saveSettings();
@@ -958,6 +967,7 @@ function start() {
     showSpace();
     if (tab === 'demarche') translateAndRun({ toPython: false, silent: true });
   }
+  if (fromHash === TEACHER_HASH) openTeacher();
 
   getSample().then((sample) => {
     sampleAvailable = Boolean(sample);
