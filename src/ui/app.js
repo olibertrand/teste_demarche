@@ -33,23 +33,31 @@ function readConfig() {
   }
 }
 
-// Brouillons et onglet de chaque visiteur : le stockage peut être indisponible.
-const store = {
-  get(key) {
-    try {
-      return localStorage.getItem(`demarche:${key}`);
-    } catch {
-      return null;
-    }
-  },
-  set(key, value) {
-    try {
-      localStorage.setItem(`demarche:${key}`, value);
-    } catch {
-      // stockage indisponible (navigation privée…) : tant pis, rien d'essentiel n'est perdu
-    }
-  },
-};
+// Stockage du navigateur ; il peut être indisponible (navigation privée…) : rien d'essentiel n'est perdu.
+function storage(kind) {
+  return {
+    get(key) {
+      try {
+        return window[kind].getItem(`demarche:${key}`);
+      } catch {
+        return null;
+      }
+    },
+    set(key, value) {
+      try {
+        window[kind].setItem(`demarche:${key}`, value);
+      } catch {
+        // stockage indisponible : tant pis
+      }
+    },
+  };
+}
+
+// Le travail en cours (textes, onglet) survit au rechargement de la page, pas à une nouvelle
+// ouverture : sur un ordinateur partagé, chacun repart des exemples, et une nouvelle version aussi.
+// Pour garder une démarche, on l'enregistre dans un fichier. L'écriture choisie, elle, est gardée.
+const store = storage('sessionStorage');
+const prefs = storage('localStorage');
 
 const TEXTS = {
   demarche: {
@@ -133,21 +141,38 @@ function start() {
 
   // ---------------------------------------------------------------- exemples
 
-  // les exemples cachés aux élèves : le choix du professeur enregistré dans la page, sinon ceux marqués hidden
+  // les exemples cachés aux élèves et leur ordre : le choix du professeur enregistré dans la page ;
+  // sinon, ceux marqués hidden sont cachés, dans l'ordre de examples.js
   const config = readConfig();
   const hiddenExamples = new Set(
     Array.isArray(config.hidden) ? config.hidden : [...DEMARCHE_EXAMPLES, ...EXAMPLES].filter((e) => e.hidden).map((e) => e.id),
   );
+  let exampleOrder = Array.isArray(config.order) ? config.order : [];
   const custom = h('option', { value: '' }, TEXTS.python.custom);
 
-  /** Les exemples par groupe, dans l'ordre du menu. */
+  /** Les exemples par groupe, dans l'ordre choisi par le professeur (un exemple nouveau vient à la fin de son groupe). */
   function exampleGroups() {
-    const groups = [['Démarches en français', DEMARCHE_EXAMPLES]];
+    const rank = (ex, k) => {
+      const i = exampleOrder.indexOf(ex.id);
+      return i >= 0 ? i : exampleOrder.length + k;
+    };
+    const sorted = (list) => list.map((ex, k) => [rank(ex, k), ex]).sort((a, b) => a[0] - b[0]).map(([, ex]) => ex);
+    const groups = [['Démarches en français', sorted(DEMARCHE_EXAMPLES)]];
     for (const ex of EXAMPLES) {
       const label = `Python · ${ex.group}`;
-      if (!groups.some(([l]) => l === label)) groups.push([label, EXAMPLES.filter((e) => e.group === ex.group)]);
+      if (!groups.some(([l]) => l === label)) groups.push([label, sorted(EXAMPLES.filter((e) => e.group === ex.group))]);
     }
     return groups;
+  }
+
+  /** Déplace un exemple d'un cran dans son groupe (delta = -1 : vers le haut). */
+  function moveExample(id, delta) {
+    const groups = exampleGroups();
+    const list = groups.find(([, l]) => l.some((ex) => ex.id === id))[1];
+    const k = list.findIndex((ex) => ex.id === id);
+    if (k + delta < 0 || k + delta >= list.length) return;
+    [list[k], list[k + delta]] = [list[k + delta], list[k]];
+    exampleOrder = groups.flatMap(([, l]) => l.map((ex) => ex.id));
   }
 
   /** Le menu des exemples : seulement ceux que le professeur montre aux élèves. */
@@ -680,9 +705,9 @@ function start() {
 
   const handFont = $('hand-font');
   handFont.append(...HAND_FONTS.map((f) => h('option', { value: f.id, style: `font-family: "${f.family}"` }, f.label)));
-  handFont.value = applyHandFont(store.get('ecriture'));
+  handFont.value = applyHandFont(prefs.get('ecriture'));
   handFont.addEventListener('change', () => {
-    store.set('ecriture', applyHandFont(handFont.value));
+    prefs.set('ecriture', applyHandFont(handFont.value));
     stage.fitPhrase();
   });
   // la taille de la phrase dépend de l'écriture (une fois sa police chargée) et de la largeur de la page
@@ -759,26 +784,45 @@ function start() {
 
   // les exemples montrés aux élèves ; le choix est gardé dans la version enregistrée pour eux
   function renderTeacherList() {
+    // les flèches déplacent l'exemple dans son groupe ; le clavier reste sur la flèche utilisée
+    const move = (ex, delta) => {
+      moveExample(ex.id, delta);
+      renderTeacherList();
+      fillExamples();
+      const buttons = $('teacher-list').querySelectorAll(`[data-id="${ex.id}"] button`);
+      const button = buttons[delta < 0 ? 0 : 1];
+      (button.disabled ? buttons[delta < 0 ? 1 : 0] : button).focus();
+    };
     $('teacher-list').replaceChildren(
       ...exampleGroups().map(([label, list]) =>
         h(
           'fieldset',
           { class: 'teacher-group' },
           h('legend', {}, label),
-          list.map((ex) =>
+          list.map((ex, k) =>
             h(
-              'label',
-              { class: 'teacher-item' },
-              h('input', {
-                type: 'checkbox',
-                checked: !hiddenExamples.has(ex.id),
-                onchange: (e) => {
-                  if (e.target.checked) hiddenExamples.delete(ex.id);
-                  else hiddenExamples.add(ex.id);
-                  fillExamples();
-                },
-              }),
-              ex.title,
+              'div',
+              { class: 'teacher-row', 'data-id': ex.id },
+              h(
+                'label',
+                { class: 'teacher-item' },
+                h('input', {
+                  type: 'checkbox',
+                  checked: !hiddenExamples.has(ex.id),
+                  onchange: (e) => {
+                    if (e.target.checked) hiddenExamples.delete(ex.id);
+                    else hiddenExamples.add(ex.id);
+                    fillExamples();
+                  },
+                }),
+                ex.title,
+              ),
+              h(
+                'span',
+                { class: 'teacher-move' },
+                h('button', { class: 'btn small', type: 'button', title: 'Monter', 'aria-label': `Monter « ${ex.title} »`, disabled: k === 0, onclick: () => move(ex, -1) }, '↑'),
+                h('button', { class: 'btn small', type: 'button', title: 'Descendre', 'aria-label': `Descendre « ${ex.title} »`, disabled: k === list.length - 1, onclick: () => move(ex, 1) }, '↓'),
+              ),
             ),
           ),
         ),
@@ -800,8 +844,13 @@ function start() {
     renderTeacherList();
     fillExamples();
   });
+  $('teacher-order').addEventListener('click', () => {
+    exampleOrder = [];
+    renderTeacherList();
+    fillExamples();
+  });
   $('teacher-save').addEventListener('click', async () => {
-    const json = JSON.stringify({ hidden: [...hiddenExamples] }).replace(/</g, '\\u003c');
+    const json = JSON.stringify({ hidden: [...hiddenExamples], order: exampleOrder }).replace(/</g, '\\u003c');
     const page = SELF_COPY.replace(/(<script type="application\/json" id="config">)[\s\S]*?(<\/script>)/, (_, open, close) => open + json + close);
     const status = $('teacher-status');
     status.classList.remove('is-error');
@@ -816,6 +865,12 @@ function start() {
 
   // ---------------------------------------------------------------- ouverture
 
+  // les versions précédentes gardaient les brouillons d'une ouverture à l'autre : on les efface
+  try {
+    for (const key of ['code', 'demarche', 'onglet']) localStorage.removeItem(`demarche:${key}`);
+  } catch {
+    // stockage indisponible : rien à effacer
+  }
   const savedCode = store.get('code');
   editor.value = savedCode?.trim() ? savedCode : EXAMPLES.find((e) => e.id === DEFAULT_EXAMPLE).code;
   spaces.python.exampleId = EXAMPLES.find((e) => e.code === editor.value)?.id ?? null;

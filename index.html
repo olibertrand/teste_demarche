@@ -159,13 +159,14 @@
   <dialog id="teacher" class="teacher" aria-labelledby="teacher-title">
     <form method="dialog" class="teacher-body">
       <h2 id="teacher-title" class="teacher-title">Exemples proposés aux élèves</h2>
-      <p class="teacher-help">Coche les exemples à montrer dans le menu « Exemple ».</p>
+      <p class="teacher-help">Coche les exemples à montrer dans le menu « Exemple » ; les flèches ↑ ↓ changent leur ordre.</p>
       <div id="teacher-list" class="teacher-list"></div>
       <p id="teacher-save-help" class="teacher-help">Pour garder ce choix, enregistre une version pour les élèves : c’est ce fichier qu’il faut leur donner. Rouvre-le plus tard pour changer les exemples.</p>
       <p id="teacher-online-help" class="teacher-help" hidden>Ce choix vaut pour cette page ouverte. Pour préparer une version pour les élèves, ouvre le fichier autonome <code>demarche.html</code> et choisis-y les exemples.</p>
       <p id="teacher-status" class="file-status" role="status"></p>
       <div class="teacher-actions">
         <button id="teacher-all" class="btn small" type="button">Tout cocher</button>
+        <button id="teacher-order" class="btn small" type="button">Ordre d’origine</button>
         <button id="teacher-save" class="btn small primary" type="button">Enregistrer une version pour les élèves</button>
         <button class="btn small" value="close">Fermer</button>
       </div>
