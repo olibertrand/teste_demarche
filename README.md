@@ -26,8 +26,9 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
 - **Enregistrer la démarche** (ou Ctrl + S) la met dans un fichier texte daté
   (`demarche-2026-11-05-14h32.txt`) ; **Ouvrir une démarche…** la recharge, traduite et animée.
   L'onglet Python fait de même avec des fichiers `.py`. Un élève peut ainsi garder son travail
-  d'une séance à l'autre, ou le rendre (sur l'ENT, par exemple). Le dernier texte écrit est aussi
-  gardé dans le navigateur.
+  d'une séance à l'autre, ou le rendre (sur l'ENT, par exemple). Le texte en cours survit à un
+  rechargement de la page, pas à une nouvelle ouverture du fichier : sur un ordinateur partagé,
+  chacun repart des exemples. L'écriture choisie, elle, est gardée.
 
 ### Pour le professeur : les exemples proposés aux élèves
 
