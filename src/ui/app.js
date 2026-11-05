@@ -10,11 +10,28 @@ import { applyAnswer, translatePseudo } from '../translate/pseudo.js';
 import { h } from './dom.js';
 import { CodeView, Editor, plainLines } from './editor.js';
 import { DEFAULT_DEMARCHE, DEFAULT_EXAMPLE, DEMARCHE_EXAMPLES, EXAMPLES } from './examples.js';
+import { datedName, saveText } from './files.js';
 import { HAND_FONTS, applyHandFont } from './handwriting.js';
 import { Player } from './player.js';
 import { Stage, describeError } from './stage.js';
 
 const $ = (id) => document.getElementById(id);
+
+// Le fichier autonome sait s'enregistrer lui-même, avec le choix d'exemples du professeur : sa copie
+// est prise avant que la page ne change. Ailleurs (page de développement, claude.ai) : null.
+const SELF_COPY =
+  typeof document !== 'undefined' && document.currentScript?.hasAttribute('data-autonome')
+    ? `<!doctype html>\n${document.documentElement.outerHTML}`
+    : null;
+
+/** Réglages enregistrés dans la page par le professeur (<script id="config">). */
+function readConfig() {
+  try {
+    return JSON.parse(document.getElementById('config')?.textContent || '{}');
+  } catch {
+    return {};
+  }
+}
 
 // Brouillons et onglet de chaque visiteur : le stockage peut être indisponible.
 const store = {
@@ -116,20 +133,42 @@ function start() {
 
   // ---------------------------------------------------------------- exemples
 
+  // les exemples cachés aux élèves : le choix du professeur enregistré dans la page, sinon ceux marqués hidden
+  const config = readConfig();
+  const hiddenExamples = new Set(
+    Array.isArray(config.hidden) ? config.hidden : [...DEMARCHE_EXAMPLES, ...EXAMPLES].filter((e) => e.hidden).map((e) => e.id),
+  );
   const custom = h('option', { value: '' }, TEXTS.python.custom);
-  select.append(custom);
-  const demarcheGroup = h('optgroup', { label: 'Démarches en français' });
-  for (const ex of DEMARCHE_EXAMPLES) demarcheGroup.append(h('option', { value: ex.id }, ex.title));
-  select.append(demarcheGroup);
-  const groups = new Map();
-  for (const ex of EXAMPLES) {
-    if (!groups.has(ex.group)) {
-      const group = h('optgroup', { label: `Python · ${ex.group}` });
-      groups.set(ex.group, group);
-      select.append(group);
+
+  /** Les exemples par groupe, dans l'ordre du menu. */
+  function exampleGroups() {
+    const groups = [['Démarches en français', DEMARCHE_EXAMPLES]];
+    for (const ex of EXAMPLES) {
+      const label = `Python · ${ex.group}`;
+      if (!groups.some(([l]) => l === label)) groups.push([label, EXAMPLES.filter((e) => e.group === ex.group)]);
     }
-    groups.get(ex.group).append(h('option', { value: ex.id }, ex.title));
+    return groups;
   }
+
+  /** Le menu des exemples : seulement ceux que le professeur montre aux élèves. */
+  function fillExamples() {
+    select.replaceChildren(
+      custom,
+      ...exampleGroups()
+        .map(([label, list]) => [label, list.filter((e) => !hiddenExamples.has(e.id))])
+        .filter(([, list]) => list.length)
+        .map(([label, list]) => h('optgroup', { label }, list.map((e) => h('option', { value: e.id }, e.title)))),
+    );
+    showExampleChoice();
+  }
+
+  // l'exemple en cours dans le menu, ou « Ma démarche » s'il n'y est pas (modifié, ou caché)
+  function showExampleChoice() {
+    const id = spaces[tab].exampleId;
+    select.value = id && [...select.options].some((o) => o.value === id) ? id : '';
+  }
+
+  fillExamples();
 
   /** @param {{atStartup?: boolean}} [options] à l'ouverture de la page, l'onglet Python garde son programme */
   function chooseExample(id, { atStartup = false } = {}) {
@@ -203,7 +242,7 @@ function start() {
     $('run-label').textContent = TEXTS[tab].run;
     $('run').title = `${TEXTS[tab].run} (Ctrl + Entrée)`;
     custom.textContent = TEXTS[tab].custom;
-    select.value = sp.exampleId ?? '';
+    showExampleChoice();
     applyMode();
     $('stale').textContent = TEXTS[tab].stale;
     $('stale').hidden = !sp.stale;
@@ -649,6 +688,131 @@ function start() {
   // la taille de la phrase dépend de l'écriture (une fois sa police chargée) et de la largeur de la page
   document.fonts?.addEventListener('loadingdone', () => stage.fitPhrase());
   window.addEventListener('resize', () => stage.fitPhrase());
+
+  // ---------------------------------------------------------------- fichiers
+
+  // l'élève enregistre sa démarche (ou son programme) dans un fichier, et la rouvre plus tard
+  async function saveCurrent() {
+    const python = tab === 'python';
+    const text = python ? editor.value : demarcheInput.value;
+    const status = $(`${tab}-file-status`);
+    status.classList.remove('is-error');
+    if (!text.trim()) {
+      status.textContent = python ? 'Le programme est vide.' : 'La démarche est vide.';
+      return;
+    }
+    try {
+      const saved = await saveText(datedName(python ? 'programme' : 'demarche', python ? 'py' : 'txt'), text.replace(/\s*$/, '\n'));
+      status.textContent = saved.status === 'saved' ? `Enregistré : ${saved.filename}` : '';
+    } catch (e) {
+      status.textContent = e.message;
+      status.classList.add('is-error');
+    }
+  }
+
+  let openTarget = 'demarche';
+  for (const name of ['demarche', 'python']) {
+    $(`save-${name}`).addEventListener('click', saveCurrent);
+    $(`open-${name}`).addEventListener('click', () => {
+      openTarget = name;
+      $('open-file').value = '';
+      $('open-file').click();
+    });
+  }
+  $('open-file').addEventListener('change', async () => {
+    const file = $('open-file').files[0];
+    if (!file) return;
+    const status = $(`${openTarget}-file-status`);
+    status.classList.toggle('is-error', file.size > 200_000);
+    if (file.size > 200_000) {
+      status.textContent = 'Ce fichier est trop gros pour une démarche ou un programme.';
+      return;
+    }
+    const text = (await file.text()).replace(/\r\n?/g, '\n');
+    status.textContent = `Ouvert : ${file.name}`;
+    spaces[openTarget].exampleId = null;
+    forgetExampleInAddress();
+    if (openTarget === 'demarche') {
+      demarcheInput.value = text;
+      store.set('demarche', text);
+      spaces.demarche.dismissed.clear();
+      markStale(spaces.demarche);
+      showExampleChoice();
+      setMode('edit');
+      translateAndRun();
+    } else {
+      editor.value = text;
+      store.set('code', text);
+      updateInputsBox();
+      executePython();
+      showExampleChoice();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      saveCurrent();
+    }
+  });
+
+  // ---------------------------------------------------------------- mode professeur
+
+  // les exemples montrés aux élèves ; le choix est gardé dans la version enregistrée pour eux
+  function renderTeacherList() {
+    $('teacher-list').replaceChildren(
+      ...exampleGroups().map(([label, list]) =>
+        h(
+          'fieldset',
+          { class: 'teacher-group' },
+          h('legend', {}, label),
+          list.map((ex) =>
+            h(
+              'label',
+              { class: 'teacher-item' },
+              h('input', {
+                type: 'checkbox',
+                checked: !hiddenExamples.has(ex.id),
+                onchange: (e) => {
+                  if (e.target.checked) hiddenExamples.delete(ex.id);
+                  else hiddenExamples.add(ex.id);
+                  fillExamples();
+                },
+              }),
+              ex.title,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  $('teacher-open').addEventListener('click', () => {
+    renderTeacherList();
+    // seul le fichier autonome sait s'enregistrer lui-même
+    $('teacher-save').hidden = !SELF_COPY;
+    $('teacher-save-help').hidden = !SELF_COPY;
+    $('teacher-online-help').hidden = Boolean(SELF_COPY);
+    $('teacher-status').textContent = '';
+    $('teacher').showModal();
+  });
+  $('teacher-all').addEventListener('click', () => {
+    hiddenExamples.clear();
+    renderTeacherList();
+    fillExamples();
+  });
+  $('teacher-save').addEventListener('click', async () => {
+    const json = JSON.stringify({ hidden: [...hiddenExamples] }).replace(/</g, '\\u003c');
+    const page = SELF_COPY.replace(/(<script type="application\/json" id="config">)[\s\S]*?(<\/script>)/, (_, open, close) => open + json + close);
+    const status = $('teacher-status');
+    status.classList.remove('is-error');
+    try {
+      const saved = await saveText('demarche-eleves.html', page);
+      status.textContent = saved.status === 'saved' ? `Version pour les élèves enregistrée : ${saved.filename}` : '';
+    } catch (e) {
+      status.textContent = e.message;
+      status.classList.add('is-error');
+    }
+  });
 
   // ---------------------------------------------------------------- ouverture
 
