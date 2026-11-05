@@ -113,7 +113,7 @@ const STOP = new Set([
 ]);
 const BUILTINS = new Set(['len', 'range', 'print', 'max', 'min', 'sum', 'abs', 'round', 'int', 'float', 'str', 'sorted', 'list', 'input']);
 
-const OPS = ['<-', '←', '==', '!=', '<=', '>=', '≤', '≥', '≠', '//', '**', '<', '>', '=', '+', '-', '*', '/', '%', '(', ')', '[', ']', ',', ':'];
+const OPS = ['<-', '←', '==', '!=', '<=', '>=', '≤', '≥', '≠', '//', '**', '<', '>', '=', '+', '-', '*', '/', '%', '^', '²', '³', '(', ')', '[', ']', ',', ':'];
 
 function tokenize(p) {
   const src = p.text;
@@ -138,7 +138,7 @@ function tokenize(p) {
       toks.push({ k: 'str', v: src.slice(i + 1, j).trim() });
       i = j + 1;
     } else if (/[\p{L}_]/u.test(c)) {
-      const m = /^[\p{L}\p{N}_]+/u.exec(src.slice(i));
+      const m = /^[\p{L}\p{Nd}_]+/u.exec(src.slice(i));
       let w = m[0];
       i += w.length;
       // « l'élément », « qu'on », « n'est » : l'apostrophe reste avec le petit mot
@@ -332,7 +332,21 @@ class Expr {
 
   unary() {
     if (this.op('-')) return `-${this.unary()}`;
-    return this.postfix(this.primary());
+    return this.power();
+  }
+
+  // 2**n, 2^n, « 2 puissance n », « 2 à la puissance n », « n au carré », n²
+  power() {
+    const base = this.postfix(this.primary());
+    if (this.op('**')) return `${base} ** ${this.unary()}`;
+    if (this.op('^')) {
+      this.t.note(this.p.line, '« ^ » : j’ai compris la puissance, qui s’écrit ** en Python.');
+      return `${base} ** ${this.unary()}`;
+    }
+    if (this.words('a la puissance') || this.words('puissance')) return `${base} ** ${this.unary()}`;
+    if (this.op('²') || this.words('au carre')) return `${base} ** 2`;
+    if (this.op('³') || this.words('au cube')) return `${base} ** 3`;
+    return base;
   }
 
   postfix(e) {

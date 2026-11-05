@@ -1,5 +1,7 @@
 // Exemples proposés dans l'application. Les commentaires jouent le rôle des phrases de la
 // démarche : quand une ligne s'exécute, son commentaire s'affiche au-dessus de l'animation.
+// hidden: true : pas encore montré aux élèves ; le professeur choisit les exemples affichés
+// (« Mode professeur »), et ce choix est enregistré dans la version pour les élèves.
 
 export const EXAMPLES = [
   {
@@ -90,6 +92,7 @@ else:
   },
   {
     id: 'dichotomie',
+    hidden: true,
     group: 'Rechercher',
     title: 'Recherche dichotomique',
     code: `def dichotomie(L, v):
@@ -111,6 +114,7 @@ print(dichotomie(L, 23))
   },
   {
     id: 'tri-selection',
+    hidden: true,
     group: 'Trier',
     title: 'Tri par sélection',
     code: `def tri_selection(T):
@@ -131,6 +135,7 @@ print(L)
   },
   {
     id: 'tri-insertion',
+    hidden: true,
     group: 'Trier',
     title: 'Tri par insertion',
     code: `def tri_insertion(T):
@@ -149,6 +154,7 @@ print(L)
   },
   {
     id: 'fusion',
+    hidden: true,
     group: 'Trier',
     title: 'Fusion de deux listes triées',
     code: `A = [2, 7, 12]
@@ -174,6 +180,7 @@ print(R)
   },
   {
     id: 'rendu-monnaie',
+    hidden: true,
     group: 'Algorithme glouton',
     title: 'Rendu de monnaie',
     code: `pieces = [200, 100, 50, 20, 10, 5, 2, 1]
@@ -299,6 +306,7 @@ affiche i
   },
   {
     id: 'demarche-bulles',
+    hidden: true,
     title: 'Une passe du tri à bulles',
     text: `T = [7, 3, 9, 1]
 pour i allant de 0 à len(T) - 2 :

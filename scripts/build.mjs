@@ -1,5 +1,6 @@
 // Construit dist/demarche.html : un seul fichier autonome (CSS, JavaScript et polices intégrés),
-// qui s'ouvre d'un double-clic, sans serveur ni connexion.
+// qui s'ouvre d'un double-clic, sans serveur ni connexion. Son script porte data-autonome : le
+// fichier sait alors s'enregistrer lui-même (version pour les élèves, « Mode professeur »).
 //
 //   npm run build                          → dist/demarche.html
 //   npm run build -- --fragment chemin     → produit aussi un fragment sans <html>/<head>/<body>
@@ -49,7 +50,7 @@ ${css}</style>
 </head>
 <body>
 ${app}
-<script>
+<script data-autonome>
 ${js}</script>
 </body>
 </html>

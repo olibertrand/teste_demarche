@@ -23,6 +23,20 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
 - Le menu **Écriture** choisit l'écriture « à la main » des phrases de la démarche : Playpen Sans
   (par défaut), Delius ou Comic Neue. Le choix est gardé dans le navigateur.
+- **Enregistrer la démarche** (ou Ctrl + S) la met dans un fichier texte daté
+  (`demarche-2026-11-05-14h32.txt`) ; **Ouvrir une démarche…** la recharge, traduite et animée.
+  L'onglet Python fait de même avec des fichiers `.py`. Un élève peut ainsi garder son travail
+  d'une séance à l'autre, ou le rendre (sur l'ENT, par exemple). Le dernier texte écrit est aussi
+  gardé dans le navigateur.
+
+### Pour le professeur : les exemples proposés aux élèves
+
+**Mode professeur : choisir les exemples**, en bas de la page, liste tous les exemples : on coche
+ceux que les élèves verront dans le menu. Les tris, la recherche dichotomique et le rendu de
+monnaie sont cachés au départ. **Enregistrer une version pour les élèves** produit le fichier
+`demarche-eleves.html`, autonome, qui garde ce choix : c'est lui qu'on donne aux élèves (ENT, clé
+USB). Pour changer le choix plus tard, on rouvre ce fichier et on l'enregistre de nouveau. Cette
+version ne peut être préparée que depuis le fichier autonome, pas depuis la version en ligne.
 
 ### La démarche en français
 
@@ -52,7 +66,8 @@ traduction (« « cela » : j'ai compris x »).
   conditions en symboles ou en mots (« est supérieur à », « vaut », « est pair », « on trouve 5 ») ;
   « afficher », « ajouter 1 au compteur », « ajouter x à la fin de L », « échanger L[i] et L[j] »
   (en trois lignes, avec temp), « renvoyer » ; « le premier élément de L », « la longueur de L »,
-  « l'élément d'indice i de L ». Majuscules et accents sont indifférents.
+  « l'élément d'indice i de L » ; la puissance (`2**n`, `2^n`, « 2 puissance n », « n au carré »,
+  `n²`). Majuscules et accents sont indifférents.
 - **Des questions quand il manque quelque chose** : le nom d'une liste, la variable d'un parcours,
   les valeurs pour essayer, ou une phrase à répéter qui n'est pas décalée. L'élève clique une
   réponse proposée ou écrit la sienne ; **sa réponse complète sa démarche** (« parcours la liste L »
@@ -141,7 +156,7 @@ src/python/   tokenizer.js, parser.js  → analyse du programme
 src/translate/ pseudo.js (traduction du pseudo-code, questions), et pour le secours par Claude :
               prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
 src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js,
-              handwriting.js (écritures du menu « Écriture »)
+              handwriting.js (écritures du menu « Écriture »), files.js (enregistrer un fichier)
 src/style.css
 src/fonts/    polices stockées avec l'application (licence SIL OFL), voir LISEZMOI.md
 index.html    page de développement (modules JS, nécessite un petit serveur)

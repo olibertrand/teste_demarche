@@ -13,6 +13,8 @@
 <body>
 <!-- APP:START -->
 <div class="app">
+  <!-- réglages choisis par le professeur (« Mode professeur ») ; la version pour les élèves les garde -->
+  <script type="application/json" id="config">{}</script>
   <header class="topbar">
     <h1 class="brand">Démarche <span class="hand">pas à pas</span></h1>
     <div class="pickers">
@@ -73,6 +75,11 @@
             </div>
           </details>
         </div>
+        <div class="file-actions">
+          <button id="save-demarche" class="btn small" type="button" title="Enregistrer la démarche dans un fichier (Ctrl + S)">Enregistrer la démarche</button>
+          <button id="open-demarche" class="btn small" type="button">Ouvrir une démarche…</button>
+          <span id="demarche-file-status" class="file-status" role="status"></span>
+        </div>
         <p class="hint">Une instruction par ligne, ou plusieurs séparées par des points. Ce qui se répète ou dépend d’un « si » se décale vers la droite, comme en Python. Pour donner une valeur : <code>m &lt;- 0</code>, <code>m ← 0</code>, <code>m = 0</code> ou « m prend la valeur 0 ». S’il manque quelque chose, une question s’affiche. La traduction ne corrige rien : l’animation montre ce que fait vraiment la démarche.</p>
       </div>
 
@@ -87,6 +94,11 @@
           <textarea id="inputs" rows="3" spellcheck="false"></textarea>
         </div>
         <div id="syntax-error" class="error-box" role="alert" hidden></div>
+        <div class="file-actions">
+          <button id="save-python" class="btn small" type="button" title="Enregistrer le programme dans un fichier (Ctrl + S)">Enregistrer le programme</button>
+          <button id="open-python" class="btn small" type="button">Ouvrir un programme…</button>
+          <span id="python-file-status" class="file-status" role="status"></span>
+        </div>
         <p class="hint">Les commentaires (après <code>#</code>) jouent le rôle des phrases de la démarche : chacun s’affiche quand sa ligne s’exécute. Double-clic sur le code pour le modifier.</p>
       </div>
     </section>
@@ -137,9 +149,28 @@
 
   <footer class="footnote">
     Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
-    Raccourcis : → ou Espace (pas à pas), ← (étape précédente), Ctrl + Entrée (exécuter ou traduire).
+    Raccourcis : → ou Espace (pas à pas), ← (étape précédente), Ctrl + Entrée (exécuter ou traduire), Ctrl + S (enregistrer).
     La traduction des démarches se fait dans le navigateur, sans connexion ; dans la version en ligne sur claude.ai, Claude peut aider pour les phrases non comprises.
+    <button id="teacher-open" class="link-button" type="button">Mode professeur : choisir les exemples</button>
   </footer>
+
+  <input id="open-file" type="file" accept=".txt,.py,text/plain" hidden>
+
+  <dialog id="teacher" class="teacher" aria-labelledby="teacher-title">
+    <form method="dialog" class="teacher-body">
+      <h2 id="teacher-title" class="teacher-title">Exemples proposés aux élèves</h2>
+      <p class="teacher-help">Coche les exemples à montrer dans le menu « Exemple ».</p>
+      <div id="teacher-list" class="teacher-list"></div>
+      <p id="teacher-save-help" class="teacher-help">Pour garder ce choix, enregistre une version pour les élèves : c’est ce fichier qu’il faut leur donner. Rouvre-le plus tard pour changer les exemples.</p>
+      <p id="teacher-online-help" class="teacher-help" hidden>Ce choix vaut pour cette page ouverte. Pour préparer une version pour les élèves, ouvre le fichier autonome <code>demarche.html</code> et choisis-y les exemples.</p>
+      <p id="teacher-status" class="file-status" role="status"></p>
+      <div class="teacher-actions">
+        <button id="teacher-all" class="btn small" type="button">Tout cocher</button>
+        <button id="teacher-save" class="btn small primary" type="button">Enregistrer une version pour les élèves</button>
+        <button class="btn small" value="close">Fermer</button>
+      </div>
+    </form>
+  </dialog>
 </div>
 <!-- APP:END -->
 <script type="module" src="src/ui/app.js"></script>

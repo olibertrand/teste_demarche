@@ -90,6 +90,29 @@ test('affectation : <-, ←, = et « prend la valeur »', () => {
   assert.equal(python(translatePseudo('L = [1, 2]\nL[0] prend la valeur L[1]')), 'L = [1, 2]\nL[0] = L[1]\n');
 });
 
+test('puissance : 2**n, 2^n, « 2 puissance n », « au carré », n²', () => {
+  const cases = {
+    'affiche 2**n': 'print(2 ** n)',
+    'affiche 2 ** n': 'print(2 ** n)',
+    'affiche 2^n': 'print(2 ** n)',
+    'p <- 2 puissance n': 'p = 2 ** n',
+    'p <- 2 à la puissance n': 'p = 2 ** n',
+    'p <- n au carré': 'p = n ** 2',
+    'p <- n au cube + 1': 'p = n ** 3 + 1',
+    'p <- n²': 'p = n ** 2',
+    'p <- n³': 'p = n ** 3',
+    'affiche -n**2, 2**-1, 2**3**2': 'print(-n ** 2, 2 ** -1, 2 ** 3 ** 2)',
+  };
+  for (const [line, code] of Object.entries(cases)) {
+    const t = translatePseudo(`n = 3\n${line}`);
+    assert.ok(t.ok, `${line} : ${t.message}`);
+    assert.equal(python(t).split('\n')[1], code, line);
+  }
+  // « ^ » est la puissance des maths ; en Python, c'est ** : la traduction le dit
+  assert.ok(translatePseudo('n = 3\naffiche 2^n').hypotheses.some((h) => /\*\* en Python/.test(h.text)));
+  assert.equal(run(python(translatePseudo('n = 10\naffiche 2**n, n²'))).output, '1024 100\n');
+});
+
 test('les blocs suivent l’indentation ; dans une ligne, « si » s’arrête à la fin de sa phrase', () => {
   const t = translatePseudo('L = [5, 2, 8]\nc = 0\npour chaque élément x de L :\n    si x > 4 :\n        affiche x\n    sinon :\n        augmente c de 1\naffiche c');
   assert.equal(
