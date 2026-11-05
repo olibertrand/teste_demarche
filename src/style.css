@@ -1096,12 +1096,78 @@ textarea.notebook {
   margin-top: 8px;
 }
 
-.notice {
-  margin: 0;
+/* question posée quand il manque une information à la démarche */
+.question {
+  display: grid;
+  gap: 8px;
+  margin: 0 14px 14px;
   padding: 10px 14px;
-  border-top: 1px solid var(--rule);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
   background: var(--accent-soft);
 }
+
+.question-text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.question-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.question-choices:empty {
+  display: none;
+}
+
+.question .suggestion {
+  font-family: var(--font-code);
+}
+
+.question-form {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.question-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  font-family: var(--font-code);
+}
+
+.question-form input::placeholder {
+  font-family: var(--font-ui);
+}
+
+.question-error {
+  margin: 0;
+  color: var(--error);
+  font-weight: 600;
+}
+
+/* la démarche complétée par une réponse se signale brièvement */
+@media (prefers-reduced-motion: no-preference) {
+  .notebook.is-completed {
+    animation: completed 1.2s ease-out;
+  }
+}
+
+@keyframes completed {
+  from {
+    background-color: var(--accent-soft);
+  }
+  to {
+    background-color: var(--surface);
+  }
+}
+
 
 .translation {
   display: grid;

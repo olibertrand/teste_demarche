@@ -6,6 +6,7 @@ import {
   PERMANENT_ERRORS, askClaude, errorMessage, getSample, rememberAnswer, rememberedAnswer,
 } from '../translate/claude.js';
 import { MAX_DEMARCHE_LINES } from '../translate/prompt.js';
+import { applyAnswer, translatePseudo } from '../translate/pseudo.js';
 import { h } from './dom.js';
 import { CodeView, Editor, plainLines } from './editor.js';
 import { DEFAULT_DEMARCHE, DEFAULT_EXAMPLE, DEMARCHE_EXAMPLES, EXAMPLES } from './examples.js';
@@ -66,12 +67,12 @@ function start() {
 
   // Deux espaces de travail indépendants, chacun avec sa dernière exécution et son étape.
   const spaces = {
-    demarche: { result: null, source: '', index: 0, mode: 'edit', stale: false, exampleId: null, translation: null, text: '' },
+    demarche: { result: null, source: '', index: 0, mode: 'edit', stale: false, exampleId: null, translation: null, text: '', dismissed: new Set() },
     python: { result: null, source: '', index: 0, mode: 'edit', stale: false, exampleId: null },
   };
   let tab = 'python';
   const space = () => spaces[tab];
-  let sampleAvailable = null; // inconnu tant que claude.ai n'a pas répondu
+  let sampleAvailable = null; // Claude, en secours : seulement dans la version en ligne sur claude.ai
   let translating = null; // AbortController de la traduction en cours
   let translatingTimer = null;
   let failedText = null; // démarche dont la dernière traduction était inutilisable
@@ -144,10 +145,12 @@ function start() {
       demarcheInput.value = demarche.text;
       store.set('demarche', demarche.text);
       Object.assign(spaces.demarche, { result: null, translation: null, mode: 'edit', stale: false, exampleId: id });
+      spaces.demarche.dismissed.clear();
       hideTranslateError();
+      hideQuestion();
       openTab('demarche');
-      // une démarche déjà traduite s'affiche tout de suite ; sinon on attend « Traduire et exécuter »
-      if (rememberedAnswer(cleanText(demarche.text))) translateAndRun({ toPython: !atStartup });
+      // à l'ouverture de la page, une éventuelle question attend « Traduire et exécuter »
+      translateAndRun({ toPython: !atStartup, silent: atStartup });
     } else {
       editor.value = program.code;
       store.set('code', program.code);
@@ -256,7 +259,9 @@ function start() {
   }
 
   function focusNext() {
-    (space().mode === 'run' ? $('step') : $('run')).focus({ preventScroll: true });
+    // une question attend sa réponse : le clavier va à la première réponse proposée
+    const answer = $('question').hidden ? null : $('question').querySelector('button, input');
+    (answer ?? (space().mode === 'run' ? $('step') : $('run'))).focus({ preventScroll: true });
   }
 
   $('tab-demarche').addEventListener('click', () => openTab('demarche'));
@@ -334,6 +339,9 @@ function start() {
       forgetExampleInAddress();
     }
     hideTranslateError();
+    // une question posée sur l'ancien texte n'a plus de sens
+    hideQuestion();
+    spaces.demarche.dismissed.clear();
     markStale(spaces.demarche);
   });
   demarcheInput.addEventListener('keydown', (e) => {
@@ -348,7 +356,7 @@ function start() {
     box.replaceChildren(h('p', {}, message));
     if (retry) {
       box.append(
-        h('p', { class: 'retry' }, h('button', { class: 'btn small', type: 'button', onclick: () => translateAndRun({ refresh: true }) }, 'Réessayer')),
+        h('p', { class: 'retry' }, h('button', { class: 'btn small', type: 'button', onclick: () => translateWithClaude({ refresh: true }) }, 'Réessayer')),
       );
     }
     box.hidden = false;
@@ -356,14 +364,6 @@ function start() {
 
   function hideTranslateError() {
     $('translate-error').hidden = true;
-  }
-
-  function markUnavailable(message) {
-    sampleAvailable = false;
-    const notice = $('translate-unavailable');
-    if (message) notice.textContent = message;
-    notice.hidden = false;
-    updateControls();
   }
 
   function setTranslating(on) {
@@ -383,21 +383,68 @@ function start() {
   }
 
   /**
-   * @param {{refresh?: boolean, toPython?: boolean}} [options] toPython : l'onglet Python reçoit la
-   *   traduction (pas à l'ouverture de la page, où il garde ce que l'élève y avait laissé)
+   * Traduit la démarche (sans IA), puis l'anime. S'il manque une information, une question
+   * s'affiche ; une phrase non comprise est signalée.
+   * @param {{toPython?: boolean, silent?: boolean}} [options] toPython : l'onglet Python reçoit la
+   *   traduction (pas à l'ouverture de la page, où il garde ce que l'élève y avait laissé) ;
+   *   silent : à l'ouverture de la page, ni question ni message
    */
-  async function translateAndRun({ refresh = false, toPython = true } = {}) {
+  function translateAndRun({ toPython = true, silent = false } = {}) {
     if (translating) return;
     const text = cleanText(demarcheInput.value);
     hideTranslateError();
+    hideQuestion();
     if (!text.trim()) {
-      showTranslateError('Écris d’abord ta démarche, une instruction par ligne.');
+      if (!silent) showTranslateError('Écris d’abord ta démarche, une instruction par ligne.');
       return;
     }
     if (text.split('\n').length > MAX_DEMARCHE_LINES) {
-      showTranslateError(`La démarche est trop longue : ${MAX_DEMARCHE_LINES} lignes au plus.`);
+      if (!silent) showTranslateError(`La démarche est trop longue : ${MAX_DEMARCHE_LINES} lignes au plus.`);
       return;
     }
+    const translation = translatePseudo(text, { dismissed: spaces.demarche.dismissed });
+    if (!translation.ok) {
+      if (silent) return;
+      setMode('edit');
+      if (translation.question) showQuestion(translation.question, text);
+      else showNotUnderstood(translation);
+      return;
+    }
+    showTranslation({ ...translation, source: 'regles' }, text, { toPython });
+  }
+
+  /** Exécute la traduction et l'anime ; l'onglet Python la reçoit aussi. */
+  function showTranslation(translation, text, { toPython = true } = {}) {
+    const sp = spaces.demarche;
+    const result = run(translation.python, { inputs: inputLines() });
+    Object.assign(sp, { result, source: translation.python, index: 0, mode: 'run', stale: false, translation, text });
+    if (toPython || editor.value === translation.python) translationToPython();
+    renderTranslation(sp);
+    if (tab === 'demarche') {
+      showSpace();
+      $('step').focus({ preventScroll: true });
+    }
+  }
+
+  // une phrase non comprise : elle est sélectionnée dans la démarche ; dans claude.ai, Claude peut prendre le relais
+  function showNotUnderstood(translation) {
+    showTranslateError(translation.message);
+    if (sampleAvailable) {
+      $('translate-error').append(
+        h('p', { class: 'retry' }, h('button', { class: 'btn small', type: 'button', onclick: () => translateWithClaude() }, 'Demander à Claude')),
+      );
+    }
+    const line = translation.incompris[0]?.line;
+    if (line) selectLine(demarcheInput, line);
+  }
+
+  /** Secours, dans la version en ligne sur claude.ai : Claude traduit la démarche. */
+  async function translateWithClaude({ refresh = false } = {}) {
+    if (translating) return;
+    const text = cleanText(demarcheInput.value);
+    hideTranslateError();
+    hideQuestion();
+    if (!text.trim()) return;
     // une traduction inutilisable ne doit pas être resservie par la mémoire de claude.ai
     const fresh = refresh || failedText === text;
     let answer = fresh ? null : rememberedAnswer(text);
@@ -405,7 +452,7 @@ function start() {
     if (!answer) {
       const sample = await getSample();
       if (!sample) {
-        markUnavailable();
+        showTranslateError('Claude n’est disponible que dans la version en ligne de l’application, sur claude.ai.');
         return;
       }
       translating = new AbortController();
@@ -419,8 +466,9 @@ function start() {
           translation = assemble(answer, text);
         }
       } catch (error) {
-        if (PERMANENT_ERRORS.has(error?.code)) markUnavailable(errorMessage(error));
-        else showTranslateError(errorMessage(error), { retry: error?.code !== 'cancelled' });
+        const permanent = PERMANENT_ERRORS.has(error?.code);
+        if (permanent) sampleAvailable = false;
+        showTranslateError(errorMessage(error), { retry: !permanent && error?.code !== 'cancelled' });
         return;
       } finally {
         translating = null;
@@ -434,15 +482,65 @@ function start() {
     }
     failedText = null;
     rememberAnswer(text, answer);
-    const sp = spaces.demarche;
-    const result = run(translation.python, { inputs: inputLines() });
-    Object.assign(sp, { result, source: translation.python, index: 0, mode: 'run', stale: false, translation, text });
-    if (toPython || editor.value === translation.python) translationToPython();
-    renderTranslation(sp);
-    if (tab === 'demarche') {
-      showSpace();
-      $('step').focus({ preventScroll: true });
+    showTranslation({ ...translation, source: 'claude' }, text);
+  }
+
+  // ---------------------------------------------------------------- questions
+
+  /** Une information manque : la question, avec des réponses à cliquer ou à écrire. */
+  function showQuestion(q, text) {
+    $('question-text').textContent = q.text;
+    $('question-error').hidden = true;
+    $('question-choices').replaceChildren(
+      ...(q.choices ?? []).map((c) => h('button', { class: 'btn small', type: 'button', onclick: () => answerQuestion(q, text, null, c) }, c.label)),
+      ...(q.suggestions ?? []).map((s) =>
+        h('button', { class: 'btn small suggestion', type: 'button', onclick: () => answerQuestion(q, text, s) }, s),
+      ),
+    );
+    const form = $('question-form');
+    const input = $('question-input');
+    form.hidden = !q.input;
+    input.value = '';
+    input.placeholder = q.input === 'name' ? 'ou un autre nom' : 'ou d’autres valeurs';
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      answerQuestion(q, text, input.value);
+    };
+    $('question').hidden = false;
+    $('question-choices').querySelector('button')?.focus({ preventScroll: true });
+    $('question').scrollIntoView({ block: 'nearest' });
+  }
+
+  function hideQuestion() {
+    $('question').hidden = true;
+  }
+
+  // la réponse complète la démarche (le texte de l'élève), puis on traduit de nouveau
+  function answerQuestion(q, text, value, choice = null) {
+    if (choice?.dismiss) {
+      spaces.demarche.dismissed.add(q.id);
+      translateAndRun();
+      return;
     }
+    const answer = applyAnswer(text, q, value, choice);
+    if (answer.error) {
+      $('question-error').textContent = answer.error;
+      $('question-error').hidden = false;
+      return;
+    }
+    demarcheInput.value = answer.text;
+    store.set('demarche', answer.text);
+    const ex = DEMARCHE_EXAMPLES.find((e) => e.id === spaces.demarche.exampleId);
+    if (ex && ex.text !== answer.text) {
+      spaces.demarche.exampleId = null;
+      select.value = '';
+      forgetExampleInAddress();
+    }
+    // le texte complété se signale brièvement
+    demarcheInput.classList.remove('is-completed');
+    void demarcheInput.offsetWidth;
+    demarcheInput.classList.add('is-completed');
+    translateAndRun();
   }
 
   function renderTranslation(sp) {
@@ -466,12 +564,13 @@ function start() {
     };
     fill('hypotheses-box', 'hypotheses', t.hypotheses, false);
     fill('incompris-box', 'incompris', t.incompris, true);
+    $('retranslate').hidden = t.source !== 'claude';
   }
 
   $('stop').addEventListener('click', () => translating?.abort());
   $('retranslate').addEventListener('click', () => {
     setMode('edit');
-    translateAndRun({ refresh: true });
+    translateWithClaude({ refresh: true });
   });
   /** L'onglet Python reçoit la traduction de la démarche, avec la même exécution, à la même étape. */
   function translationToPython() {
@@ -520,7 +619,7 @@ function start() {
       ready && player.atEnd
         ? `Fin du programme : clique sur « ${TEXTS[tab].run} » pour recommencer`
         : 'Exécuter la ligne suivante (→ ou Espace)';
-    $('run').disabled = Boolean(translating) || (tab === 'demarche' && sampleAvailable === false);
+    $('run').disabled = Boolean(translating);
   }
 
   $('prev').addEventListener('click', () => player.prev());
@@ -561,22 +660,18 @@ function start() {
   demarcheInput.value = savedDemarche?.trim() ? savedDemarche : DEMARCHE_EXAMPLES.find((e) => e.id === DEFAULT_DEMARCHE).text;
   spaces.demarche.exampleId = DEMARCHE_EXAMPLES.find((e) => e.text === demarcheInput.value)?.id ?? null;
 
-  // dans claude.ai, on commence par la démarche ; ailleurs, la traduction n'existe pas
-  const inClaude = typeof window.claude?.use === 'function';
   const savedTab = store.get('onglet');
-  tab = savedTab === 'python' || savedTab === 'demarche' ? savedTab : inClaude ? 'demarche' : 'python';
+  tab = savedTab === 'python' ? 'python' : 'demarche';
   executePython();
   const fromHash = decodeURIComponent(location.hash.slice(1));
   if ([...EXAMPLES, ...DEMARCHE_EXAMPLES].some((e) => e.id === fromHash)) chooseExample(fromHash, { atStartup: true });
   else {
     showSpace();
-    if (tab === 'demarche' && rememberedAnswer(cleanText(demarcheInput.value))) translateAndRun({ toPython: false });
+    if (tab === 'demarche') translateAndRun({ toPython: false, silent: true });
   }
 
   getSample().then((sample) => {
     sampleAvailable = Boolean(sample);
-    if (!sample) markUnavailable();
-    updateControls();
   });
 }
 

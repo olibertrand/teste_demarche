@@ -38,8 +38,17 @@
 
       <div id="demarche-pane" role="tabpanel" aria-labelledby="tab-demarche" hidden>
         <textarea id="demarche" class="notebook" spellcheck="true" lang="fr" aria-label="Démarche, une instruction par ligne"
-          placeholder="Une instruction par ligne, par exemple :&#10;L = [4, 12, 7, 2, 33]&#10;parcours la liste L"></textarea>
+          placeholder="Une instruction par ligne, par exemple :&#10;L = [4, 12, 7, 2, 33]&#10;m <- L[0]&#10;pour chaque élément x de la liste L :&#10;    si x > m alors m prend la valeur x"></textarea>
         <div id="demarche-view" class="notebook notebook-view" hidden title="Double-clic pour modifier"></div>
+        <div id="question" class="question" role="group" aria-labelledby="question-text" hidden>
+          <p id="question-text" class="question-text"></p>
+          <div id="question-choices" class="question-choices"></div>
+          <form id="question-form" class="question-form">
+            <input id="question-input" type="text" spellcheck="false" autocomplete="off" aria-label="Ta réponse">
+            <button class="btn small primary" type="submit">Valider</button>
+          </form>
+          <p id="question-error" class="question-error" role="alert" hidden></p>
+        </div>
         <div id="translating" class="translating" role="status" hidden>
           <span class="spinner" aria-hidden="true"></span>
           <span id="translating-text">Traduction en cours…</span>
@@ -64,8 +73,7 @@
             </div>
           </details>
         </div>
-        <p id="translate-unavailable" class="notice" hidden>La traduction automatique fonctionne dans la version en ligne de l’application, ouverte sur claude.ai avec un compte Claude. Ici, écris directement le programme dans l’onglet Python.</p>
-        <p class="hint">Une instruction par ligne ; les lignes déjà écrites en Python sont gardées telles quelles. La traduction ne corrige rien : l’animation montre ce que fait vraiment la démarche.</p>
+        <p class="hint">Une instruction par ligne, ou plusieurs séparées par des points. Ce qui se répète ou dépend d’un « si » se décale vers la droite, comme en Python. Pour donner une valeur : <code>m &lt;- 0</code>, <code>m ← 0</code>, <code>m = 0</code> ou « m prend la valeur 0 ». S’il manque quelque chose, une question s’affiche. La traduction ne corrige rien : l’animation montre ce que fait vraiment la démarche.</p>
       </div>
 
       <div id="python-pane" role="tabpanel" aria-labelledby="tab-python" hidden>
@@ -130,7 +138,7 @@
   <footer class="footnote">
     Python restreint, exécuté dans le navigateur : listes, boucles, fonctions, <code>math</code> et <code>random</code>.
     Raccourcis : → ou Espace (pas à pas), ← (étape précédente), Ctrl + Entrée (exécuter ou traduire).
-    La traduction des démarches en français utilise Claude, dans la version en ligne sur claude.ai.
+    La traduction des démarches se fait dans le navigateur, sans connexion ; dans la version en ligne sur claude.ai, Claude peut aider pour les phrases non comprises.
   </footer>
 </div>
 <!-- APP:END -->

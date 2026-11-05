@@ -233,32 +233,41 @@ while L[i] != v:       # tant qu'on n'a pas trouvé v
 
 export const DEFAULT_EXAMPLE = 'maximum';
 
-// Démarches en français, à traduire en Python par Claude (version en ligne sur claude.ai).
+// Démarches en français, telles que les écrivent les élèves : traduites en Python dans le
+// navigateur. Certaines sont incomplètes (une question s'affiche) ou à corriger (l'animation le montre).
 export const DEMARCHE_EXAMPLES = [
   {
     id: 'demarche-parcours',
     title: 'Parcours d’une liste',
-    text: `L = [4,12,7,2,33]
+    text: `L = [4, 12, 7, 2, 33]
 parcours la liste L
 `,
   },
   {
     id: 'demarche-maximum',
     title: 'Maximum',
-    text: `L = [4,12,7,2,33]
-m = L[0]
-parcours la liste L
-chaque fois que la valeur x rencontrée est supérieure à m, cela devient la nouvelle valeur de m
+    text: `L = [4, 12, 7, 2, 33]
+m <- L[0]
+pour chaque élément x de la liste L :
+    si x > m alors m prend la valeur x
+affiche m
+`,
+  },
+  {
+    id: 'demarche-compter',
+    title: 'Compter les 5',
+    text: `compteur <- 0. pour chaque élément x de la liste L, si x est égal à 5, ajoute 1 au compteur
 `,
   },
   {
     id: 'demarche-somme',
     title: 'Somme et moyenne',
     text: `notes = [12, 15, 8, 17, 10]
-s = 0
-pour chaque note n de la liste notes, on ajoute n à s
-la moyenne est s divisé par le nombre de notes
-on affiche la moyenne
+s ← 0
+pour chaque note n de la liste notes :
+    ajoute n à s
+moyenne = s / la longueur de notes
+affiche moyenne
 `,
   },
   {
@@ -266,37 +275,47 @@ on affiche la moyenne
     title: 'Compter les nombres pairs',
     text: `L = [3, 8, 6, 1, 4]
 c = 0
-pour chaque élément x de L
-si x est pair, on augmente c de 1
-on affiche c
+pour chaque élément x de L :
+    si x est pair, augmente c de 1
+affiche c
+`,
+  },
+  {
+    id: 'demarche-appartient',
+    title: 'La valeur est-elle dans la liste ?',
+    text: `regarde chaque élément de la liste. Si l'élément vaut x, renvoie True. Si après avoir vu toute la liste on n'a pas trouvé x, renvoie False
 `,
   },
   {
     id: 'demarche-recherche',
-    title: 'Recherche d’une valeur',
+    title: 'Position d’une valeur (tant que)',
     text: `L = [5, 3, 8, 1, 9]
-v = 8
-i = 0
-tant que l’élément d’indice i n’est pas v, on passe à l’indice suivant
-on affiche i
+v <- 8
+i <- 0
+tant que l'élément d'indice i de L n'est pas v :
+    on passe à l'indice suivant
+affiche i
 `,
   },
   {
-    id: 'demarche-tri-selection',
-    title: 'Tri par sélection : premières idées',
-    text: `démarche pour trier la liste L = [4,12,7,2,33]
-on parcourt la liste pour placer son minimum en tete (chaque fois qu'on rencontre eun nombre plus petit que le 1er de la liste, n l'échange avec le 1er de la liste.
-On recommence pour placer le 2e plus petit en 2e position
-On recommence pour placer le 3e plus petit en 3e position
-On continue de même jusqu'à ce que toute la liste soit triée
+    id: 'demarche-bulles',
+    title: 'Une passe du tri à bulles',
+    text: `T = [7, 3, 9, 1]
+pour i allant de 0 à len(T) - 2 :
+    si T[i] > T[i + 1] alors échange T[i] et T[i + 1]
+affiche T
 `,
   },
   {
-    id: 'demarche-sans-depart',
-    title: 'Maximum sans valeur de départ (à corriger)',
-    text: `L = [4,12,7,2,33]
-parcours la liste L
-chaque fois que la valeur x rencontrée est supérieure à m, cela devient la nouvelle valeur de m
+    id: 'demarche-compter-sans-depart',
+    title: 'Compter, sans valeur de départ (à corriger)',
+    text: `parcourir la liste. A chaque fois qu'on trouve 5, ajoute 1 au compteur.
+`,
+  },
+  {
+    id: 'demarche-max-indices',
+    title: 'Maximum par les indices (à corriger)',
+    text: `pour chaque indice i de L: si L[i] > max alors L[I] est la nouvelle valeur de max
 `,
   },
 ];
