@@ -21,10 +21,8 @@ du Python.
   précédente** (ou ←) revient en arrière. Il n'y a pas de lecture automatique : c'est l'élève qui
   avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
-- Le menu **Écriture** (provisoire) change l'écriture « à la main » des phrases de la démarche,
-  pour comparer plusieurs polices en situation : Patrick Hand, Playpen Sans, Delius, Comic Neue,
-  Klee One, Gochi Hand, Playwrite FR (cursive scolaire) ou des lettres d'imprimerie. Le choix est
-  gardé dans le navigateur.
+- Le menu **Écriture** choisit l'écriture « à la main » des phrases de la démarche : Playpen Sans
+  (par défaut), Delius ou Comic Neue. Le choix est gardé dans le navigateur.
 
 ### La démarche en français
 
