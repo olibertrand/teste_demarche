@@ -40,8 +40,9 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
   leur groupe (**Ordre d'origine** le remet). Les tris, la recherche dichotomique et le rendu de
   monnaie sont cachés au départ.
 
-**Enregistrer une version pour les élèves** produit le fichier `demarche-eleves.html`, autonome,
-qui garde ces choix : c'est lui qu'on donne aux élèves (ENT, clé
+Ces réglages sont gardés dans le navigateur : on les retrouve en rouvrant la page (le fichier
+principal comme la version en ligne). **Enregistrer une version pour les élèves** produit le
+fichier `demarche-eleves.html`, autonome, qui garde ces choix : c'est lui qu'on donne aux élèves (ENT, clé
 USB). Pour changer le choix plus tard, on rouvre ce fichier et on l'enregistre de nouveau. Cette
 version ne peut être préparée que depuis le fichier autonome, pas depuis la version en ligne.
 

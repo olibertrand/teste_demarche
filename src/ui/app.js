@@ -141,9 +141,12 @@ function start() {
 
   // ---------------------------------------------------------------- exemples
 
-  // les exemples cachés aux élèves et leur ordre : le choix du professeur enregistré dans la page ;
-  // sinon, ceux marqués hidden sont cachés, dans l'ordre de examples.js
-  const config = readConfig();
+  // Réglages du professeur : exemples cachés, leur ordre, ce qui s'affiche à l'ouverture. Une version
+  // pour les élèves garde les siens dans la page ; sinon, ceux choisis la dernière fois dans ce
+  // navigateur ; sinon, ceux marqués hidden sont cachés, dans l'ordre de examples.js.
+  const embedded = readConfig();
+  const inFile = Object.keys(embedded).length > 0;
+  const config = inFile ? embedded : readSettings();
   const hiddenExamples = new Set(
     Array.isArray(config.hidden) ? config.hidden : [...DEMARCHE_EXAMPLES, ...EXAMPLES].filter((e) => e.hidden).map((e) => e.id),
   );
@@ -154,6 +157,23 @@ function start() {
     python: typeof config.opening?.python === 'string' ? config.opening.python : DEFAULT_EXAMPLE,
   };
   const custom = h('option', { value: '' }, TEXTS.python.custom);
+
+  function readSettings() {
+    try {
+      const saved = JSON.parse(prefs.get('reglages') ?? '{}');
+      return saved && typeof saved === 'object' ? saved : {};
+    } catch {
+      return {};
+    }
+  }
+
+  const settings = () => ({ hidden: [...hiddenExamples], order: exampleOrder, opening });
+
+  // le professeur retrouve ses réglages en rouvrant la page ; une version pour les élèves garde
+  // les siens : pour les changer, on l'enregistre de nouveau
+  function saveSettings() {
+    if (!inFile) prefs.set('reglages', JSON.stringify(settings()));
+  }
 
   /** Les exemples par groupe, dans l'ordre choisi par le professeur (un exemple nouveau vient à la fin de son groupe). */
   function exampleGroups() {
@@ -793,11 +813,12 @@ function start() {
 
   // ---------------------------------------------------------------- mode professeur
 
-  // les exemples montrés aux élèves ; le choix est gardé dans la version enregistrée pour eux
+  // les exemples montrés aux élèves ; le choix est gardé dans ce navigateur, et dans la version enregistrée pour eux
   function renderTeacherList() {
     // les flèches déplacent l'exemple dans son groupe ; le clavier reste sur la flèche utilisée
     const move = (ex, delta) => {
       moveExample(ex.id, delta);
+      saveSettings();
       renderTeacherList();
       fillExamples();
       const buttons = $('teacher-list').querySelectorAll(`[data-id="${ex.id}"] button`);
@@ -826,6 +847,7 @@ function start() {
                     else hiddenExamples.add(ex.id);
                     fillExamples();
                     renderOpening();
+                    saveSettings();
                   },
                 }),
                 ex.title,
@@ -864,32 +886,39 @@ function start() {
   }
   $('teacher-open-demarche').addEventListener('change', (e) => {
     opening.demarche = e.target.value;
+    saveSettings();
   });
   $('teacher-open-python').addEventListener('change', (e) => {
     opening.python = e.target.value;
+    saveSettings();
   });
 
   $('teacher-open').addEventListener('click', () => {
     renderTeacherList();
     // seul le fichier autonome sait s'enregistrer lui-même
     $('teacher-save').hidden = !SELF_COPY;
-    $('teacher-save-help').hidden = !SELF_COPY;
-    $('teacher-online-help').hidden = Boolean(SELF_COPY);
+    $('teacher-save-help').textContent = inFile
+      ? 'Cette version pour les élèves garde le choix enregistré avec elle. Pour le changer, modifie-le ici, puis enregistre de nouveau la version pour les élèves.'
+      : SELF_COPY
+        ? 'Ton choix est gardé dans ce navigateur. Pour le donner aux élèves, enregistre une version pour eux : c’est ce fichier qu’il faut leur donner.'
+        : 'Ton choix est gardé dans ce navigateur. Pour préparer une version pour les élèves, ouvre le fichier autonome demarche.html et refais-y ce choix.';
     $('teacher-status').textContent = '';
     $('teacher').showModal();
   });
   $('teacher-all').addEventListener('click', () => {
     hiddenExamples.clear();
+    saveSettings();
     renderTeacherList();
     fillExamples();
   });
   $('teacher-order').addEventListener('click', () => {
     exampleOrder = [];
+    saveSettings();
     renderTeacherList();
     fillExamples();
   });
   $('teacher-save').addEventListener('click', async () => {
-    const json = JSON.stringify({ hidden: [...hiddenExamples], order: exampleOrder, opening }).replace(/</g, '\\u003c');
+    const json = JSON.stringify(settings()).replace(/</g, '\\u003c');
     const page = SELF_COPY.replace(/(<script type="application\/json" id="config">)[\s\S]*?(<\/script>)/, (_, open, close) => open + json + close);
     const status = $('teacher-status');
     status.classList.remove('is-error');
