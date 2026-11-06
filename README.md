@@ -48,6 +48,10 @@ ouvre la version des élèves en ajoutant `#professeur` à la fin de l'adresse
 (`…/demarche-eleves.html#professeur`), et on l'enregistre de nouveau. Cette version ne peut être
 préparée que depuis le fichier autonome, pas depuis la version en ligne.
 
+Pour la mettre en ligne sur un serveur (par exemple https://demarche.jeangi.org), voir
+[docs/mise-en-ligne.md](docs/mise-en-ligne.md) : le nom de domaine, la configuration de nginx,
+Apache ou Caddy, le HTTPS, puis le dépôt du fichier à chaque nouvelle version.
+
 ### La démarche en français
 
 L'onglet **Démarche** reçoit le texte de l'élève, un pseudo-code en français, éventuellement mêlé
@@ -177,6 +181,7 @@ src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.
               files.js (enregistrer un fichier)
 src/style.css
 src/fonts/    polices stockées avec l'application (licence SIL OFL), voir LISEZMOI.md
+docs/         mise-en-ligne.md (mettre la version pour les élèves sur un serveur)
 index.html    page de développement (modules JS, nécessite un petit serveur)
 dist/         demarche.html, fichier autonome produit par la construction
 tests/        tests (node:test)
