@@ -77,13 +77,15 @@ clic (elle reste ouverte ensuite, jusqu'au rechargement de la page).
   plusieurs instructions peuvent se suivre sur une ligne, séparées par des points.
 - **Tournures comprises** : parcours des valeurs ou des indices (« pour chaque élément x de la
   liste L », « parcours la liste L avec la variable x », « pour chaque indice i de L », « pour i
-  allant de 0 à 4 », « pour tous les i de 1 à 12 »), « tant que », « si … alors … », « sinon »,
+  allant de 0 à 4 », « pour tous les i de 1 à 12 », « pour chaque chiffre x de ch » pour une
+  chaîne), « tant que », « si … alors … », « sinon »,
   « à chaque fois que… » ; des fonctions (« fonction double(x) », le corps décalé en dessous,
   « renvoie 2*x » ; ou sur une ligne : « fonction double(x) qui renvoie 2*x »), appelées comme en
   Python (« afficher double(i) ») ;
   conditions en symboles ou en mots (« est supérieur à », « vaut », « est pair », « on trouve 5 ») ;
   « afficher », « ajouter 1 au compteur », « ajouter x à la fin de L », « échanger L[i] et L[j] »
-  (en trois lignes, avec temp), « renvoyer » ; « le premier élément de L », « la longueur de L »,
+  (en trois lignes, avec temp), « renvoyer » ; « le premier élément de L », « la longueur de L » (ou « de la chaîne ch », « le nombre de
+  caractères de ch »),
   « l'élément d'indice i de L » ; la puissance (`2**n`, `2^n`, « 2 puissance n », « n au carré »,
   `n²`) ; « multiplier x par 2 », « diviser p par 2 » (division décimale, ou « en division
   entière »), « doubler x », « élever x au carré », « x est divisé par 2 », aussi pour une case
