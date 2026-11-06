@@ -18,30 +18,13 @@
   font-display: swap;
 }
 
-/* écritures « à la main » des phrases de la démarche, au choix dans le menu « Écriture »
-   (src/ui/handwriting.js) ; size-adjust leur donne la même hauteur de minuscules */
+/* écriture « à la main » des phrases de la démarche */
 @font-face {
   font-family: "Playpen Sans";
   src: url("fonts/playpen-sans.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
   size-adjust: 85%;
-}
-
-@font-face {
-  font-family: "Delius";
-  src: url("fonts/delius.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  size-adjust: 90%;
-}
-
-@font-face {
-  font-family: "Comic Neue";
-  src: url("fonts/comic-neue.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  size-adjust: 94%;
 }
 
 :root {
@@ -80,8 +63,7 @@
 
   --font-ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --font-code: "Atkinson Hyperlegible Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
-  --hand-family: "Playpen Sans"; /* remplacée par l'écriture choisie dans le menu « Écriture » */
-  --font-hand: var(--hand-family), "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --font-hand: "Playpen Sans", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
   --radius: 12px;
 }
 
