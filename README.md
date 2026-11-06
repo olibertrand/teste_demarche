@@ -63,8 +63,9 @@ affiche m
 
 **Traduire et exécuter** traduit la démarche en Python (`src/translate/pseudo.js`), puis
 l'animation démarre. La phrase en cours d'exécution est surlignée dans le texte de l'élève et
-affichée sur la scène ; la traduction en Python est visible à côté, avec les **hypothèses** de
-traduction (« « cela » : j'ai compris x »).
+affichée sur la scène. Sous la démarche, les **hypothèses** de traduction (« « cela » : j'ai
+compris x ») sont affichées ; la **traduction en Python** est repliée au départ et s'ouvre d'un
+clic (elle reste ouverte ensuite, jusqu'au rechargement de la page).
 
 - **Conventions** : pour donner une valeur, `<-`, `←`, `=` ou « prend la valeur » (aussi « reçoit »,
   « devient », « est la nouvelle valeur de ») ; ce qui se répète ou dépend d'un « si » se décale vers
