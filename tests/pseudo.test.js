@@ -203,6 +203,39 @@ test('« de 0 à 4 » compte 4 ; les bornes sont simplifiées', () => {
   assert.equal(python(translatePseudo('L = [1]\npour i de 0 à len(L) - 1 :\n    affiche i')), 'L = [1]\nfor i in range(len(L)):\n    print(i)\n');
   assert.equal(python(translatePseudo('n = 3\npour k de 1 à n :\n    affiche k')), 'n = 3\nfor k in range(1, n + 1):\n    print(k)\n');
   assert.equal(python(translatePseudo('L = [1, 2, 3]\npour i de 0 à len(L) - 2 :\n    affiche i')), 'L = [1, 2, 3]\nfor i in range(len(L) - 1):\n    print(i)\n');
+  // « pour tous les i de 1 à 12 », « pour tout entier n de… », « pour chaque i de… »
+  assert.equal(python(translatePseudo('pour tous les i de 1 à 12\n    affiche i')), 'for i in range(1, 13):\n    print(i)\n');
+  assert.equal(python(translatePseudo('pour tout entier n de 1 à 3 :\n    affiche n')), 'for n in range(1, 4):\n    print(n)\n');
+  assert.equal(python(translatePseudo('pour chaque i de 0 à 2 :\n    affiche i')), 'for i in range(3):\n    print(i)\n');
+});
+
+test('fonctions : « fonction double(x) », son bloc décalé, ses appels', () => {
+  const t = translatePseudo('fonction double(x)\n    renvoie 2*x\n\npour tous les i de 1 à 12\n    afficher double(i)');
+  assert.equal(python(t), 'def double(x):\n    return 2 * x\nfor i in range(1, 13):\n    print(double(i))\n');
+  assert.equal(run(t.python).output, '2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n22\n24\n');
+  // sur une ligne, en Python, avec plusieurs paramètres, récursive
+  const cases = {
+    'fonction double(x) qui renvoie 2*x\nafficher double(5)': '10\n',
+    'la fonction carré(x) renvoie x*x\nafficher carré(4)': '16\n',
+    'def double(x):\n    return 2*x\nprint(double(3))': '6\n',
+    'définir la fonction aire(a, b) :\n    renvoie a * b\naffiche aire(3, 4)': '12\n',
+    'fonction fact(n) :\n    si n == 0 alors renvoie 1\n    sinon renvoie n * fact(n - 1)\naffiche fact(5)': '120\n',
+  };
+  for (const [text, output] of Object.entries(cases)) {
+    const r = translatePseudo(text);
+    assert.ok(r.ok, `${text} : ${r.message}`);
+    assert.equal(run(r.python).output, output, text);
+  }
+  // les variables de la fonction lui appartiennent ; ce qu'elle lit sans le définir vient du programme
+  const scope = translatePseudo('fonction somme(L) :\n    s <- 0\n    pour chaque x de L : ajoute x à s\n    renvoie s\nnotes = [12, 15, 9]\naffiche somme(notes)');
+  assert.equal(run(scope.python).output, '36\n');
+  assert.equal(translatePseudo('fonction moyenne(L)\n    renvoie somme / len(L)\naffiche moyenne([1, 2])').question?.id, 'donnee:somme');
+  // « renvoie » dans une fonction de l'élève : la démarche ne devient pas elle-même une fonction
+  assert.doesNotMatch(scope.python, /def demarche/);
+  // le corps oublié sous la fonction, un paramètre impossible, des parenthèses oubliées
+  assert.match(translatePseudo('fonction double(x)\nrenvoie 2*x').question.text, /fait-elle partie de la fonction/);
+  assert.match(translatePseudo('fonction f(2)\n    renvoie 1').message, /nom d’un paramètre/);
+  assert.match(translatePseudo('fonction double x\n    renvoie 2*x').message, /paramètres entre parenthèses/);
 });
 
 test('une phrase à répéter, mais pas décalée : la question propose de la décaler', () => {

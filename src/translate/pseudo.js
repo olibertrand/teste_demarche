@@ -567,8 +567,10 @@ const HEADERS = [
   },
   {
     kind: 'range',
-    re: rule(`pour (?<v>${NAME}) (?:allant |variant |qui va |qui varie )?de (?<a>.+?) (?:a|jusqu'a) (?<b>.+?)(?: inclus)?`),
+    re: rule(`pour (?:(?:chaque|tout|tous les|toutes les) (?:(?:entiers?|nombres?|valeurs?|indices?|rangs?|positions?) )?)?(?<v>${NAME}) (?:allant |variant |qui va |qui varie |prenant les valeurs |qui prend les valeurs )?de (?<a>.+?) (?:a|jusqu'a) (?<b>.+?)(?: inclus)?`),
   },
+  // « fonction double(x) », « définir la fonction double(x) », « def double(x): »
+  { kind: 'function', re: rule(`(?:(?:(?:definir|definis|definit|definissons) )?(?:la |une )?fonction|def|soit la fonction) (?<name>${NAME})\\s*\\((?<params>[^)]*)\\)\\s*:?`) },
   {
     kind: 'traverse',
     re: rule(`(?:parcour(?:s|t|ir|rir|ons|ez|e)|regarde(?:r|s)?|examine(?:r|s)?|passe(?:r)? en revue|traverse(?:r|s)?)(?: (?:chaque|tous les|toutes les|les) (?<kind>elements?|valeurs?|nombres?|cases?|entiers?)(?: (?<v1>${NAME}))? (?:de|d'|du|dans))?(?: (?<lw>la liste|le tableau|liste|tableau)\\b)?(?: (?<l>${NAME}))?(?: (?<by>avec|en utilisant|a l'aide de|a l'aide d'|en t'aidant de|en t'aidant d'|en te servant de|grace a) (?:(?:la|une) variable (?:d'indice )?|(?<idx1>l'indice|un indice) )?(?<v2>${NAME})(?<idx2> pour (?:les|ses) indices| comme indice| pour l'indice)?)?`),
@@ -581,8 +583,10 @@ const HEADERS = [
   { kind: 'each-time', re: rule("(?:a )?chaque fois (?:que\\s+|qu'\\s*)(?<c>.+)") },
 ];
 
+// « fonction double(x) » : ce qui suit, décalé, est le corps de la fonction
+const FUNCTION_START = /^(?:(?:(?:definir|definis|definit|definissons)\s+)?(?:la\s+|une\s+)?fonction\s|def\s|soit\s+la\s+fonction\s)/;
 const HEADER_START =
-  /^(?:pour\s|parcour|regard|examin|passe(?:r)?\s+en\s+revue|travers|tant\s+qu|sinon\b|si\b|s'il\b|a\s+chaque\s+fois|chaque\s+fois|des\s+qu|lorsqu|quand\s|for\s|while\s|if\s|elif\s|else\b)/;
+  /^(?:pour\s|parcour|regard|examin|passe(?:r)?\s+en\s+revue|travers|tant\s+qu|sinon\b|si\b|s'il\b|a\s+chaque\s+fois|chaque\s+fois|des\s+qu|lorsqu|quand\s|for\s|while\s|if\s|elif\s|else\b|(?:(?:definir|definis|definit|definissons)\s+)?(?:la\s+|une\s+)?fonction\s|def\s|soit\s+la\s+fonction\s)/;
 const LOOP_START = /^(?:pour\s|parcour|regard|examin|passe(?:r)?\s+en\s+revue|travers|tant\s+qu|for\s|while\s)/;
 
 // « après avoir vu toute la liste… » : la phrase vient après le parcours
@@ -661,13 +665,13 @@ function structure(lines) {
           return;
         }
         const [head, rest] = splitHeader(cur);
-        open.push({ node: header(head), loop: LOOP_START.test(head.f), ended: Boolean(rest) });
+        open.push({ node: header(head), loop: LOOP_START.test(head.f), fn: FUNCTION_START.test(head.f), ended: Boolean(rest) });
         cur = rest ? trimFillers(rest) : null;
       }
     };
     for (const sentence of splitSentences(line)) {
       // un « si » suivi de son action s'arrête à la fin de sa phrase
-      while (open.length && !open.at(-1).loop && open.at(-1).ended) open.pop();
+      while (open.length && !open.at(-1).loop && !open.at(-1).fn && open.at(-1).ended) open.pop();
       const p = trimFillers(sentence);
       const after = AFTER_LOOP.exec(p.f);
       if (!after) {
@@ -712,6 +716,12 @@ function structure(lines) {
 
 // fin de l'en-tête : « : », « , », « alors » ou « faire », hors crochets et parenthèses
 function splitHeader(p) {
+  // « fonction double(x) qui renvoie 2*x », « def double(x): return 2*x » : l'en-tête finit avec les paramètres
+  if (FUNCTION_START.test(p.f) && p.f.includes(')')) {
+    const close = p.f.indexOf(')') + 1;
+    const start = close + /^\s*[:,]?\s*(?:qui\s+|et\s+)?/.exec(p.f.slice(close))[0].length;
+    return [cut(p, 0, close), start < p.text.length ? cut(p, start) : null];
+  }
   const bare = /^(?:sinon|else)\b(?!\s+si\b)\s*[,:]?\s*/.exec(p.f);
   if (bare) {
     const head = cut(p, 0, bare[0].replace(/[\s,:]+$/, '').length);
@@ -747,6 +757,8 @@ class Translator {
     this.numbers = [];
     this.lastSubject = null;
     this.returns = false;
+    this.functionDepth = 0; // dans le corps d'une fonction écrite par l'élève
+    this.outerNames = new Set(); // les noms du programme, vus depuis une fonction
   }
 
   note(line, text) {
@@ -763,7 +775,25 @@ class Translator {
   }
 
   known() {
-    return new Set([...this.stores.keys(), ...this.reads.keys()]);
+    return new Set([...this.stores.keys(), ...this.reads.keys(), ...this.outerNames]);
+  }
+
+  // une fonction a ses propres noms : ses paramètres et ce qui y reçoit une valeur
+  enterFunction(fn) {
+    fn.outer = { reads: this.reads, stores: this.stores, loops: this.loops, names: this.outerNames };
+    this.outerNames = this.known();
+    this.reads = new Map();
+    this.stores = new Map(fn.params.map((n) => [n, 1]));
+    this.loops = [];
+    this.functionDepth++;
+  }
+
+  leaveFunction(fn) {
+    const { reads, stores } = this;
+    Object.assign(this, { reads: fn.outer.reads, stores: fn.outer.stores, loops: fn.outer.loops, outerNames: fn.outer.names });
+    this.functionDepth--;
+    // lu dans la fonction sans y recevoir de valeur : cela vient du programme (une liste, une autre fonction…)
+    for (const [name, role] of reads) if (!stores.has(name)) this.read(name, role);
   }
 
   /** « L[I] » quand seule la variable i existe : on comprend L[i]. */
@@ -838,10 +868,12 @@ class Translator {
       } else {
         if (!node.children.length) this.askIndent(node, nodes[k + 1]);
         const loop = this.header(node, depth);
-        if (loop) this.loops.push(loop);
+        if (loop?.kind === 'function') this.enterFunction(loop);
+        else if (loop) this.loops.push(loop);
         if (node.children.length) this.block(node.children, depth + 1);
         else this.emit(depth + 1, 'pass', node.line);
-        if (loop) this.loops.pop();
+        if (loop?.kind === 'function') this.leaveFunction(loop);
+        else if (loop) this.loops.pop();
       }
     }
   }
@@ -852,6 +884,7 @@ class Translator {
     const id = `decaler:${next.line}`;
     if (this.dismissed.has(id)) return;
     const loop = LOOP_START.test(node.c.f);
+    const fn = FUNCTION_START.test(node.c.f);
     const first = this.lines.findIndex((l) => l.n === next.line);
     let last = first;
     while (last + 1 < this.lines.length && this.lines[last + 1].indent > next.indent) last++;
@@ -860,7 +893,9 @@ class Translator {
       line: next.line,
       text: loop
         ? `La phrase « ${next.c.text} » est-elle à répéter à chaque tour de « ${node.c.text} » ? Alors elle doit être décalée vers la droite, sous le parcours.`
-        : `La phrase « ${next.c.text} » fait-elle partie de « ${node.c.text} » ? Alors elle doit être décalée vers la droite, sous le « si ».`,
+        : fn
+          ? `La phrase « ${next.c.text} » fait-elle partie de la fonction ? Alors elle doit être décalée vers la droite, sous « ${node.c.text} ».`
+          : `La phrase « ${next.c.text} » fait-elle partie de « ${node.c.text} » ? Alors elle doit être décalée vers la droite, sous le « si ».`,
       choices: [
         { label: 'Oui, la décaler', edit: { indent: [next.line, this.lines[last].n] } },
         { label: 'Non', dismiss: true },
@@ -921,11 +956,24 @@ class Translator {
         case 'else':
           this.emit(depth, 'else:', node.line);
           return null;
+        case 'function': {
+          const name = g('name').text;
+          if (!isVariableName(name)) throw new Untranslatable(`« ${name} » ne peut pas être le nom d’une fonction`, p);
+          const params = g('params').text.trim() ? g('params').text.split(',').map((x) => x.trim()) : [];
+          const wrong = params.find((x) => !isVariableName(x));
+          if (wrong !== undefined) throw new Untranslatable(`« ${wrong} » ne peut pas être le nom d’un paramètre (il faut des noms de variables, par exemple « fonction double(x) »)`, p);
+          this.store(name);
+          this.emit(depth, `def ${name}(${params.join(', ')}):`, node.line);
+          return { kind: 'function', name, params };
+        }
         case 'if':
         case 'each-time':
           this.emit(depth, `if ${this.expr(stripColon(g('c')), { condition: true })}:`, node.line);
           return null;
       }
+    }
+    if (FUNCTION_START.test(p.f)) {
+      throw new Untranslatable('une fonction s’écrit avec son nom puis ses paramètres entre parenthèses, par exemple « fonction double(x) »', p);
     }
     throw new Untranslatable('je ne sais pas traduire ce début de phrase', p);
   }
@@ -1123,7 +1171,8 @@ class Translator {
           return;
         }
         case 'return':
-          this.returns = true;
+          // hors d'une fonction écrite par l'élève, c'est toute la démarche qui devient une fonction
+          if (!this.functionDepth) this.returns = true;
           this.emit(depth, `return ${this.expr(g('e'))}`, line);
           return;
         case 'next': {
