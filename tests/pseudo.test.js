@@ -209,6 +209,18 @@ test('« de 0 à 4 » compte 4 ; les bornes sont simplifiées', () => {
   assert.equal(python(translatePseudo('pour chaque i de 0 à 2 :\n    affiche i')), 'for i in range(3):\n    print(i)\n');
 });
 
+test('chaînes : « pour chaque chiffre x de ch », « la longueur de ch », « le nombre de caractères de ch »', () => {
+  const t = translatePseudo('ch = "1101"\nres = 0\np = 2**((longueur de ch) -1)\npour chaque chiffre x de ch:\n    res = res + p*int(x)\n    p = p // 2\naffiche res');
+  assert.equal(python(t), 'ch = "1101"\nres = 0\np = 2 ** ((len(ch)) - 1)\nfor x in ch:\n    res = res + p * int(x)\n    p = p // 2\nprint(res)\n');
+  assert.equal(run(t.python).output, '13\n');
+  // les caractères sont des textes : la traduction le dit, avec int(x)
+  assert.ok(t.hypotheses.some((h) => /"1" et non 1.*int\(x\)/.test(h.text)));
+  assert.equal(run(python(translatePseudo('ch = "bonjour"\nn <- le nombre de caractères de ch\naffiche n'))).output, '7\n');
+  assert.equal(python(translatePseudo('mot = "abc"\nparcours la chaîne mot avec la variable c\n    affiche c')), 'mot = "abc"\nfor c in mot:\n    print(c)\n');
+  assert.equal(python(translatePseudo('ch = "abc"\naffiche la longueur de la chaîne ch')), 'ch = "abc"\nprint(len(ch))\n');
+  assert.equal(python(translatePseudo('ch = "10"\npour chaque bit b de la chaîne ch :\n    affiche b')), 'ch = "10"\nfor b in ch:\n    print(b)\n');
+});
+
 test('fonctions : « fonction double(x) », son bloc décalé, ses appels', () => {
   const t = translatePseudo('fonction double(x)\n    renvoie 2*x\n\npour tous les i de 1 à 12\n    afficher double(i)');
   assert.equal(python(t), 'def double(x):\n    return 2 * x\nfor i in range(1, 13):\n    print(double(i))\n');

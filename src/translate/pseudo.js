@@ -453,7 +453,9 @@ class Expr {
     if (arithmetic) return arithmetic;
     if (this.words('la longueur de') || this.words('la longueur d\'') || this.words('la taille de') ||
       this.words('la taille d\'') || this.words('longueur de') || this.words('taille de') ||
-      this.words("le nombre d' elements de") || this.words("le nombre d' elements d'")) {
+      this.words("le nombre d' elements de") || this.words("le nombre d' elements d'") ||
+      this.words('le nombre de caracteres de') || this.words('le nombre de caracteres d\'') ||
+      this.words('le nombre de lettres de') || this.words('le nombre de chiffres de')) {
       const list = this.listRef();
       return `len(${list})`;
     }
@@ -528,7 +530,8 @@ class Expr {
 
   // « de L », « de la liste L », ou la liste du parcours en cours si elle n'est pas nommée
   listRef() {
-    this.words('la liste') || this.words('le tableau') || this.words('liste');
+    this.words('la liste') || this.words('le tableau') || this.words('la chaine') || this.words('le mot') ||
+      this.words('le texte') || this.words('liste') || this.words('chaine');
     if (this.isName(this.peek())) {
       const name = this.name();
       this.t.read(name, 'list');
@@ -556,14 +559,17 @@ function group(p, m, g) {
   return span ? cut(p, span[0], span[1]) : null;
 }
 
+// « la liste L », « le tableau T », « la chaîne ch » : ce qu'on parcourt
+const LIST_WORD = 'la liste|le tableau|la chaine|le mot|le texte|liste|tableau|chaine';
+
 const HEADERS = [
   {
     kind: 'indices',
-    re: rule(`pour (?:chaque|tout|tous les|toutes les) (?<kind>indices?|positions?|rangs?)(?: (?<v>${NAME}))?(?: ${OF}(?:(?<lw>la liste|le tableau|liste|tableau)\\b\\s*)?(?<l>${NAME})?)?`),
+    re: rule(`pour (?:chaque|tout|tous les|toutes les) (?<kind>indices?|positions?|rangs?)(?: (?<v>${NAME}))?(?: ${OF}(?:(?<lw>${LIST_WORD})\\b\\s*)?(?<l>${NAME})?)?`),
   },
   {
     kind: 'values',
-    re: rule(`pour (?:chaque|tout|tous les|toutes les) (?:(?<kind>elements?|valeurs?|nombres?|entiers?|termes?|cases?|notes?|mots?|lettres?|caracteres?) )?(?:(?<v>${NAME}) )?${OF}(?:(?<lw>la liste|le tableau|liste|tableau)\\b\\s*)?(?<l>${NAME})?`),
+    re: rule(`pour (?:chaque|tout|tous les|toutes les) (?:(?<kind>elements?|valeurs?|nombres?|entiers?|termes?|cases?|notes?|mots?|lettres?|caracteres?|chiffres?|bits?|symboles?) )?(?:(?<v>${NAME}) )?${OF}(?:(?<lw>${LIST_WORD})\\b\\s*)?(?<l>${NAME})?`),
   },
   {
     kind: 'range',
@@ -573,7 +579,7 @@ const HEADERS = [
   { kind: 'function', re: rule(`(?:(?:(?:definir|definis|definit|definissons) )?(?:la |une )?fonction|def|soit la fonction) (?<name>${NAME})\\s*\\((?<params>[^)]*)\\)\\s*:?`) },
   {
     kind: 'traverse',
-    re: rule(`(?:parcour(?:s|t|ir|rir|ons|ez|e)|regarde(?:r|s)?|examine(?:r|s)?|passe(?:r)? en revue|traverse(?:r|s)?)(?: (?:chaque|tous les|toutes les|les) (?<kind>elements?|valeurs?|nombres?|cases?|entiers?)(?: (?<v1>${NAME}))? (?:de|d'|du|dans))?(?: (?<lw>la liste|le tableau|liste|tableau)\\b)?(?: (?<l>${NAME}))?(?: (?<by>avec|en utilisant|a l'aide de|a l'aide d'|en t'aidant de|en t'aidant d'|en te servant de|grace a) (?:(?:la|une) variable (?:d'indice )?|(?<idx1>l'indice|un indice) )?(?<v2>${NAME})(?<idx2> pour (?:les|ses) indices| comme indice| pour l'indice)?)?`),
+    re: rule(`(?:parcour(?:s|t|ir|rir|ons|ez|e)|regarde(?:r|s)?|examine(?:r|s)?|passe(?:r)? en revue|traverse(?:r|s)?)(?: (?:chaque|tous les|toutes les|les) (?<kind>elements?|valeurs?|nombres?|cases?|entiers?|lettres?|caracteres?|chiffres?|bits?|symboles?)(?: (?<v1>${NAME}))? (?:de|d'|du|dans))?(?: (?<lw>${LIST_WORD})\\b)?(?: (?<l>${NAME}))?(?: (?<by>avec|en utilisant|a l'aide de|a l'aide d'|en t'aidant de|en t'aidant d'|en te servant de|grace a) (?:(?:la|une) variable (?:d'indice )?|(?<idx1>l'indice|un indice) )?(?<v2>${NAME})(?<idx2> pour (?:les|ses) indices| comme indice| pour l'indice)?)?`),
   },
   { kind: 'python-for', re: rule(`for (?<v>${NAME}) in (?<e>.+)`) },
   { kind: 'while', re: rule("(?:tant que\\s+|tant qu'\\s*|while\\s+)(?<c>.+)") },
@@ -754,6 +760,7 @@ class Translator {
     this.stores = new Map(); // nom → nombre d'affectations
     this.reads = new Map(); // nom → 'list' | 'value', dans l'ordre des premières lectures
     this.lists = new Set();
+    this.strings = new Map(); // variables qui reçoivent un texte : ch = "1101"
     this.numbers = [];
     this.lastSubject = null;
     this.returns = false;
@@ -1035,6 +1042,14 @@ class Translator {
       this.emit(depth, `for ${name} in range(len(${list})):`, node.line);
       return { kind: 'indices', var: name, list };
     }
+    if (this.strings.has(list)) {
+      const digits = /^\d+$/.test(this.strings.get(list));
+      this.note(
+        node.line,
+        `« ${p.text} » : ${name} prend un à un les caractères de ${list}` +
+          (digits ? `. Ce sont des textes ("1" et non 1) : pour calculer avec un chiffre, écris int(${name}).` : '.'),
+      );
+    }
     this.emit(depth, `for ${name} in ${list}:`, node.line);
     return { kind: 'values', var: name, list };
   }
@@ -1086,6 +1101,7 @@ class Translator {
           const value = this.expr(g('e'));
           const target = this.target(g('v'));
           if (/^\[.*\]$/.test(value)) this.lists.add(target);
+          if (/^"[^"]*"$/.test(value)) this.strings.set(target, JSON.parse(value));
           const literal = /^(?:-?\d+(?:\.\d+)?|"[^"]*"|True|False|\[[^[\]]*\])$/.test(value);
           this.emit(depth, `${target} = ${value}`, line, depth === 0 && literal ? { data: target } : {});
           return;
