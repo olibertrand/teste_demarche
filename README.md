@@ -21,8 +21,7 @@ compte, sans être corrigée, puis animée. On peut aussi écrire directement du
   précédente** (ou ←) revient en arrière. Il n'y a pas de lecture automatique : c'est l'élève qui
   avance. **Exécuter** recommence depuis le début.
 - Un lien peut ouvrir directement un exemple : `demarche.html#tri-insertion`.
-- Le menu **Écriture** choisit l'écriture « à la main » des phrases de la démarche : Playpen Sans
-  (par défaut), Delius ou Comic Neue. Le choix est gardé dans le navigateur.
+- Les phrases de la démarche s'écrivent « à la main », avec la police Playpen Sans.
 - **Enregistrer la démarche** (ou Ctrl + S) la met dans un fichier texte daté
   (`demarche-2026-11-05-14h32.txt`) ; **Ouvrir une démarche…** la recharge, traduite et animée.
   L'onglet Python fait de même avec des fichiers `.py`. Un élève peut ainsi garder son travail
@@ -174,7 +173,7 @@ src/python/   tokenizer.js, parser.js  → analyse du programme
 src/translate/ pseudo.js (traduction du pseudo-code, questions), et pour le secours par Claude :
               prompt.js (consigne), assemble.js (contrôle de la réponse), claude.js (appel à Claude)
 src/ui/       app.js (point d'entrée), stage.js (scène), narration.js, editor.js, player.js, examples.js,
-              handwriting.js (écritures du menu « Écriture »), files.js (enregistrer un fichier)
+              files.js (enregistrer un fichier)
 src/style.css
 src/fonts/    polices stockées avec l'application (licence SIL OFL), voir LISEZMOI.md
 index.html    page de développement (modules JS, nécessite un petit serveur)

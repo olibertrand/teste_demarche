@@ -1,22 +1,20 @@
-// Polices : chaque écriture proposée a sa police, stockée avec l'application.
+// Polices : celles de la feuille de style sont stockées avec l'application.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
-import { HAND_FONTS } from '../src/ui/handwriting.js';
 
 const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
 const faces = new Map(
   [...css.matchAll(/@font-face\s*{[^}]*font-family:\s*"([^"]+)";[^}]*url\("fonts\/([\w.-]+)"\)/g)].map(([, family, file]) => [family, file]),
 );
 
-test('chaque écriture proposée a sa police dans src/fonts', () => {
-  assert.equal(new Set(HAND_FONTS.map((f) => f.id)).size, HAND_FONTS.length);
-  for (const { family } of HAND_FONTS) {
-    assert.ok(faces.has(family), `pas de @font-face pour ${family}`);
-    assert.ok(existsSync(new URL(`../src/fonts/${faces.get(family)}`, import.meta.url)), faces.get(family));
-  }
+test('chaque police de la feuille de style est dans src/fonts, et seulement elles', () => {
+  for (const [family, file] of faces) assert.ok(existsSync(new URL(`../src/fonts/${file}`, import.meta.url)), `${family} : ${file}`);
+  const files = readdirSync(new URL('../src/fonts/', import.meta.url)).filter((f) => f.endsWith('.woff2'));
+  assert.deepEqual(files.sort(), [...faces.values()].sort());
 });
 
-test('l’écriture par défaut de la feuille de style est la première proposée', () => {
-  assert.equal(css.match(/--hand-family:\s*"([^"]+)"/)[1], HAND_FONTS[0].family);
+test('les phrases de la démarche s’écrivent en Playpen Sans', () => {
+  assert.ok(faces.has('Playpen Sans'));
+  assert.match(css, /--font-hand:\s*"Playpen Sans"/);
 });
